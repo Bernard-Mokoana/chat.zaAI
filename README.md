@@ -20,6 +20,25 @@ The project is currently built around a token-based chat session flow:
 6. The worker reads from `message_channel`, updates Redis chat history, calls the Hugging Face model, and writes the answer into `response_channel`.
 7. The server listens for matching replies on `response_channel` and forwards them to the correct WebSocket client.
 
+## High-level Design
+
+The system is split into three runtime services connected through Redis:
+
+- `client` (Next.js): browser UI, session bootstrap, WebSocket chat transport, local message rendering/state
+- `server` (FastAPI): token/session management, WebSocket gateway, Redis stream producer/consumer bridge
+- `worker` (Python): background consumer that reads user messages, calls the model, and publishes responses
+
+Core data movement:
+
+1. Browser gets a token from FastAPI and opens a WebSocket with that token.
+2. Server writes user messages to Redis stream `message_channel`.
+3. Worker consumes `message_channel`, updates Redis JSON history, generates a model reply, then writes to `response_channel`.
+4. Server listens for the token-matched reply and pushes it back over the same client WebSocket.
+
+## Chatbot Architecture
+
+![Chatbot Architecture v1](Application%20Architecture/Chatbot_Architecture_v1.jpg)
+
 ## Repository Layout
 
 ```text

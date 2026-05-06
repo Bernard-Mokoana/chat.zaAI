@@ -1,0 +1,418 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.5 Chrome/134.0.6998.205 Electron/35.3.0 Safari/537.36" version="27.0.5">
+  <diagram name="Enhanced Architecture" id="enhanced-chatbot-arch">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1800" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Legend -->
+        <mxCell id="legend-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="30" y="30" width="300" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" value="Legend" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="30" y="40" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-fe" value="■ Frontend" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="50" y="75" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-be" value="■ Backend" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="50" y="100" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-infra" value="■ Infrastructure" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="50" y="125" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-ext" value="■ External" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="50" y="150" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-fe-color" value="" style="rectangle;fillColor=#E8F4F8;strokeColor=#4A90E2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="165" y="75" width="15" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-be-color" value="" style="rectangle;fillColor=#F0E8F8;strokeColor=#9C27B0;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="165" y="100" width="15" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-infra-color" value="" style="rectangle;fillColor=#F8F0E8;strokeColor=#FF9800;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="165" y="125" width="15" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-ext-color" value="" style="rectangle;fillColor=#E8F8E8;strokeColor=#4CAF50;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="165" y="150" width="15" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Title -->
+        <mxCell id="title" value="FullStack AI Chatbot - Enhanced Architecture (Open Source)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="350" y="30" width="700" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============ LAYER 1: FRONTEND ============ -->
+        <mxCell id="layer-fe-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4F8;strokeColor=#4A90E2;strokeWidth=2;dashed=0;" parent="1" vertex="1">
+          <mxGeometry x="30" y="250" width="1340" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="layer-fe-label" value="PRESENTATION LAYER (Frontend)" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;fontColor=#4A90E2;" parent="1" vertex="1">
+          <mxGeometry x="50" y="265" width="250" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Client/UI -->
+        <mxCell id="client-ui" value="" style="points=[[0.35,0,0],[0.98,0.51,0],[1,0.71,0],[0.67,1,0],[0,0.795,0],[0,0.65,0]];verticalLabelPosition=bottom;sketch=0;html=1;verticalAlign=bottom;align=center;pointerEvents=1;shape=mxgraph.sketch.iosMilitary;fillColor=#E8F4F8;strokeColor=#4A90E2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="100" y="295" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="client-label" value="Client/UI&#10;(React/Vue)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="85" y="360" width="90" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- API Gateway -->
+        <mxCell id="api-gateway" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F4F8;strokeColor=#4A90E2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="280" y="295" width="80" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="api-gateway-label" value="Nginx/Caddy&#10;(Rate Limit/Auth)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="260" y="360" width="120" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Client Auth -->
+        <mxCell id="client-auth" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/security/Multifactor_Authentication.svg;fillColor=#E8F4F8;strokeColor=#4A90E2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="455" y="295" width="70" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="client-auth-label" value="JWT/OAuth&#10;Validation" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="445" y="360" width="90" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Config Service -->
+        <mxCell id="config-service" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4F8;strokeColor=#4A90E2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="630" y="295" width="80" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="config-label" value="Config Service&#10;(Env Vars)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="615" y="360" width="110" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- CDN Cache -->
+        <mxCell id="cdn-cache" value="" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Cache_Redis_Product.svg;fillColor=#E8F4F8;strokeColor=#4A90E2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="805" y="295" width="70" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cdn-label" value="Varnish Cache&#10;(Static Assets)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="790" y="360" width="100" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Error Handler -->
+        <mxCell id="error-handler" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F4F8;strokeColor=#4A90E2;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="980" y="295" width="80" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="error-label" value="Error Handler&#10;(Logging)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="965" y="360" width="110" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Connections in Frontend Layer -->
+        <mxCell id="con-fe-1" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#4A90E2;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="325" as="sourcePoint" />
+            <mxPoint x="280" y="325" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-fe-1-label" value="HTTPS" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;fontColor=#4A90E2;" parent="con-fe-1" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============ LAYER 2: BACKEND AND PROCESSING ============ -->
+        <mxCell id="layer-be-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0E8F8;strokeColor=#9C27B0;strokeWidth=2;dashed=0;" parent="1" vertex="1">
+          <mxGeometry x="30" y="420" width="1340" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="layer-be-label" value="API and PROCESSING LAYER (Backend)" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;fontColor=#9C27B0;" parent="1" vertex="1">
+          <mxGeometry x="50" y="435" width="280" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- FastAPI Server -->
+        <mxCell id="fastapi-server" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];html=1;aspect=fixed;rounded=0;align=center;verticalAlign=middle;fillColor=#F0E8F8;strokeColor=#9C27B0;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="100" y="480" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="fastapi-label" value="FastAPI Server&#10;(Request Handler&#10;Socket Manager)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="85" y="585" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Request Validator -->
+        <mxCell id="validator" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0E8F8;strokeColor=#9C27B0;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="100" y="680" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="validator-label" value="Request Validator&#10;(Pydantic)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="85" y="745" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Message Queue -->
+        <mxCell id="msg-queue" value="" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Cache_Redis_Product.svg;fillColor=#F0E8F8;strokeColor=#9C27B0;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="320" y="480" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="queue-label" value="Message Queue&#10;Redis Streams&#10;(Async Tasks)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="305" y="585" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Session Cache -->
+        <mxCell id="session-cache" value="" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Cache_Redis_Product.svg;fillColor=#F0E8F8;strokeColor=#9C27B0;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="540" y="480" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="session-label" value="Session Cache&#10;Redis JSON&#10;(User Context)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="525" y="585" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Worker/Consumer -->
+        <mxCell id="worker" value="" style="html=1;whiteSpace=wrap;shape=isoCube2;backgroundOutline=1;isoAngle=15;fillColor=#F0E8F8;strokeColor=#9C27B0;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="780" y="480" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="worker-label" value="Worker/Consumer&#10;(Process Tasks&#10;Async Inference)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="765" y="585" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Dead Letter Queue -->
+        <mxCell id="dlq" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8E8E8;strokeColor=#E74C3C;strokeWidth=2;dashed=1;" parent="1" vertex="1">
+          <mxGeometry x="780" y="680" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="dlq-label" value="Dead Letter Queue&#10;(Error Handling)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;fontColor=#E74C3C;" parent="1" vertex="1">
+          <mxGeometry x="765" y="745" width="130" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Connections in Backend Layer -->
+        <mxCell id="con-be-1" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#9C27B0;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="200" y="530" as="sourcePoint" />
+            <mxPoint x="320" y="530" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-be-1-label" value="Queue Tasks" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;fontColor=#9C27B0;" parent="con-be-1" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="con-be-2" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#9C27B0;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="200" y="560" as="sourcePoint" />
+            <mxPoint x="540" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-be-2-label" value="Store Session (JSON)" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;fontColor=#9C27B0;" parent="con-be-2" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="con-be-3" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#9C27B0;strokeWidth=2;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="420" y="530" as="sourcePoint" />
+            <mxPoint x="780" y="530" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-be-3-label" value="Dequeue and Process" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;fontColor=#9C27B0;" parent="con-be-3" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="con-be-4" value="" style="endArrow=classic;html=1;rounded=0;strokeColor=#E74C3C;strokeWidth=2;dashed=1;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="830" y="580" as="sourcePoint" />
+            <mxPoint x="830" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-be-4-label" value="Failed Tasks" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;fontColor=#E74C3C;" parent="con-be-4" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============ LAYER 3: DATA and PERSISTENCE ============ -->
+        <mxCell id="layer-data-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F0E8;strokeColor=#FF9800;strokeWidth=2;dashed=0;" parent="1" vertex="1">
+          <mxGeometry x="30" y="850" width="1340" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="layer-data-label" value="DATA LAYER (Persistence and Infrastructure)" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;fontColor=#FF9800;" parent="1" vertex="1">
+          <mxGeometry x="50" y="865" width="350" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- PostgreSQL DB -->
+        <mxCell id="postgres" value="" style="html=1;whiteSpace=wrap;shape=isoCube2;backgroundOutline=1;isoAngle=15;fillColor=#F8F0E8;strokeColor=#FF9800;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="120" y="910" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="postgres-label" value="PostgreSQL&#10;(Conversations&#10;Users)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="105" y="985" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- MinIO Storage -->
+        <mxCell id="aws-storage" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];html=1;aspect=fixed;rounded=0;align=center;verticalAlign=middle;fillColor=#F8F0E8;strokeColor=#FF9800;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="330" y="910" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="aws-label" value="MinIO&#10;(File Storage&#10;Backups)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="315" y="985" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Monitoring Stack -->
+        <mxCell id="monitoring" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F0E8;strokeColor=#FF9800;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="540" y="910" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="monitoring-label" value="Monitoring Stack&#10;(Prometheus&#10;Grafana)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="525" y="985" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Logging -->
+        <mxCell id="logging" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F0E8;strokeColor:#FF9800;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="750" y="910" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="logging-label" value="Logging Stack&#10;(ELK/Loki&#10;Log Aggregation)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="735" y="985" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Docker/Kubernetes -->
+        <mxCell id="app-runner" value="" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];html=1;aspect=fixed;rounded=0;align=center;verticalAlign=middle;fillColor=#F8F0E8;strokeColor=#FF9800;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="960" y="910" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="runner-label" value="Docker/K8s&#10;(Kubernetes&#10;Deployment)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="945" y="985" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============ LAYER 4: EXTERNAL SERVICES ============ -->
+        <mxCell id="layer-ext-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8E8;strokeColor=#4CAF50;strokeWidth=2;dashed=0;" parent="1" vertex="1">
+          <mxGeometry x="30" y="1050" width="1340" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="layer-ext-label" value="EXTERNAL SERVICES LAYER" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontStyle=1;fontColor=#4CAF50;" parent="1" vertex="1">
+          <mxGeometry x="50" y="1065" width="280" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Hugging Face -->
+        <mxCell id="hugging-face" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8E8;strokeColor=#4CAF50;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="150" y="1110" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="hf-label" value="Hugging Face API&#10;(Model Inference&#10;NLP Tasks)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="135" y="1185" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Keycloak Auth -->
+        <mxCell id="auth-provider" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8E8;strokeColor=#4CAF50;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="360" y="1110" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-label" value="Keycloak&#10;(OAuth/OIDC&#10;User Management)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="345" y="1185" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Mailhog/Postfix -->
+        <mxCell id="email-service" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8E8;strokeColor=#4CAF50;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="570" y="1110" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="email-label" value="Mailhog/Postfix&#10;(SMTP&#10;Notifications)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="555" y="1185" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Matomo Analytics -->
+        <mxCell id="analytics" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8E8;strokeColor=#4CAF50;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="780" y="1110" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="analytics-label" value="Matomo&#10;(Analytics&#10;User Behavior)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="765" y="1185" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Stripe/Free Tier -->
+        <mxCell id="payment" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8E8;strokeColor=#4CAF50;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="990" y="1110" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="payment-label" value="Stripe/Lemonsqueezy&#10;(Free Tier&#10;Billing)" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="975" y="1185" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============ DATA FLOW CROSS-LAYER CONNECTIONS ============ -->
+
+        <!-- API Gateway to FastAPI -->
+        <mxCell id="con-layer-1" value="" style="endArrow=classic;html=1;rounded=1;strokeColor=#666;strokeWidth=2;exitX=0.5;exitY=1;entryX=0;entryY=0.3;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="355" as="sourcePoint" />
+            <mxPoint x="100" y="480" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="320" y="400" />
+              <mxPoint x="50" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-layer-1-label" value="WebSocket/JSON" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;" parent="con-layer-1" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- FastAPI to Database -->
+        <mxCell id="con-layer-2" value="" style="endArrow=classic;html=1;rounded=1;strokeColor=#666;strokeWidth=2;exitX=0.3;exitY=1;entryX=0.3;entryY=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="130" y="580" as="sourcePoint" />
+            <mxPoint x="170" y="910" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-layer-2-label" value="SQL Queries&#10;(Sync)" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;" parent="con-layer-2" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Worker to Hugging Face -->
+        <mxCell id="con-layer-3" value="" style="endArrow=classic;html=1;rounded=1;strokeColor=#666;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="830" y="580" as="sourcePoint" />
+            <mxPoint x="200" y="1110" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="830" y="800" />
+              <mxPoint x="200" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-layer-3-label" value="HTTP REST API&#10;(Async Inference)" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;" parent="con-layer-3" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Auth Flow -->
+        <mxCell id="con-layer-4" value="" style="endArrow=classic;html=1;rounded=1;strokeColor:#666;strokeWidth=2;exitX=0.7;exitY=1;entryX=0.7;entryY=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="490" y="355" as="sourcePoint" />
+            <mxPoint x="410" y="1110" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="490" y="700" />
+              <mxPoint x="410" y="700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-layer-4-label" value="OAuth/OIDC&#10;Validation" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;" parent="con-layer-4" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Monitoring Connection -->
+        <mxCell id="con-layer-5" value="" style="endArrow=classic;html=1;rounded=1;strokeColor:#666;strokeWidth=2;strokeDasharray=5,5;exitX=0.5;exitY=1;entryX=0.4;entryY=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="150" y="580" as="sourcePoint" />
+            <mxPoint x="590" y="910" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="150" y="750" />
+              <mxPoint x="590" y="750" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="con-layer-5-label" value="Metrics&#10;(All Services)" style="edgeLabel;resizable=0;html=1;align=center;verticalAlign=middle;fontSize=9;" parent="con-layer-5" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Documentation Box -->
+        <mxCell id="doc-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#CCCCCC;strokeWidth=1;dashed=1;" parent="1" vertex="1">
+          <mxGeometry x="30" y="1250" width="1340" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="doc-title" value="Open Source Stack Overview" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="50" y="1265" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="doc-1" value="• Frontend: Nginx/Caddy (reverse proxy, SSL/TLS), Varnish (HTTP caching) • Backend: FastAPI + Python• Data: PostgreSQL (SQL), MinIO (S3-compatible object storage)" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="50" y="1285" width="1300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="doc-2" value="• Monitoring: Prometheus + Grafana (metrics/dashboards), ELK/Loki (log aggregation) • Auth: Keycloak (IAM/OIDC) • Email: Mailhog (testing), Postfix (production SMTP)" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="50" y="1305" width="1300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="doc-3" value="• Analytics: Matomo (privacy-respecting alternative) • Deployment: Docker + Kubernetes (K8s for orchestration) • Free Tiers: Hugging Face (inference), Lemonsqueezy/Stripe free tier (billing)" style="text;html=1;align=left;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=9;" parent="1" vertex="1">
+          <mxGeometry x="50" y="1325" width="1300" height="20" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
