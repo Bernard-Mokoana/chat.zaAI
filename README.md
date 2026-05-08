@@ -6,7 +6,10 @@ This repository contains a small end-to-end chatbot system with three runtime pa
 - `server/`: a FastAPI app that creates sessions and hosts the WebSocket endpoint
 - `worker/`: a Python background process that consumes Redis stream messages, calls a Hugging Face inference model, and publishes replies
 
-The app uses Redis for both session persistence and message passing between the API server and the worker.
+The app currently uses:
+
+- Redis for session persistence and stream-based message passing between server and worker
+- PostgreSQL (via SQLAlchemy models) as the relational data layer foundation for users, conversations, messages, refresh tokens, and usage logs
 
 ## Current Architecture
 
@@ -35,9 +38,22 @@ Core data movement:
 3. Worker consumes `message_channel`, updates Redis JSON history, generates a model reply, then writes to `response_channel`.
 4. Server listens for the token-matched reply and pushes it back over the same client WebSocket.
 
+Data persistence is currently hybrid:
+
+- Active chat session flow: Redis JSON + Redis Streams
+- Relational domain model and migrations: PostgreSQL + SQLAlchemy + Alembic (newly added scaffolding)
+
 ## Chatbot Architecture
 
-![Chatbot Architecture v1](Application%20Architecture/Chatbot_Architecture_v1.jpg)
+![Chatbot Architecture](Application%20Architecture/Chatbot_Architecture.jpg)
+
+## Data Model (ERD)
+
+The backend entity relationships are documented here:
+
+- [AI Chatbot ERD documentation](docs/ai-chatbot-erd.md)
+- Editable Draw.io source: [docs/AI Chatbot ERD.drawio](docs/AI%20Chatbot%20ERD.drawio)
+- Image export: [Application Architecture/AI Chatbot ERD.jpg](Application%20Architecture/AI%20Chatbot%20ERD.jpg)
 
 ## Repository Layout
 
@@ -51,7 +67,10 @@ Core data movement:
 |-- server/                         FastAPI API + WebSocket gateway
 |   |-- src/routes/chat.py          Token + refresh + WebSocket routes
 |   |-- src/socket/                 WebSocket helpers
+|   |-- src/database/               SQLAlchemy config + relational models
 |   `-- src/redis/                  Redis connection and stream helpers
+|   |-- alembic/                    Migration environment
+|   `-- alembic.ini                 Alembic configuration
 |-- worker/                         Redis consumer + model caller
 |   |-- src/model/gptj.py           Hugging Face inference client
 |   `-- src/redis/                  Redis cache/stream helpers
@@ -80,6 +99,9 @@ Core data movement:
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Redis JSON](https://img.shields.io/badge/Redis_JSON-B91C1C?style=for-the-badge&logo=redis&logoColor=white)
 ![WebSockets](https://img.shields.io/badge/WebSockets-0F172A?style=for-the-badge&logo=socketdotio&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Alembic](https://img.shields.io/badge/Alembic-111111?style=for-the-badge&logo=alembic&logoColor=white)
 
 ### Model Worker
 
@@ -160,12 +182,29 @@ pip install -r requirements.txt
 ```env
 APP_ENV=development
 REDIS_URL=redis://localhost:6379/0
+DATABASE_URL=postgresql+psycopg://postgres:password@localhost:5432/chatbot
 ```
 
 Notes:
 
 - `server/src/redis/config.py` currently reads `REDIS_URL`.
+- `server/src/database/config/databaseConfig.py` requires `DATABASE_URL` and will raise an error if it is missing.
 - `python server/main.py` only starts Uvicorn when `APP_ENV=development`.
+
+### Database migrations (Alembic)
+
+From the `server/` directory:
+
+```powershell
+alembic upgrade head
+```
+
+To create a new migration after model changes:
+
+```powershell
+alembic revision --autogenerate -m "describe_change"
+alembic upgrade head
+```
 
 ### `worker/.env`
 
@@ -256,7 +295,11 @@ This repo also contains planning material that is useful for future work:
 
 - [docs/design.md](docs/design.md)
 - [docs/requirements.md](docs/requirements.md)
+- [docs/ai-chatbot-erd.md](docs/ai-chatbot-erd.md)
+- [docs/AI Chatbot ERD.drawio](docs/AI%20Chatbot%20ERD.drawio)
 - [Application Architecture/Chatbot Architecture.drawio](<Application Architecture/Chatbot Architecture.drawio>)
+- [Application Architecture/Chatbot_Architecture.jpg](Application%20Architecture/Chatbot_Architecture.jpg)
+- [Application Architecture/AI Chatbot ERD.jpg](Application%20Architecture/AI%20Chatbot%20ERD.jpg)
 - `notes.txt`
 
 Some of those notes describe future Auth0-based work that is not yet implemented in the current codebase.
