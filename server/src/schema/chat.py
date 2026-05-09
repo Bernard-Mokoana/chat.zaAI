@@ -10,6 +10,7 @@ class Message(BaseModel):
 
 class Chat(BaseModel):
     token: str
+    user_id: str
     messages: List[Message]
     name: str
     session_start: str = Field(default_factory=lambda: datetime.now().isoformat())
