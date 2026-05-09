@@ -1,8 +1,8 @@
 import asyncio
 import contextlib
-import os
 from fastapi import APIRouter, WebSocket, Request, HTTPException, Depends, WebSocketDisconnect
 import uuid
+
 from ..socket.connection import ConnectionManager
 from ..socket.utils import get_token
 from ..redis.producer import Producer
@@ -10,13 +10,17 @@ from ..redis.config import Redis
 from ..schema.chat import Chat
 from ..redis.stream import StreamConsumer
 from ..redis.cache import Cache
+from src.services.jwt_validation import get_current_user
+from src.database.models.users import User
+from src.utils.token import Token
 
 chat = APIRouter()
 manager = ConnectionManager()
 redis = Redis()
+token_util = Token()
 
 @chat.post("/token")
-async def token_generator(name: str, request: Request):
+async def token_generator(name: str, request: Request, current_user: User = Depends(get_current_user)):
     token = str(uuid.uuid4())
 
     if name == "":
@@ -25,16 +29,19 @@ async def token_generator(name: str, request: Request):
         })
     
     redis_client = await redis.create_connection()
-    chat_session = Chat(token=token, messages=[], name=name)
-    await redis_client.json().set(str(token), "$", chat_session.dict())
+    chat_session = Chat(token=token, user_id=str(current_user.id), messages=[], name=name)
+
+    payload = chat_session.model_dump()
+    payload["user_id"] = str(current_user.id)
+
+    await redis_client.json().set(str(token), "$", chat_session.model_dump())
     await redis_client.expire(str(token), 3600)
 
-    return chat_session.model_dump()
-
+    return payload
 
 @chat.get("/refresh_token")
-async def refresh_token(request: Request, token: str):
-    json_client = redis.create_json_connection()
+async def refresh_token(request: Request, token: str, current_user: User = Depends(get_current_user)):
+    json_client = await redis.create_json_connection()
     cache = Cache(json_client)
     data = await cache.get_chat_history(token)
 
@@ -42,19 +49,34 @@ async def refresh_token(request: Request, token: str):
         raise HTTPException(
             status_code=400, detail="Session expired or does not exist"
         )
-    else:
-        return data
+    
+    if str(data.get("user_id")) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    
+    return data
+
 
 @chat.websocket("/chat")
-async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_token)):
-    await manager.connect(websocket)
+async def websocket_endpoint(websocket: WebSocket, chat_token: str, token_payload=Depends(get_token)):
     redis_client = await redis.create_connection()
+
+    user_id = str(token_payload.get("id"))
+    if not user_id:
+        await websocket.close(code=1008)
+        return
+    user_id = str(user_id)
+
+    session = await redis_client.json().get(chat_token, "$")
+    session_data = session[0] if isinstance(session, list) and session else session
+    if not session_data or str(session_data.get("user_id")) != user_id:
+        await websocket.close(code=1008)
+        return
+
+    await manager.connect(websocket)
     producer = Producer(redis_client)
     consumer = StreamConsumer(redis_client)
-    token = str(token)
-
     last_id = "$"
-    
+
     async def response_listener():
         nonlocal last_id
         while True:
@@ -75,23 +97,19 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_toke
                     message_value = next(iter(message[1].values()), None)
 
                     response_token = token_key.decode("utf-8") if isinstance(token_key, (bytes, bytearray)) else token_key
-
-       
                     last_id = message_id
 
-                    if token == response_token:
+                    if chat_token == str(response_token):
                         response_message = message_value.decode("utf-8") if isinstance(message_value, (bytes, bytearray)) else message_value
                         await manager.send_personal_message(response_message, websocket)
                         await consumer.delete_message(stream_channel="response_channel", message_id=message_id)
-                   
 
     listener_task = asyncio.create_task(response_listener())
-
 
     try:
         while True:
             data = await websocket.receive_text()
-            stream_data = {token: data}
+            stream_data = {chat_token: data}
             await producer.add_to_stream(stream_data, "message_channel")
 
     except WebSocketDisconnect:
