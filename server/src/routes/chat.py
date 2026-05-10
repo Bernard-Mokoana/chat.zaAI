@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import logging
 from fastapi import APIRouter, WebSocket, Request, HTTPException, Depends, WebSocketDisconnect
 import uuid
 
@@ -14,10 +15,11 @@ from src.services.jwt_validation import get_current_user
 from src.database.models.users import User
 from src.utils.token import Token
 
-chat = APIRouter()
+chat = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 manager = ConnectionManager()
 redis = Redis()
 token_util = Token()
+logger = logging.getLogger(__name__)
 
 @chat.post("/token")
 async def token_generator(name: str, request: Request, current_user: User = Depends(get_current_user)):
@@ -41,7 +43,7 @@ async def token_generator(name: str, request: Request, current_user: User = Depe
 
 @chat.get("/refresh_token")
 async def refresh_token(request: Request, token: str, current_user: User = Depends(get_current_user)):
-    json_client = await redis.create_json_connection()
+    json_client = redis.create_json_connection()
     cache = Cache(json_client)
     data = await cache.get_chat_history(token)
 
@@ -61,18 +63,33 @@ async def websocket_endpoint(websocket: WebSocket, chat_token: str, token_payloa
     redis_client = await redis.create_connection()
 
     user_id = str(token_payload.get("id"))
+    logger.info("[WS DEBUG] handshake start user_id=%s chat_token=%s", user_id, chat_token)
     if not user_id:
+        logger.warning("[WS DEBUG] missing user_id in token payload=%s", token_payload)
         await websocket.close(code=1008)
         return
     user_id = str(user_id)
 
     session = await redis_client.json().get(chat_token, "$")
     session_data = session[0] if isinstance(session, list) and session else session
+    logger.info("[WS DEBUG] redis session raw=%s", session)
+    logger.info(
+        "[WS DEBUG] session_data exists=%s session_user_id=%s",
+        bool(session_data),
+        str(session_data.get("user_id")) if session_data else None,
+    )
     if not session_data or str(session_data.get("user_id")) != user_id:
+        logger.warning(
+            "[WS DEBUG] ownership check failed user_id=%s session_user_id=%s chat_token=%s",
+            user_id,
+            str(session_data.get("user_id")) if session_data else None,
+            chat_token,
+        )
         await websocket.close(code=1008)
         return
 
     await manager.connect(websocket)
+    logger.info("[WS DEBUG] websocket accepted user_id=%s chat_token=%s", user_id, chat_token)
     producer = Producer(redis_client)
     consumer = StreamConsumer(redis_client)
     last_id = "$"

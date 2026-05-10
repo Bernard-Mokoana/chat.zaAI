@@ -2,8 +2,18 @@ import type { FormEvent } from "react";
 
 type ConnectionState = "connecting" | "connected" | "disconnected" | "error";
 
+export type onMessage = (message: string) => void;
+export type onError = (message: Event) => void;
+export type OnClose = (event: CloseEvent) => void;
+export type OnOpen = (event: Event) => void;
+
 export type MessageHandler = (message: string) => void;
 export type ErrorHandler = (event: Event) => void;
+
+export type AuthResponse = {
+  access_token: string;
+  token_type: string;
+};
 
 export type ChatMessage = {
   id: string;

@@ -3,12 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
 from dotenv import load_dotenv
+
 from src.routes.chat import chat
+from src.routes.auth import auth
+import src.database.models 
 
 load_dotenv()
 
 api = FastAPI()
 api.include_router(chat)
+api.include_router(auth)
 
 api.add_middleware(
     CORSMiddleware,
