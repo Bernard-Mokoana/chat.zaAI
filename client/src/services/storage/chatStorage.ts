@@ -1,6 +1,7 @@
 const CHAT_TOKEN_KEY = "chat_token";
 const CHAT_MESSAGES_KEY = "chat_messages";
 const CHAT_NAME = "chat_name";
+const ACCESS_TOKEN_KEY = "access_token";
 
 export function getChatToken() {
   if (typeof window === "undefined") return null;
@@ -56,4 +57,19 @@ export function setChatName(name: string) {
 export function clearChatName() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(CHAT_NAME);
+}
+
+export function getAccessToken() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function setAccessToken(token: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+}
+
+export function clearAccessToken() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
 }
