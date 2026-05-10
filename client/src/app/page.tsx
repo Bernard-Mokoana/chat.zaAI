@@ -1,30 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { createChatSession } from "@/services/chat/chatApi";
-import { setChatName, setChatToken } from "@/services/storage/chatStorage";
+import Link from "next/link";
 
 export default function Home() {
-  const [name, setName] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmedName = name.trim();
-    if (!trimmedName || isSubmitting) return;
-    
-    setIsSubmitting(true);
-    try {
-      const session = await createChatSession(trimmedName);
-      setChatName(trimmedName);
-      setChatToken(session.token);
-      // router.push("/chat");
-      window.location.href = "/chat";
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <main
       style={{
@@ -42,7 +20,7 @@ export default function Home() {
       <section
         style={{
           width: "100%",
-          maxWidth: "560px",
+          maxWidth: "620px",
           borderRadius: "16px",
           padding: "2.5rem",
           background: "#ffffff",
@@ -65,44 +43,47 @@ export default function Home() {
             AI Chatbot
           </p>
           <h1 style={{ fontSize: "2rem", margin: 0 }}>
-            Enter your name to continue
+            Welcome to FullStack AI Chatbot
           </h1>
+          <p style={{ color: "#475569", marginTop: "0.75rem" }}>
+            Sign in to continue chatting, or create a new account.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-          <label style={{ display: "grid", gap: "0.4rem" }}>
-            <span style={{ fontSize: "0.9rem", color: "#475569" }}>Your name</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Itachi Uchiha"
-              style={{
-                padding: "0.75rem 1rem",
-                borderRadius: "10px",
-                border: "1px solid #cbd5f5",
-                fontSize: "1rem",
-              }}
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
+        <div style={{ display: "grid", gap: "0.75rem" }}>
+          <Link
+            href="/login"
             style={{
+              display: "inline-block",
+              textAlign: "center",
+              textDecoration: "none",
               padding: "0.85rem 1.25rem",
               borderRadius: "10px",
               background: "linear-gradient(135deg, #0f172a, #1e293b)",
               color: "#ffffff",
               fontWeight: 700,
               border: "none",
-              cursor: "pointer",
-              boxShadow: "0 10px 20px rgba(15, 23, 42, 0.2)",
-              opacity: isSubmitting ? 0.7 : 1,
             }}
           >
-            {isSubmitting ? "Creating session..." : "Continue to chat"}
-          </button>
-        </form>
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            style={{
+              display: "inline-block",
+              textAlign: "center",
+              textDecoration: "none",
+              padding: "0.85rem 1.25rem",
+              borderRadius: "10px",
+              background: "#ffffff",
+              color: "#0f172a",
+              fontWeight: 700,
+              border: "1px solid #cbd5e1",
+            }}
+          >
+            Create Account
+          </Link>
+        </div>
       </section>
     </main>
   );
