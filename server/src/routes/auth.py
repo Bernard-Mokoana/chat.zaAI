@@ -4,13 +4,24 @@ from sqlalchemy.orm import Session
 from src.utils.token import Token
 from src.database.config.databaseConfig import get_db
 from src.database.models.users import User
-from src.schema.auth import LoginSchema
+from src.schema.auth import LoginSchema, RegisterSchema
 from src.services.auth_services import AuthService
 
 import bcrypt
 
 auth = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 auth_service = AuthService()
+
+@auth.post("/register")
+async def register(payload: RegisterSchema, response: Response, request: Request, db: Session = Depends(get_db)):
+    user = auth_service.register_user(
+        db=db,
+        name=payload.name,
+        email=payload.email,
+        password=payload.password,
+    )
+
+    return auth_service.login(db=db, user=user, request=request, response=response)
 
 @auth.post("/login")
 async def login(payload: LoginSchema, response: Response, request: Request, db: Session = Depends(get_db)):

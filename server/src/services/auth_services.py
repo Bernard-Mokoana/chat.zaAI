@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from fastapi import HTTPException, status, Request, Response
 from sqlalchemy.orm import Session
+import bcrypt
+import re
 
 from src.database.models.users import User
 from src.database.models.refresh_token import RefreshToken
@@ -9,8 +11,55 @@ from src.utils.token import Token
 class AuthService:
     def __init__(self):
         self.token = Token()
+        
+    def register_user(self, db: Session, name: str, email: str, password: str) -> User:
+        normalized_email = email.strip().lower()
+        normalized_name = name.strip()
 
+        if not normalized_name or not normalized_email or not password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="All fields are required",
+            )
+        
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, normalized_email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid email format",
+            )
 
+        existing_user = db.query(User).filter(User.email == normalized_email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email is already registered",
+            )
+        
+        if len(password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must at least be 8 characters long",
+            )
+
+        password_hash = bcrypt.hashpw(
+            password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+        new_user = User(
+            name=normalized_name,
+            email=normalized_email,
+            password_hash=password_hash,
+            tier="free",
+        )
+
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+
+        return new_user
+    
     def login(self, db: Session, user: User, request: Request, response: Response):
 
         user_payload = {
@@ -48,7 +97,7 @@ class AuthService:
         
         user_id = payload.get("id")
         jti = payload.get("jti")
-        if not user_id or not ti:
+        if not user_id or not jti:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Malformed refresh token")
         
         token_hash = self.token.hash_token(raw_refresh)

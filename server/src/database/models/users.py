@@ -18,5 +18,6 @@ class User(Base):
 
     conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    usage_logs = relationship("UsageLog", back_populates="user", cascade="all, delete-orphan")
 
     

@@ -7,7 +7,7 @@ from src.database.models.users import User
 from src.utils.token import Token
 
 bearer = HTTPBearer(auto_error=False)
-token_util = Token
+token_util = Token()
 
 def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(bearer),
