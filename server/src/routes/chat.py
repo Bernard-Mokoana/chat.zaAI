@@ -1,11 +1,11 @@
 import asyncio
 import contextlib
 import logging
-from fastapi import APIRouter, WebSocket, Request, HTTPException, Depends, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, Request, HTTPException, Depends, WebSocketDisconnect, status
 import uuid
 
+from ..socket.utils import validate_token
 from ..socket.connection import ConnectionManager
-from ..socket.utils import get_token
 from ..redis.producer import Producer
 from ..redis.config import Redis
 from ..schema.chat import Chat
@@ -15,20 +15,16 @@ from src.services.jwt_validation import get_current_user
 from src.database.models.users import User
 from src.utils.token import Token
 
+logger = logging.getLogger(__name__)
+
 chat = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 manager = ConnectionManager()
 redis = Redis()
 token_util = Token()
-logger = logging.getLogger(__name__)
 
 @chat.post("/token")
 async def token_generator(name: str, request: Request, current_user: User = Depends(get_current_user)):
     token = str(uuid.uuid4())
-
-    if name == "":
-        raise HTTPException(status_code=400, detail={
-            "loc": "name", "message": "Enter a valid name"
-        })
     
     redis_client = await redis.create_connection()
     chat_session = Chat(token=token, user_id=str(current_user.id), messages=[], name=name)
@@ -59,37 +55,44 @@ async def refresh_token(request: Request, token: str, current_user: User = Depen
 
 
 @chat.websocket("/chat")
-async def websocket_endpoint(websocket: WebSocket, chat_token: str, token_payload=Depends(get_token)):
+async def websocket_endpoint(websocket: WebSocket):
+    query_params = dict(websocket.query_params)
+    token = query_params.get("token")
+    chat_token = query_params.get("chat_token")
+
+    if not token or not chat_token:
+        return
+
+    try:
+        token_payload = await validate_token(token)
+    except ValueError:
+        return
+    except Exception:
+        return
+
     redis_client = await redis.create_connection()
 
     user_id = str(token_payload.get("id"))
-    logger.info("[WS DEBUG] handshake start user_id=%s chat_token=%s", user_id, chat_token)
     if not user_id:
-        logger.warning("[WS DEBUG] missing user_id in token payload=%s", token_payload)
-        await websocket.close(code=1008)
         return
     user_id = str(user_id)
 
     session = await redis_client.json().get(chat_token, "$")
-    session_data = session[0] if isinstance(session, list) and session else session
-    logger.info("[WS DEBUG] redis session raw=%s", session)
-    logger.info(
-        "[WS DEBUG] session_data exists=%s session_user_id=%s",
-        bool(session_data),
-        str(session_data.get("user_id")) if session_data else None,
-    )
-    if not session_data or str(session_data.get("user_id")) != user_id:
-        logger.warning(
-            "[WS DEBUG] ownership check failed user_id=%s session_user_id=%s chat_token=%s",
-            user_id,
-            str(session_data.get("user_id")) if session_data else None,
-            chat_token,
-        )
-        await websocket.close(code=1008)
+
+    if isinstance(session, list) and len(session) > 0:
+        session_data = session[0]
+    else:
+        session_data = session
+
+    if not session_data or not isinstance(session_data, dict):
+        return
+
+    session_user_id = str(session_data.get("user_id"))
+
+    if session_user_id != user_id:
         return
 
     await manager.connect(websocket)
-    logger.info("[WS DEBUG] websocket accepted user_id=%s chat_token=%s", user_id, chat_token)
     producer = Producer(redis_client)
     consumer = StreamConsumer(redis_client)
     last_id = "$"

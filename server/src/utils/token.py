@@ -39,7 +39,10 @@ class Token:
 
     def sign_access_token(self, user: dict) -> str:
         try:
-            minutes = int(self.expires_in[:-1]) if self.expires_in.endswith("h") else int(self.expires_in)
+            if self.expires_in.endswith("h"):
+                minutes = int(self.expires_in[:-1]) * 60
+            else:
+                minutes = int(self.expires_in)
         except (AttributeError, ValueError) as e:
             raise ValueError(f"Invalid EXPIRES_IN format: {self.expires_in}") from e
 

@@ -4,7 +4,7 @@ import type { AuthResponse } from "@/types/types";
 export async function login(payload: { email: string; password: string }) {
   const response = await httpClient.post<AuthResponse>(
     "/api/v1/auth/login",
-    payload
+    payload,
   );
   return response.data;
 }
@@ -16,7 +16,7 @@ export async function register(payload: {
 }) {
   const response = await httpClient.post<AuthResponse>(
     "/api/v1/auth/register",
-    payload
+    payload,
   );
   return response.data;
 }

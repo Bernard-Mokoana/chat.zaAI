@@ -5,7 +5,8 @@ export class ChatSocket {
   private readonly baseWsUrl: string;
 
   constructor(
-    baseWsUrl = process.env.NEXT_PUBLIC_WS_URL || "WS://localhost:3500/chat"
+    baseWsUrl = process.env.NEXT_PUBLIC_WS_URL ||
+      "WS://localhost:3500/api/v1/chat/chat",
   ) {
     this.baseWsUrl = baseWsUrl;
   }
@@ -18,7 +19,8 @@ export class ChatSocket {
     onError?: onError;
     onClose?: OnClose;
   }) {
-    const { accessToken, chatToken, onMessage, onOpen, onError, onClose } = params;
+    const { accessToken, chatToken, onMessage, onOpen, onError, onClose } =
+      params;
 
     if (!accessToken) throw new Error("Missing access token");
     if (!chatToken) throw new Error("Missing chat token");
@@ -28,6 +30,8 @@ export class ChatSocket {
     url.searchParams.set("chat_token", chatToken);
 
     this.socket = new WebSocket(url.toString());
+
+    console.log(this.socket);
 
     this.socket.onopen = (event) => {
       if (onOpen) onOpen(event);

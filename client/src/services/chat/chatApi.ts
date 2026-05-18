@@ -1,8 +1,13 @@
 import { httpClient } from "../httpClient";
 
 export async function createChatSession(name: string) {
+  const token = localStorage.getItem("token");
+
   const response = await httpClient.post("/api/v1/chat/token", null, {
     params: { name },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   return response.data;
 }
