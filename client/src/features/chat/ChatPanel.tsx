@@ -25,6 +25,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
   const stored = getChatMessages<ChatMessage[]>();
+  console.log(stored)
   return stored ?? [];
 });
 

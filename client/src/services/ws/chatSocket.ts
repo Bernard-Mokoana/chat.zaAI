@@ -31,8 +31,6 @@ export class ChatSocket {
 
     this.socket = new WebSocket(url.toString());
 
-    console.log(this.socket);
-
     this.socket.onopen = (event) => {
       if (onOpen) onOpen(event);
     };

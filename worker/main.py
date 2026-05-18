@@ -41,18 +41,19 @@ async def main():
                     input = ["" + i["msg"] for i in message_data]
                     input = " ".join(input)
                     
-                    res = GPT().query(input=input)
+                    res = GPT().query(input)
 
                     msg = Message(
                         msg=res
                     )
 
+                    # Extract only the text string for stream, not the full JSON dump
                     stream_data = {}
-                    stream_data[str(token)] = msg.model_dump_json()
+                    stream_data[str(token)] = msg.msg
 
                     await producer.add_to_stream(stream_data, "response_channel")
 
-                    await cache.add_message_to_cache(token=token, source="bot", message_data=msg.model_dump())
+                    await cache.add_message_to_cache(token=token, source="Bot", message_data=msg.model_dump())
 
                 await consumer.delete_message(stream_channel="message_channel", message_id=message_id)
 
