@@ -32,6 +32,9 @@ export default function RegisterPage() {
       router.push("/chat");
     } catch (e: any) {
       const message = e?.response?.data?.detail || e?.message || "Registration failed.";
+      if (password.length < 8) {
+        setError(typeof message === "string" ? message : "Registration failed, Password must at least be 8 characters long");
+      }
       setError(typeof message === "string" ? message : "Registration failed.");
     } finally {
       setIsSubmitting(false);

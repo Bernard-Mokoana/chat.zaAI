@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Send } from "lucide-react";
 import type { ChatInterfaceProps } from "@/types/types";
 import { clearChatToken, clearChatName, clearChatMessages } from "@/services/storage/chatStorage";
+import { createSession, saveSession, getActiveSessionId, setActiveSessionId, loadSessions } from "./ChatSidebar";
+import type { ChatMessage, ChatSession, } from "@/types/types";
+import ChatSidebar from "./ChatSidebar";
 
 
 const connectionTone = {
@@ -42,7 +45,75 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [activeSessionId, setActiveSessionIdState] = useState<string | null>(
+    () => getActiveSessionId()
+  );
+
+  // Persist messages into the active session whenever they change
+  useEffect(() => {
+    if (!activeSessionId || messages.length === 0) return;
+
+    const sessions = loadSessions();
+    const existing = sessions.find((s) => s.id === activeSessionId);
+    const lastMsg = messages[messages.length - 1];
+
+    const updated: ChatSession = {
+      id: activeSessionId,
+      title: existing?.title ?? messages[0]?.content?.slice(0, 40) ?? "New conversation",
+      preview: lastMsg?.content?.slice(0, 80) ?? "",
+      messages: messages as ChatMessage[],
+      createdAt: existing?.createdAt ?? Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    saveSession(updated);
+  }, [messages, activeSessionId]);
+
+  // Create a new session when there's no active one and the first message arrives
+  useEffect(() => {
+    if (activeSessionId || messages.length === 0) return;
+
+    const newSession = createSession(messages[0] as ChatMessage);
+    saveSession(newSession);
+
+    const timeoutId = window.setTimeout(() => {
+      setActiveSessionIdState(newSession.id);
+      setActiveSessionId(newSession.id);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [messages, activeSessionId]);
+
+
+  const handleSelectSession = useCallback(
+    (session: ChatSession) => {
+      setActiveSessionIdState(session.id);
+      setActiveSessionId(session.id);
+
+      window.dispatchEvent(
+        new CustomEvent("chat:load-session", { detail: session })
+      );
+    },
+    []
+  );
+
+  const handleNewChat = useCallback(() => {
+    setActiveSessionIdState(null);
+    setActiveSessionId(null);
+    window.dispatchEvent(new CustomEvent("chat:new-session"));
+  }, []);
+
+  const handleDeleteSession = useCallback(
+    (id: string) => {
+      if (id === activeSessionId) {
+        setActiveSessionIdState(null);
+        setActiveSessionId(null);
+        window.dispatchEvent(new CustomEvent("chat:new-session"));
+      }
+    },
+    [activeSessionId]
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -50,77 +121,84 @@ export default function ChatInterface({
 
   const status = useMemo(() => connectionTone[connectionState], [connectionState]);
 
-  const handleBack = (() => {
-    setIsLogoutModalOpen(true);
-  })
+  const handleBack = () => setIsLogoutModalOpen(true);
 
-  const confirmLogout = (() => {
-     clearChatName();
+  const confirmLogout = () => {
+    clearChatName();
     clearChatToken();
     clearChatMessages();
-    router.push("/")
-  })
+    router.push("/");
+  };
 
-  const cancelLogout = () => {
-    setIsLogoutModalOpen(false);
-  }
+  const cancelLogout = () => setIsLogoutModalOpen(false);
 
   return (
-    <div className="min-h-screen w-full bg-slate-50">
-      <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen w-full overflow-hidden bg-slate-50">
+      <ChatSidebar
+        activeSessionId={activeSessionId}
+        onSelectSession={handleSelectSession}
+        onNewChat={handleNewChat}
+        onDeleteSession={handleDeleteSession}
+        liveMessages={messages as ChatMessage[]}
+      />
+
+      <div className="flex flex-1 flex-col overflow-hidden">
         <header className="w-full bg-white border-b border-slate-200">
           <div className="mx-auto flex flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
             <div className="flex items-center gap-3 sm:gap-4">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-            aria-label="Back to home"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
-          </button>
+              <button
+                type="button"
+                onClick={handleBack}
+                className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="Back to home"
+              >
+                <ArrowLeft className="w-5 h-5 text-slate-600" />
+              </button>
 
-             {/* Logout Modal */}
+              {/* Logout Modal */}
               {isLogoutModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/25 px-4">
-          <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="px-6 pt-6 pb-5 text-center">
-              <h3 className="text-2xl font-bold text-gray-700">Logout</h3>
-              <p className="mt-3 text-lg text-gray-700">Are you sure you want to logout?</p>
-            </div>
-            <div className="flex border-t border-gray-200">
-              <button
-                onClick={cancelLogout}
-                className="w-1/2 border-r border-gray-200 py-3 text-xl font-medium text-gray-500 transition-colors hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmLogout}
-                className="w-1/2 py-3 text-xl font-semibold text-indigo-500 transition-colors hover:bg-gray-50"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/25 px-4">
+                  <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl">
+                    <div className="px-6 pt-6 pb-5 text-center">
+                      <h3 className="text-2xl font-bold text-gray-700">Logout</h3>
+                      <p className="mt-3 text-lg text-gray-700">
+                        Are you sure you want to logout?
+                      </p>
+                    </div>
+                    <div className="flex border-t border-gray-200">
+                      <button
+                        onClick={cancelLogout}
+                        className="w-1/2 border-r border-gray-200 py-3 text-xl font-medium text-gray-500 transition-colors hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={confirmLogout}
+                        className="w-1/2 py-3 text-xl font-semibold text-indigo-500 transition-colors hover:bg-gray-50"
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-          <div>
-            <h2 className="font-semibold text-slate-900">AI Assistant</h2>
-            <p className="text-sm text-slate-500">Chatting with {displayName}</p>
-          </div>
-        </div>
-        <div
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${status.badge}`}
-        >
-          <span className={`h-2 w-2 rounded-full ${status.dot}`} />
-          {status.label}
-        </div>
-        
+              <div>
+                <h2 className="font-semibold text-slate-900">AI Assistant</h2>
+                <p className="text-sm text-slate-500">Chatting with {displayName}</p>
+              </div>
+            </div>
+
+            <div
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${status.badge}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${status.dot}`} />
+              {status.label}
+            </div>
           </div>
         </header>
 
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full px-4 py-6 sm:px-6">
             <div className="space-y-4">
@@ -132,7 +210,9 @@ export default function ChatInterface({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
-                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                    className={`flex ${
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    }`}
                   >
                     <div
                       className={`w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
@@ -147,7 +227,6 @@ export default function ChatInterface({
                 ))}
               </AnimatePresence>
 
-
               {connectionState === "connecting" && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -156,48 +235,44 @@ export default function ChatInterface({
                 >
                   <div className="w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-3 rounded-2xl bg-white border border-slate-200">
                     <div className="flex gap-1">
-                      <motion.span
-                        animate={{ opacity: [0.4, 1, 0.4] }}
-                        transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
-                        className="w-2 h-2 rounded-full bg-slate-400"
-                      />
-                      <motion.span
-                        animate={{ opacity: [0.4, 1, 0.4] }}
-                        transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
-                        className="w-2 h-2 rounded-full bg-slate-400"
-                      />
-                      <motion.span
-                        animate={{ opacity: [0.4, 1, 0.4] }}
-                        transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
-                        className="w-2 h-2 rounded-full bg-slate-400"
-                      />
+                      {[0, 0.2, 0.4].map((delay) => (
+                        <motion.span
+                          key={delay}
+                          animate={{ opacity: [0.4, 1, 0.4] }}
+                          transition={{ duration: 1.2, repeat: Infinity, delay }}
+                          className="w-2 h-2 rounded-full bg-slate-400"
+                        />
+                      ))}
                     </div>
                   </div>
                 </motion.div>
               )}
-              
+
               {isAssistantTyping && connectionState === "connected" && (
                 <div className="flex justify-start">
-                   <div className="w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-3 rounded-2xl bg-white border border-slate-200"><div className="space-y-2 w-44">
-                    <div className="h-3 w-32 rounded-full bg-slate-200 animate-pulse" />
-                    <div className="h-3 w-40 rounded-full bg-slate-200 animate-pulse" />
-                    <div className="h-3 w-24 rounded-full bg-slate-200 animate-pulse" />
+                  <div className="w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-3 rounded-2xl bg-white border border-slate-200">
+                    <div className="space-y-2 w-44">
+                      <div className="h-3 w-32 rounded-full bg-slate-200 animate-pulse" />
+                      <div className="h-3 w-40 rounded-full bg-slate-200 animate-pulse" />
+                      <div className="h-3 w-24 rounded-full bg-slate-200 animate-pulse" />
                     </div>
-                    </div>
-                    </div>
-                  )}
+                  </div>
+                </div>
+              )}
+
               <div ref={messagesEndRef} />
             </div>
           </div>
         </div>
 
+        {/* Input */}
         <form onSubmit={onSubmit} className="w-full border-t border-slate-200 bg-white">
           <div className="mx-auto w-full px-4 py-4 sm:px-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
                 type="text"
                 value={input}
-                onChange={(event) => onInputChange(event.target.value)}
+                onChange={(e) => onInputChange(e.target.value)}
                 placeholder="Type your message..."
                 className="w-full flex-1 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />

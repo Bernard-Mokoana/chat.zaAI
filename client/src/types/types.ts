@@ -34,3 +34,20 @@ export type ChatInterfaceProps = {
 export type ChatPanelProps = {
   displayName: string;
 };
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  preview: string;
+  messages: ChatMessage[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ChatSidebarProps {
+  activeSessionId: string | null;
+  onSelectSession: (session: ChatSession) => void;
+  onNewChat: () => void;
+  onDeleteSession?: (id: string) => void;
+  liveMessages?: ChatMessage[];
+}
