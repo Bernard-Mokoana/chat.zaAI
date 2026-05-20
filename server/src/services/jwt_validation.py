@@ -21,7 +21,7 @@ def get_current_user(
         
         try:
                 payload = token_util.decode_access_token(credentials.credentials)
-        except Exception:
+        except (ValueError, KeyError, TypeError) as e:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
 
         user_id = payload.get("id")

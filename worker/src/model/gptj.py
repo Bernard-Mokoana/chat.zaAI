@@ -49,7 +49,12 @@ class GPT:
                 raise RuntimeError("Empty response from model")
             
             text = response.choices[0].message.content
-            res = text.split("Human: ")[0].strip()
+            
+            if "Human: " in text:
+                res = text.split("Human: ")[0].strip()
+            else:
+                res = text.strip()
+
             return res
         except Exception as e:
             logger.error(f"Query failed: {e}")

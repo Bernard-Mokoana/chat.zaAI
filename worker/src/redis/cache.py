@@ -18,7 +18,7 @@ class Cache:
             return value.isoformat()
         return value
 
-    async def get_chat_history(self, token: str):
+    def get_chat_history(self, token: str):
         data = self.json_client.json().get(
             str(token), Path.root_path())
         
@@ -29,6 +29,12 @@ class Cache:
         messages_path = Path(".messages")
 
         message_data = self._json_safe(message_data)
+        
+        source_normalized = (source or "").lower()
+        if source_normalized == "human":
+            message_data['msg'] = "Human: " + (message_data['msg'])
+        elif source_normalized == "bot":
+            message_data['msg'] = "Bot: " + (message_data['msg'])
 
         existing = self.json_client.json().get(key, Path.root_path())
         if existing is None:
@@ -39,11 +45,5 @@ class Cache:
         if messages is None:
             self.json_client.json().set(key, messages_path, [message_data])
             return
-
-        source_normalized = (source or "").lower()
-        if source_normalized == "human":
-            message_data['msg'] = "Human: " + (message_data['msg'])
-        elif source_normalized == "bot":
-            message_data['msg'] = "Bot: " + (message_data['msg'])
 
         self.json_client.json().arrappend(key, messages_path, message_data)
