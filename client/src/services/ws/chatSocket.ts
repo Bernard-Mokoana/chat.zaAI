@@ -6,7 +6,7 @@ export class ChatSocket {
 
   constructor(
     baseWsUrl = process.env.NEXT_PUBLIC_WS_URL ||
-      "WS://localhost:3500/api/v1/chat/chat",
+      "ws://localhost:3500/api/v1/chat/chat",
   ) {
     this.baseWsUrl = baseWsUrl;
   }
@@ -24,6 +24,8 @@ export class ChatSocket {
 
     if (!accessToken) throw new Error("Missing access token");
     if (!chatToken) throw new Error("Missing chat token");
+
+    if (this.socket) this.disconnect();
 
     const url = new URL(this.baseWsUrl);
     url.searchParams.set("token", accessToken);

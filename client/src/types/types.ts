@@ -1,6 +1,10 @@
 import type { FormEvent } from "react";
 
-type ConnectionState = "connecting" | "connected" | "disconnected" | "error";
+export type ConnectionState =
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | "error";
 
 export type onMessage = (message: string) => void;
 export type onError = (message: Event) => void;

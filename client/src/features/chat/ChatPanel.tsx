@@ -13,14 +13,12 @@ import {
   clearChatMessages,
 } from "@/services/storage/chatStorage";
 import ChatInterface from "@/features/chat/ChatInterface";
-import type { ChatMessage, ChatPanelProps } from "@/types/types";
+import type { ChatMessage, ChatPanelProps, ConnectionState } from "@/types/types";
 
 export default function ChatPanel({ displayName }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const socketRef = useRef<ChatSocket | null>(null);
-  const [connectionState, setConnectionState] = useState<
-    "connecting" | "connected" | "disconnected" | "error"
-  >("connecting");
+  const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -155,8 +153,18 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
     }
 
     if (socketRef.current && socketRef.current.isConnected()) {
+    try {
       socketRef.current.send(trimmed);
+    } catch(error) {
+      console.error("Failed to send message", error);
+      // add setError() state
+      return;
     }
+    } else {
+      console.warn("Cannot send message: socket not connected");
+      return;
+    }
+
     setMessages((prev) => [
       ...prev,
       { id: crypto.randomUUID(), role: "user", content: trimmed },

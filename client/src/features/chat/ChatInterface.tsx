@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Send } from "lucide-react";
 import type { ChatInterfaceProps } from "@/types/types";
 import { clearChatToken, clearChatName, clearChatMessages } from "@/services/storage/chatStorage";
-import { createSession, saveSession, getActiveSessionId, setActiveSessionId, loadSessions } from "./ChatSidebar";
+import { loadSessions, saveSession, getActiveSessionId, setActiveSessionId, createSession} from "@/services/sessionStorage";
 import type { ChatMessage, ChatSession, } from "@/types/types";
 import ChatSidebar from "./ChatSidebar";
 
@@ -157,10 +157,15 @@ export default function ChatInterface({
 
               {/* Logout Modal */}
               {isLogoutModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/25 px-4">
+                <div 
+                className="fixed inset-0 z-[60] flex items-center justify-center bg-black/25 px-4"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="logout-title"
+                >
                   <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl">
                     <div className="px-6 pt-6 pb-5 text-center">
-                      <h3 className="text-2xl font-bold text-gray-700">Logout</h3>
+                      <h3 id="logout-title" className="text-2xl font-bold text-gray-700">Logout</h3>
                       <p className="mt-3 text-lg text-gray-700">
                         Are you sure you want to logout?
                       </p>

@@ -3,55 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageSquare, PanelLeftClose, PanelLeftOpen, Plus, Trash2, Clock } from "lucide-react";
-import { ChatSession, ChatMessage, ChatSidebarProps } from "@/types/types";
-
-const SESSIONS_KEY = "chat_sessions";
-const ACTIVE_SESSION_KEY = "active_session_id";
-
-export function loadSessions(): ChatSession[] {
-  try {
-    return JSON.parse(localStorage.getItem(SESSIONS_KEY) ?? "[]");
-  } catch {
-    return [];
-  }
-}
-
-export function saveSession(session: ChatSession): void {
-  const sessions = loadSessions();
-  const idx = sessions.findIndex((s) => s.id === session.id);
-  if (idx >= 0) sessions[idx] = session;
-  else sessions.unshift(session);
-  localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-}
-
-export function deleteSession(id: string): void {
-  const sessions = loadSessions().filter((s) => s.id !== id);
-  localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-}
-
-export function getActiveSessionId(): string | null {
-  return localStorage.getItem(ACTIVE_SESSION_KEY);
-}
-
-export function setActiveSessionId(id: string | null): void {
-  if (id) localStorage.setItem(ACTIVE_SESSION_KEY, id);
-  else localStorage.removeItem(ACTIVE_SESSION_KEY);
-}
-
-export function createSession(firstMessage?: ChatMessage): ChatSession {
-  const now = Date.now();
-  const title = firstMessage
-    ? firstMessage.content.slice(0, 40) + (firstMessage.content.length > 40 ? "…" : "")
-    : "New conversation";
-  return {
-    id: `session_${now}_${Math.random().toString(36).slice(2, 7)}`,
-    title,
-    preview: firstMessage?.content ?? "",
-    messages: firstMessage ? [firstMessage] : [],
-    createdAt: now,
-    updatedAt: now,
-  };
-}
+import { loadSessions, deleteSession } from "@/services/sessionStorage";
+import type { ChatSession, ChatSidebarProps } from "@/types/types";
 
 // Helpers 
 
