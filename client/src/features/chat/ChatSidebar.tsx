@@ -5,36 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { MessageSquare, PanelLeftClose, PanelLeftOpen, Plus, Trash2, Clock } from "lucide-react";
 import { loadSessions, deleteSession } from "@/services/sessionStorage";
 import type { ChatSession, ChatSidebarProps } from "@/types/types";
-
-// Helpers 
-
-function relativeTime(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60_000);
-  const hours = Math.floor(diff / 3_600_000);
-  const days = Math.floor(diff / 86_400_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return new Date(ts).toLocaleDateString();
-}
-
-function groupSessions(sessions: ChatSession[]) {
-  const now = Date.now();
-  const today: ChatSession[] = [];
-  const yesterday: ChatSession[] = [];
-  const older: ChatSession[] = [];
-
-  for (const s of sessions) {
-    const diff = now - s.updatedAt;
-    if (diff < 86_400_000) today.push(s);
-    else if (diff < 172_800_000) yesterday.push(s);
-    else older.push(s);
-  }
-
-  return { today, yesterday, older };
-}
+import { relativeTime, groupSessions } from "@/utils/helpers";
 
 // Sub-component
 function SessionItem({session, isActive, onSelect, onDelete}: {
@@ -110,8 +81,6 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
           )}
         </AnimatePresence>
       </div>
-
-      {/* Preview */}
       <p
         className={`line-clamp-1 text-xs ${
           isActive ? "text-blue-100" : "text-slate-500"
@@ -119,8 +88,6 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
       >
         {session.preview || "No messages yet"}
       </p>
-
-      {/* Timestamp */}
       <div
         className={`flex items-center gap-1 text-[10px] ${
           isActive ? "text-blue-200" : "text-slate-400"
@@ -153,11 +120,13 @@ export default function ChatSidebar({
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-        setSessions(loadSessions());
+      setSessions(loadSessions());
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [liveMessages]);
+  }, [activeSessionId, liveMessages]);
+
+
 
   const handleDelete = (id: string) => {
     deleteSession(id);

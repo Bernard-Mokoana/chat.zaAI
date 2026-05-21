@@ -100,7 +100,7 @@ class Token:
         user_agent = request.headers.get("user-agent")
         return ip, user_agent
 
-    async def persist_refresh_token(self, db: Session, user: dict, refresh_token: str, jti: str, request: Optional[Request] = None):
+    def persist_refresh_token(self, db: Session, user: dict, refresh_token: str, jti: str, request: Optional[Request] = None):
         token_hash = self.hash_token(refresh_token)
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=REFRESH_TTL_SEC)
         ip, user_agent = self._client_meta(request)
@@ -119,8 +119,8 @@ class Token:
         )
 
         db.add(new_token)
-        await db.commit()
-        await db.refresh(new_token)
+        db.commit()
+        db.refresh(new_token)
         return new_token
 
     def rotate_refresh_token(self, db: Session, user: dict, request: Optional[Request], response: Optional[Response]) -> str:
