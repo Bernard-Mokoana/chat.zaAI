@@ -24,7 +24,7 @@ class Cache:
         
         return data
     
-    async def add_message_to_cache(self, token: str, source: str, message_data: dict):
+    def add_message_to_cache(self, token: str, source: str, message_data: dict):
         key = str(token)
         messages_path = Path(".messages")
 

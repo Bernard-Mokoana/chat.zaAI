@@ -129,8 +129,7 @@ class Token:
         )
 
         db.add(new_token)
-        db.commit()
-        db.refresh(new_token)
+        db.flush()
         return new_token
 
     def rotate_refresh_token(self, db: Session, user: dict, request: Optional[Request], response: Optional[Response]) -> str:

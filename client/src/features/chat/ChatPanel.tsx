@@ -17,16 +17,6 @@ import ChatInterface from "@/features/chat/ChatInterface";
 import type { ChatMessage, ChatPanelProps, ChatSession, ConnectionState } from "@/types/types";
 import { useRouter } from "next/navigation";
 
-type RedisHistoryMessage = {
-  id?: string;
-  msg?: string;
-};
-
-type ChatSessionResponse = {
-  token: string;
-  messages?: RedisHistoryMessage[];
-};
-
 export default function ChatPanel({ displayName }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const socketRef = useRef<ChatSocket | null>(null);
@@ -104,7 +94,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
 
         if (existingToken) {
           try {
-            const history = await refreshChatSession(existingToken) as ChatSessionResponse;
+            const history = await refreshChatSession(existingToken);
             if (!alive) return;
 
             socketRef.current = createChatSocket({
@@ -153,7 +143,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
           }
         }
 
-        const session = await createChatSession(displayName) as ChatSessionResponse;
+        const session = await createChatSession(displayName);
         if (!alive) return;
 
         setChatToken(session.token);
