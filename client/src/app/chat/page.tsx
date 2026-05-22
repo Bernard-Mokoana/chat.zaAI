@@ -13,9 +13,14 @@ export default function ChatPage() {
     const name = getChatName();
     if (!name) {
       router.push("/");
-    } else {
-      setDisplayName(name);
+      return;
     }
+
+    const timeoutId = window.setTimeout(() => {
+      setDisplayName(name);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [router]);
 
   if (!displayName) {

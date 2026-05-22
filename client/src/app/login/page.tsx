@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import { login } from "@/services/auth/authApi";
 import { setAccessToken, setChatName} from "@/services/storage/chatStorage";
 
@@ -32,8 +33,12 @@ export default function LoginPage() {
       setChatName(auth.user.name);
 
       router.push("/chat");
-    } catch (e: any) {
-      const message = e?.response?.data?.detail || e?.message || "Login failed.";
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.detail || error.message
+        : error instanceof Error
+          ? error.message
+          : "Login failed.";
       setError(typeof message === "string" ? message : "Login failed.");
     } finally {
       setIsSubmitting(false);
@@ -64,4 +69,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

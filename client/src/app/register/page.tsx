@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import { register } from "@/services/auth/authApi";
 import { setAccessToken, setChatName } from "@/services/storage/chatStorage";
 
@@ -38,8 +39,12 @@ export default function RegisterPage() {
       setChatName(trimmedName);
 
       router.push("/chat");
-    } catch (e: any) {
-      const message = e?.response?.data?.detail || e?.message || "Registration failed.";
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.detail || error.message
+        : error instanceof Error
+          ? error.message
+          : "Registration failed.";
       setError(typeof message === "string" ? message : "Registration failed.");
     } finally {
       setIsSubmitting(false);
@@ -71,4 +76,3 @@ export default function RegisterPage() {
     </main>
   );
 }
-

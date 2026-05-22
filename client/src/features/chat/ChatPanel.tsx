@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import { createChatSession, refreshChatSession } from "@/services/chat/chatApi";
 import { ChatSocket, createChatSocket } from "@/services/ws/chatSocket";
 import {
@@ -13,8 +14,18 @@ import {
   clearChatMessages,
 } from "@/services/storage/chatStorage";
 import ChatInterface from "@/features/chat/ChatInterface";
-import type { ChatMessage, ChatPanelProps, ConnectionState } from "@/types/types";
+import type { ChatMessage, ChatPanelProps, ChatSession, ConnectionState } from "@/types/types";
 import { useRouter } from "next/navigation";
+
+type RedisHistoryMessage = {
+  id?: string;
+  msg?: string;
+};
+
+type ChatSessionResponse = {
+  token: string;
+  messages?: RedisHistoryMessage[];
+};
 
 export default function ChatPanel({ displayName }: ChatPanelProps) {
   const [input, setInput] = useState("");
@@ -22,8 +33,8 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-  const stored = getChatMessages();
-  return stored ?? [];
+    const stored = getChatMessages<ChatMessage[]>();
+    return stored ?? [];
 });
  const [debouncedMessages, setDebouncedMessages] = useState(messages);
  const router = useRouter()
@@ -51,6 +62,33 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
   };
 
   useEffect(() => {
+    const handleLoadSession = (event: Event) => {
+      const session = (event as CustomEvent<ChatSession>).detail;
+      const sessionMessages = session?.messages ?? [];
+
+      setInput("");
+      setIsAssistantTyping(false);
+      setMessages(sessionMessages);
+      setChatMessages(sessionMessages);
+    };
+
+    const handleNewSession = () => {
+      setInput("");
+      setIsAssistantTyping(false);
+      setMessages([]);
+      clearChatMessages();
+    };
+
+    window.addEventListener("chat:load-session", handleLoadSession);
+    window.addEventListener("chat:new-session", handleNewSession);
+
+    return () => {
+      window.removeEventListener("chat:load-session", handleLoadSession);
+      window.removeEventListener("chat:new-session", handleNewSession);
+    };
+  }, []);
+
+  useEffect(() => {
     let alive = true;
 
     async function initSession() {
@@ -66,7 +104,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
 
         if (existingToken) {
           try {
-            const history = await refreshChatSession(existingToken);
+            const history = await refreshChatSession(existingToken) as ChatSessionResponse;
             if (!alive) return;
 
             socketRef.current = createChatSocket({
@@ -91,7 +129,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
             });
 
             if (history?.messages?.length) {
-              const mapped = history.messages.map((m: any) => {
+              const mapped = history.messages.map((m) => {
                 const parsed = parseHistoryMessage(m.msg ?? "");
                 return {
                   id: m.id ?? crypto.randomUUID(),
@@ -104,18 +142,18 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
             }
 
             return;
-          } catch (err: any) {
-            const status = err?.response?.status;
+          } catch (error: unknown) {
+            const status = axios.isAxiosError(error) ? error.response?.status : undefined;
             if (status === 401 || status === 403) {
               clearChatToken();
               clearChatMessages();
             } else {
-              throw err;
+              throw error;
             }
           }
         }
 
-        const session = await createChatSession(displayName);
+        const session = await createChatSession(displayName) as ChatSessionResponse;
         if (!alive) return;
 
         setChatToken(session.token);
@@ -124,7 +162,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
           accessToken,
           chatToken: session.token,
           onOpen: () => setConnectionState("connected"),
-          onMessage: (message) => {
+          onMessage: (message: string) => {
             setIsAssistantTyping(false);
             setMessages((prev) => [
               ...prev,
@@ -154,7 +192,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
       alive = false;
       socketRef.current?.disconnect();
     };
-  }, [displayName]);
+  }, [displayName, router]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
