@@ -4,6 +4,9 @@ import { getAccessToken } from "../storage/chatStorage";
 export async function createChatSession(name: string) {
   const token = getAccessToken();
 
+  if (!token)
+    throw new Error("Access token is required to create a chat session");
+
   const response = await httpClient.post("/api/v1/chat/token", null, {
     params: { name },
     headers: {

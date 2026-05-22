@@ -29,6 +29,12 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   return (
     <motion.div
       layout
@@ -114,7 +120,8 @@ export default function ChatSidebar({
   onNewChat,
   onDeleteSession,
   liveMessages = [],
-}: ChatSidebarProps) {
+  refreshTrigger = 0,
+}: ChatSidebarProps & { refreshTrigger?: number}) {
   const [isOpen, setIsOpen] = useState(true);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
 
@@ -124,7 +131,7 @@ export default function ChatSidebar({
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [activeSessionId, liveMessages]);
+  }, [activeSessionId, refreshTrigger]);
 
 
 

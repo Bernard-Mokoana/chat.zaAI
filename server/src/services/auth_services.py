@@ -82,7 +82,7 @@ class AuthService:
 
         self.token.set_refresh_cookie(response, refresh_token)
 
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {"access_token": access_token, "token_type": "bearer", "user": user_payload}
 
     def refresh_access_token(self, db: Session, request: Request, response: Response):
         raw_refresh = request.cookies.get("refreshToken")
@@ -119,6 +119,7 @@ class AuthService:
         
         db_token.is_revoked = True
         db_token.revoked_at = datetime.now(timezone.utc)
+        db.commit()
 
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
@@ -139,8 +140,14 @@ class AuthService:
         db_token.replaced_by = str(replacement.id)
         db.commit()
 
+        new_user = { 
+            "id": str(user.id),
+            "name": user.name,
+            "email": user.email,
+        }
+
         self.token.set_refresh_cookie(response, new_refresh)
-        return { "access_token": new_access, "token_type": "bearer"}
+        return { "access_token": new_access, "token_type": "bearer", "user": new_user}
     
     def logout(self, db: Session, request: Request, response: Response):
         raw_refresh = request.cookies.get("refreshToken")

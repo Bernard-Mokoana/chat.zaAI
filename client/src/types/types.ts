@@ -6,17 +6,19 @@ export type ConnectionState =
   | "disconnected"
   | "error";
 
-export type onMessage = (message: string) => void;
-export type onError = (message: Event) => void;
+export type OnMessage = (message: string) => void;
+export type OnError = (message: Event) => void;
 export type OnClose = (event: CloseEvent) => void;
 export type OnOpen = (event: Event) => void;
-
-export type MessageHandler = (message: string) => void;
-export type ErrorHandler = (event: Event) => void;
 
 export type AuthResponse = {
   access_token: string;
   token_type: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
 };
 
 export type ChatMessage = {

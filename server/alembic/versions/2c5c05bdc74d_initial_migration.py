@@ -51,7 +51,7 @@ def upgrade() -> None:
     sa.Column('jwt_id', sa.Text(), nullable=False),
     sa.Column('user_agent', sa.Text(), nullable=True),
     sa.Column('ip', sa.Text(), nullable=True),
-    sa.Column('is_revoked', sa.Boolean(), nullable=False),
+    sa.Column('is_revoked', sa.Boolean(), server_default=sa.text('false'), nullable=False),
     sa.Column('replaced_by', sa.Text(), nullable=True),
     sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),

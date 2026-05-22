@@ -14,21 +14,30 @@ import {
 } from "@/services/storage/chatStorage";
 import ChatInterface from "@/features/chat/ChatInterface";
 import type { ChatMessage, ChatPanelProps, ConnectionState } from "@/types/types";
+import { useRouter } from "next/navigation";
 
 export default function ChatPanel({ displayName }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const socketRef = useRef<ChatSocket | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
-
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-  const stored = getChatMessages<ChatMessage[]>();
+  const stored = getChatMessages();
   return stored ?? [];
 });
+ const [debouncedMessages, setDebouncedMessages] = useState(messages);
+ const router = useRouter()
 
   useEffect(() => {
-    setChatMessages(messages);
+    const timeoutId = setTimeout(() => {
+      setDebouncedMessages(messages);
+    }, 1000);
+    return () => clearTimeout(timeoutId);
   }, [messages]);
+
+  useEffect(() => {
+    setChatMessages(debouncedMessages);
+  }, [debouncedMessages]);
 
   const parseHistoryMessage = (raw: string) => {
     const trimmed = raw.trim();
@@ -50,7 +59,9 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
         const existingToken = getChatToken();
         const accessToken = getAccessToken();
         if (!accessToken) {
-          throw new Error("Missing access token");
+          console.warn("Missing access token, redirecting to login");
+          router.push("/");
+          return
         }
 
         if (existingToken) {

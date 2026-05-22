@@ -11,7 +11,7 @@ from ..redis.config import Redis
 from ..schema.chat import Chat
 from ..redis.stream import StreamConsumer
 from ..redis.cache import Cache
-from src.services.jwt_validation import get_current_user
+from src.middlewares.jwt_validation import get_current_user
 from src.database.models.users import User
 from src.utils.token import Token
 
@@ -74,8 +74,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
     redis_client = await redis.create_connection()
 
-    user_id = str(token_payload.get("id"))
+    user_id = token_payload.get("id")
     if not user_id:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     user_id = str(user_id)
 

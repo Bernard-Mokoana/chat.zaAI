@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Send } from "lucide-react";
 import type { ChatInterfaceProps } from "@/types/types";
-import { clearChatToken, clearChatName, clearChatMessages } from "@/services/storage/chatStorage";
+import { clearChatToken, clearChatName, clearChatMessages, clearAccessToken} from "@/services/storage/chatStorage";
 import { loadSessions, saveSession, getActiveSessionId, setActiveSessionId, createSession} from "@/services/sessionStorage";
 import type { ChatMessage, ChatSession, } from "@/types/types";
 import ChatSidebar from "./ChatSidebar";
@@ -128,6 +128,7 @@ export default function ChatInterface({
     try {
       await logout();
     } finally {
+      clearAccessToken();
       clearChatName();
       clearChatToken();
       clearChatMessages();

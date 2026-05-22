@@ -34,4 +34,5 @@ if __name__ == "__main__":
     if os.environ.get('APP_ENV') == "development":
         uvicorn.run("main:api", host="0.0.0.0", port=3500, reload=True)
     else:
-        pass
+        uvicorn.run("main:api", host="0.0.0.0", port=3500, reload=False)
+        

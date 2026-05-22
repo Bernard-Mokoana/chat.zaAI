@@ -4,11 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/services/auth/authApi";
-import { setAccessToken, setChatName } from "@/services/storage/chatStorage";
+import { setAccessToken, setChatName} from "@/services/storage/chatStorage";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,10 +15,13 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
 
-    if (!trimmedName || !trimmedEmail || !password || isSubmitting) return;
+    if (!trimmedEmail || !password) {
+      setError("Please fill in all fields");
+      return;
+    };
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -27,7 +29,7 @@ export default function LoginPage() {
     try {
       const auth = await login({ email: trimmedEmail, password });
       setAccessToken(auth.access_token);
-      setChatName(trimmedName);
+      setChatName(auth.user.name);
 
       router.push("/chat");
     } catch (e: any) {
@@ -45,7 +47,6 @@ export default function LoginPage() {
         <p style={{ color: "#475569", marginTop: "0.5rem" }}>Welcome back. Continue to your chat.</p>
 
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: "0.9rem", marginTop: "1rem" }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Display name" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
 

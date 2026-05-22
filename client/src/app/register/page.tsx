@@ -24,7 +24,10 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!trimmedName || !trimmedEmail || !password || isSubmitting) return;
+    if (!trimmedName || !trimmedEmail || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
