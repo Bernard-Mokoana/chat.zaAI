@@ -38,3 +38,9 @@ async def login(payload: LoginSchema, response: Response, request: Request, db: 
 @auth.post("/refresh")
 async def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
     return auth_service.refresh_access_token(db=db, request=request, response=response)
+
+@auth.post("/logout")
+async def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    return auth_service.logout(db=db, request=request, response=response)
+
+    

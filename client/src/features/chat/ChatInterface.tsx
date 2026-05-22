@@ -9,6 +9,7 @@ import { clearChatToken, clearChatName, clearChatMessages } from "@/services/sto
 import { loadSessions, saveSession, getActiveSessionId, setActiveSessionId, createSession} from "@/services/sessionStorage";
 import type { ChatMessage, ChatSession, } from "@/types/types";
 import ChatSidebar from "./ChatSidebar";
+import { logout } from "@/services/auth/authApi";
 
 
 const connectionTone = {
@@ -123,11 +124,15 @@ export default function ChatInterface({
 
   const handleBack = () => setIsLogoutModalOpen(true);
 
-  const confirmLogout = () => {
-    clearChatName();
-    clearChatToken();
-    clearChatMessages();
-    router.push("/");
+  const confirmLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      clearChatName();
+      clearChatToken();
+      clearChatMessages();
+      router.push("/");
+    }
   };
 
   const cancelLogout = () => setIsLogoutModalOpen(false);

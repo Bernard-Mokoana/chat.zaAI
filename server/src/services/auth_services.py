@@ -83,7 +83,7 @@ class AuthService:
         self.token.set_refresh_cookie(response, refresh_token)
 
         return {"access_token": access_token, "token_type": "bearer"}
-    
+
     def refresh_access_token(self, db: Session, request: Request, response: Response):
         raw_refresh = request.cookies.get("refreshToken")
 
@@ -141,5 +141,36 @@ class AuthService:
 
         self.token.set_refresh_cookie(response, new_refresh)
         return { "access_token": new_access, "token_type": "bearer"}
-        
     
+    def logout(self, db: Session, request: Request, response: Response):
+        raw_refresh = request.cookies.get("refreshToken")
+        
+        if raw_refresh:
+            try:
+                payload = self.token.decode_refresh_token(raw_refresh)
+                user_id = payload.get("id")
+                jti = payload.get("jti")
+                token_hash = self.token.hash_token(raw_refresh)
+                
+                if user_id and jti:
+                    db_token = (
+                        db.query(RefreshToken)
+                        .filter(
+                            RefreshToken.user_id == user_id,
+                            RefreshToken.jwt_id == jti,
+                            RefreshToken.token == token_hash,
+                            RefreshToken.is_revoked.is_(False),
+                            )
+                            .first()
+                            )
+                    
+                    if db_token:
+                        db_token.is_revoked = True
+                        db_token.revoked_at = datetime.now(timezone.utc)
+                        db.commit()
+                        
+            except Exception:
+                pass
+        
+        self.token.clear_refresh_cookie(response)
+        return {"message": "Logged out successfully"}

@@ -20,3 +20,8 @@ export async function register(payload: {
   );
   return response.data;
 }
+
+export async function logout() {
+  const response = await httpClient.post("/api/v1/auth/logout");
+  return response.data;
+}

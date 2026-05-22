@@ -88,8 +88,18 @@ class Token:
             httponly=True,
             secure=is_prod,
             samesite="lax",
-            path="/api/v1/auth/refresh",
+            path="/api/v1/auth",
             max_age=REFRESH_TTL_SEC,
+        )
+
+    def clear_refresh_cookie(self, response: Response):
+        is_prod = os.environ.get('NODE_ENV') == "production"
+        response.delete_cookie(
+            key="refreshToken",
+            httponly=True,
+            secure=is_prod,
+            samesite="lax",
+            path="/api/v1/auth",
         )
 
     def _client_meta(self, request: Optional[Request]) -> tuple[Optional[str], Optional[str]]:
