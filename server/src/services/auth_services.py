@@ -79,6 +79,7 @@ class AuthService:
             jti=jti,
             request=request
         )
+        db.commit()
 
         self.token.set_refresh_cookie(response, refresh_token)
 
