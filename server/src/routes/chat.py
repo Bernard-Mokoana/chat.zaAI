@@ -38,9 +38,11 @@ async def token_generator(name: str, request: Request, current_user: User = Depe
 
 @chat.get("/refresh_token")
 async def refresh_token(request: Request, token: str, current_user: User = Depends(get_current_user)):
-    json_client = redis.create_json_connection()
-    cache = Cache(json_client)
-    data = cache.get_chat_history(token)
+    redis_client = await redis.create_connection()
+    data = await redis_client.json().get(token, "$")
+
+    if isinstance(data, list) and len(data) > 0:
+        data = data[0]
 
     if (data) == None:
         raise HTTPException(

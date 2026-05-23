@@ -18,12 +18,12 @@ export function clearChatToken() {
   localStorage.removeItem(CHAT_TOKEN_KEY);
 }
 
-export function getChatMessages(): unknown[] | null {
+export function getChatMessages<T = unknown[]>(): T | null {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem(CHAT_MESSAGES_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw);
+    return JSON.parse(raw) as T;
   } catch (error) {
     console.warn("Failed to parse chat messages from storage", error);
     return null;

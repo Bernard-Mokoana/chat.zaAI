@@ -119,7 +119,6 @@ export default function ChatSidebar({
   onSelectSession,
   onNewChat,
   onDeleteSession,
-  liveMessages = [],
   refreshTrigger = 0,
 }: ChatSidebarProps & { refreshTrigger?: number}) {
   const [isOpen, setIsOpen] = useState(true);

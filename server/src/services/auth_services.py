@@ -79,6 +79,7 @@ class AuthService:
             jti=jti,
             request=request
         )
+        db.commit()
 
         self.token.set_refresh_cookie(response, refresh_token)
 
@@ -116,10 +117,6 @@ class AuthService:
         
         if db_token.expires_at <= datetime.now(timezone.utc):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
-        
-        db_token.is_revoked = True
-        db_token.revoked_at = datetime.now(timezone.utc)
-        db.commit()
 
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
@@ -137,6 +134,9 @@ class AuthService:
             jti=new_jti,
             request=request,
         )
+
+        db_token.is_revoked = True
+        db_token.revoked_at = datetime.now(timezone.utc)
         db_token.replaced_by = str(replacement.id)
         db.commit()
 

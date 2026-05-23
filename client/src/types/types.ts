@@ -57,3 +57,13 @@ export interface ChatSidebarProps {
   onDeleteSession?: (id: string) => void;
   liveMessages?: ChatMessage[];
 }
+
+export type RedisHistoryMessage = {
+  id?: string;
+  msg?: string;
+};
+
+export type ChatSessionResponse = {
+  token: string;
+  messages?: RedisHistoryMessage[];
+};

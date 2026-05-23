@@ -1,4 +1,4 @@
-import type { onMessage, OnClose, onError, OnOpen } from "@/types/types";
+import type { OnMessage, OnClose, OnError, OnOpen } from "@/types/types";
 
 export class ChatSocket {
   private socket: WebSocket | null = null;
@@ -14,9 +14,9 @@ export class ChatSocket {
   connect(params: {
     accessToken: string;
     chatToken: string;
-    onMessage: onMessage;
+    onMessage: OnMessage;
     onOpen?: OnOpen;
-    onError?: onError;
+    onError?: OnError;
     onClose?: OnClose;
   }) {
     const { accessToken, chatToken, onMessage, onOpen, onError, onClose } =
@@ -72,9 +72,9 @@ export class ChatSocket {
 export function createChatSocket(params: {
   accessToken: string;
   chatToken: string;
-  onMessage: onMessage;
+  onMessage: OnMessage;
   onOpen?: OnOpen;
-  onError?: onError;
+  onError?: OnError;
   onClose?: OnClose;
 }) {
   const ws = new ChatSocket();

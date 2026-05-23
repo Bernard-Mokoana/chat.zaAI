@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import { register } from "@/services/auth/authApi";
 import { setAccessToken, setChatName } from "@/services/storage/chatStorage";
 
@@ -18,13 +19,21 @@ export default function RegisterPage() {
     event.preventDefault();
     const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
 
-    if (password.length < 8) {
+    if (trimmedPassword.length < 8) {
       setError("Password must be at least 8 characters long");
       return;
     }
 
-    if (!trimmedName || !trimmedEmail || !password) {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+
+    if (!passwordRegex.test(password)) {
+      setError("Password must include uppercase, lowercase, number, and special character");
+      return;
+    }
+
+    if (!trimmedName || !trimmedEmail || !trimmedPassword) {
       setError("Please fill in all fields");
       return;
     }
@@ -33,13 +42,17 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      const auth = await register({ name: trimmedName, email: trimmedEmail, password });
+      const auth = await register({ name: trimmedName, email: trimmedEmail, password: trimmedPassword });
       setAccessToken(auth.access_token);
       setChatName(trimmedName);
 
       router.push("/chat");
-    } catch (e: any) {
-      const message = e?.response?.data?.detail || e?.message || "Registration failed.";
+    } catch (error: unknown) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.detail || error.message
+        : error instanceof Error
+          ? error.message
+          : "Registration failed.";
       setError(typeof message === "string" ? message : "Registration failed.");
     } finally {
       setIsSubmitting(false);
@@ -71,4 +84,3 @@ export default function RegisterPage() {
     </main>
   );
 }
-
