@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 import bcrypt
 import re
 
-from src.database.models.users import User
-from src.database.models.refresh_token import RefreshToken
+from backend.database.models.users import User
+from backend.database.models.refresh_token import RefreshToken
 from src.utils.token import Token
 
 class AuthService:

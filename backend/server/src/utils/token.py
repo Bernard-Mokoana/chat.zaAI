@@ -9,7 +9,8 @@ from fastapi import Response, Request, HTTPException, status
 from dotenv import load_dotenv
 
 from sqlalchemy.orm import Session
-from src.database.models.refresh_token import RefreshToken
+
+from backend.database.models.refresh_token import RefreshToken
 
 load_dotenv()
 

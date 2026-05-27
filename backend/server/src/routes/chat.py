@@ -12,8 +12,9 @@ from ..schema.chat import Chat
 from ..redis.stream import StreamConsumer
 from ..redis.cache import Cache
 from src.middlewares.jwt_validation import get_current_user
-from src.database.models.users import User
 from src.utils.token import Token
+
+from backend.database.models.users import User
 
 logger = logging.getLogger(__name__)
 
