@@ -6,6 +6,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import asyncio
 import logging
 
+from backend.database.config.databaseConfig import SessionPrimary
+
 from redis.exceptions import ConnectionError as RedisConnectionError
 
 from src.redis.config import Redis
@@ -41,6 +43,7 @@ async def main() -> None:
         consumer=consumer,
         gpt_client=gpt_client,
         model_timeout=model_timeout,
+        session_factory=SessionPrimary
     )
 
     logger.info("Stream consumer started, waiting for messages on '%s'", STREAM_CHANNEL)
