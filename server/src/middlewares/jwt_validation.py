@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from src.database.config.databaseConfig import get_db
+from src.database.config.databaseConfig import get_write_db
 from src.database.models.users import User
 from src.utils.token import Token
 
@@ -11,7 +11,7 @@ token_util = Token()
 
 def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(bearer),
-        db: Session = Depends(get_db)) -> User:
+        db: Session = Depends(get_write_db)) -> User:
         
         if not credentials:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorisation header")
