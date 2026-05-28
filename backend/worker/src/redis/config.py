@@ -8,7 +8,9 @@ load_dotenv()
 
 class Redis():
     def __init__(self):
-        self.url = os.environ["REDIS_URL"]
+        self.url = os.environ.get("REDIS_URL")
+        if not self.url:
+            raise ValueError("REDIS_URL environment variable must be set.")
 
     async def create_connection(self):
         return redis_async.from_url(self.url, db=0)

@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
@@ -18,12 +18,17 @@ engine_replica = create_engine(REPLICA_URL, pool_pre_ping=True)
 SessionPrimary = sessionmaker(autocommit=False, autoflush=False, bind=engine_primary) 
 SessionReplica = sessionmaker(autocommit=False, autoflush=False, bind=engine_replica)
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 def get_write_db():
     db = SessionPrimary()
     try:
         yield db
+    # Session rollback on exception
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
@@ -31,5 +36,9 @@ def get_read_db():
     db = SessionReplica()
     try:
         yield db
+    # Session rollback on exception
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

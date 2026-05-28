@@ -5,6 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import asyncio
 import logging
+import signal
 
 from backend.database.config.databaseConfig import SessionPrimary
 
@@ -23,8 +24,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 redis_client = Redis()
+shutdown_event = asyncio.Event()
 
 RETRY_BACKOFF_SEC = 5
+
+def handle_shutdown(signum, frame):
+    logger.info("Received shutdown signal, stopping worker...")
+    shutdown_event.set()
+
+signal.signal(signal.SIGTERM, handle_shutdown)
+signal.signal(signal.SIGINT, handle_shutdown)
 
 
 async def main() -> None:
@@ -48,7 +57,8 @@ async def main() -> None:
 
     logger.info("Stream consumer started, waiting for messages on '%s'", STREAM_CHANNEL)
 
-    while True:
+    # while True:
+    while not shutdown_event.is_set():
         try:
             response = await consumer.consume_stream(
                 stream_channel=STREAM_CHANNEL, count=1, block=5000
@@ -68,6 +78,10 @@ async def main() -> None:
 
         except Exception:
             logger.exception("Unexpected error in consumer loop; continuing")
+    
+    logger.info("Worker shutdown complete")
+    await redis_conn.aclose()
+    json_client.close()
 
 
 if __name__ == "__main__":

@@ -61,7 +61,10 @@ class MessageHandler:
 
         # Persist Human Message to database via worker Thread
         try:
-            await asyncio.to_thread(self._run_db_save, user_id, token, "Human", text)
+            await asyncio.wait_for(
+                 asyncio.to_thread(self._run_db_save, user_id, token, "Human", text),
+                 timeout=10.0
+            )
         except Exception as e:
             logger.error(f"Failed to persist user message to DB: {e}")
 
@@ -83,7 +86,10 @@ class MessageHandler:
 
         # Persist Bot response via worker thread
         try:
-            await asyncio.to_thread(self._run_db_save, user_id, token, "Bot", response_text)
+            await asyncio.wait_for(
+                asyncio.to_thread(self._run_db_save, user_id, token, "Bot", response_text),
+                timeout=10.0
+            )
         except Exception as e:
             logger.error(f"Failed to persist bot message to DB: {e}")
         

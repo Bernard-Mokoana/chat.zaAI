@@ -7,7 +7,7 @@ from .error_handlers import (
     handle_model_timeout,
     handle_model_error,
 )
- 
+
 __all__ = [
     "parse_stream_message",
     "decode_bytes",

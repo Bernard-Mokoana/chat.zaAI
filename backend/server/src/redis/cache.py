@@ -1,10 +1,18 @@
 from redis.commands.json.path import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Cache:
     def __init__(self, json_client):
         self.json_client = json_client
 
-    def get_chat_history(self, token: str) :
-        data = self.json_client.json().get(token, Path.root_path())
+    def get_chat_history(self, token: str) -> dict | None:
+        try:
+            data = self.json_client.json().get(token, Path.root_path())
+            return data
+        except Exception as e:
+            logger.error(f"Failed to get chat history: {e}")
+            return None
 
-        return data
+
