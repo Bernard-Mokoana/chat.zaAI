@@ -15,6 +15,7 @@ from src.utils.parsing import parse_stream_message
 from src.utils.error_handlers import (handle_invalid_envelope, handle_cache_failure, handle_model_timeout, handle_model_error)
 
 from backend.server.src.services.conversation_services import save_chat_message
+from backend.server.src.services.usage_services import create_usage_log
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,20 @@ class MessageHandler:
         with self.session_factory() as db:
             save_chat_message(db, user_id=user_id, chat_token=token, role=role, content=content)
 
+    def _run_db_log(self, user_id: str, event_type: str, model_name: str | None, total_tokens: int | None, message_count: int | None):
+        try:
+            with self.session_factory() as db:
+                create_usage_log(
+                    db,
+                    user_id=user_id,
+                    event_type=event_type,
+                    model_name=model_name,
+                    total_tokens=total_tokens,
+                    message_count=message_count
+                )
+        except Exception as e:
+            logger.error(f"Failed to write metrics to usage_logs database: {e}")
+
     async def _process(self, message_id, token: str, text: str, raw_message) -> None:
         # Fetch session metadata from cache to acquire user_id
         chat_metadata = self.cache.get_chat_history(token=token)
@@ -52,6 +67,8 @@ class MessageHandler:
             return
         
         user_id = chat_metadata["user_id"]
+        # Extract model name
+        model_name = getattr(self.gpt_client, "model_name", "GPT-J")
 
         # Store incoming user message
         user_msg = Message(msg=text)
@@ -77,9 +94,12 @@ class MessageHandler:
             return
 
         # Query the model
-        response_text = await self._call_model(message_id, token, raw_message, prompt)
-        if response_text is None:
-            return  
+        try:
+            response_text = await self._call_model_with_logging(message_id, token, raw_message, prompt, user_id, model_name)
+            if response_text is None:
+                return  
+        except Exception as e:
+            return
 
         # Publish response
         await self._publish_response(message_id, token, response_text)
@@ -92,29 +112,45 @@ class MessageHandler:
             )
         except Exception as e:
             logger.error(f"Failed to persist bot message to DB: {e}")
+
+        estimated_tokens = len(prompt + response_text) // 4
+
+        # Track success event in background thread
+        await asyncio.to_thread(
+            self._run_db_log,
+            user_id,
+            "inference_success",
+            model_name,
+            estimated_tokens,
+            1
+        )
         
     def _build_prompt(self, token: str) -> str | None:
         data = self.cache.get_chat_history(token=token)
         messages = (data.get("messages", []) if data else [])[-CHAT_HISTORY_WINDOW:]
         return " ".join(m["msg"] for m in messages) if messages else None
 
-    async def _call_model(self, message_id, token: str, raw_message, prompt: str) -> str | None:
+    async def _call_model_with_logging(self, message_id, token: str, raw_message, prompt: str, user_id: str, model_name: str) -> str | None:
         try:
             return await query_model(self.gpt_client, prompt, self.model_timeout)
 
         except asyncio.TimeoutError:
+            # Track failure metric: Timeout
+            await asyncio.to_thread(self._run_db_log, user_id, "model_timeout", model_name, 0, 1)
             await handle_model_timeout(
                 message_id, token, raw_message, self.model_timeout,
                 self.producer, self.cache, self.consumer, MODEL_TIMEOUT_MESSAGE,
             )
-            return None
+            raise
 
         except Exception as exc:
+            # Track failure metric: Runtime processing error 
+            await asyncio.to_thread(self._run_db_log, user_id, "model_error", model_name, 0, 1)
             await handle_model_error(
                 message_id, token, raw_message, exc,
                 self.producer, self.cache, self.consumer, MODEL_ERROR_MESSAGE,
             )
-            return None
+            raise
 
     async def _publish_response(self, message_id, token: str, response_text: str) -> None:
         bot_msg = Message(msg=response_text)
