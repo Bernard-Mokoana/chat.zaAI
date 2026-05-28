@@ -14,11 +14,9 @@ from src.services.model import query_model
 from src.utils.parsing import parse_stream_message
 from src.utils.error_handlers import (handle_invalid_envelope, handle_cache_failure, handle_model_timeout, handle_model_error)
 
-from backend.server.src.services.conversation_services import save_chat_message
-from backend.server.src.services.usage_services import create_usage_log
+from src.utils.dbHelper import run_db_log, run_db_save
 
 logger = logging.getLogger(__name__)
-
 class MessageHandler:
     def __init__(self, cache: Cache, producer: Producer, consumer: StreamConsumer, gpt_client: GPT, model_timeout: float, session_factory: sessionmaker) -> None:
         self.cache = cache
@@ -37,25 +35,6 @@ class MessageHandler:
 
         message_id, token, text = parsed
         await self._process(message_id, token, text, raw_message=message)
-
-# Helper Method
-    def _run_db_save(self,user_id: str, token: str, role: str, content: str):
-        with self.session_factory() as db:
-            save_chat_message(db, user_id=user_id, chat_token=token, role=role, content=content)
-
-    def _run_db_log(self, user_id: str, event_type: str, model_name: str | None, total_tokens: int | None, message_count: int | None):
-        try:
-            with self.session_factory() as db:
-                create_usage_log(
-                    db,
-                    user_id=user_id,
-                    event_type=event_type,
-                    model_name=model_name,
-                    total_tokens=total_tokens,
-                    message_count=message_count
-                )
-        except Exception as e:
-            logger.error(f"Failed to write metrics to usage_logs database: {e}")
 
     async def _process(self, message_id, token: str, text: str, raw_message) -> None:
         # Fetch session metadata from cache to acquire user_id
@@ -79,7 +58,7 @@ class MessageHandler:
         # Persist Human Message to database via worker Thread
         try:
             await asyncio.wait_for(
-                 asyncio.to_thread(self._run_db_save, user_id, token, "Human", text),
+                 asyncio.to_thread(self.run_db_save, user_id, token, "Human", text),
                  timeout=10.0
             )
         except Exception as e:
@@ -107,7 +86,7 @@ class MessageHandler:
         # Persist Bot response via worker thread
         try:
             await asyncio.wait_for(
-                asyncio.to_thread(self._run_db_save, user_id, token, "Bot", response_text),
+                asyncio.to_thread(self.run_db_save, user_id, token, "Bot", response_text),
                 timeout=10.0
             )
         except Exception as e:
@@ -117,7 +96,7 @@ class MessageHandler:
 
         # Track success event in background thread
         await asyncio.to_thread(
-            self._run_db_log,
+            self.run_db_log,
             user_id,
             "inference_success",
             model_name,
@@ -136,7 +115,7 @@ class MessageHandler:
 
         except asyncio.TimeoutError:
             # Track failure metric: Timeout
-            await asyncio.to_thread(self._run_db_log, user_id, "model_timeout", model_name, 0, 1)
+            await asyncio.to_thread(self.run_db_log, user_id, "model_timeout", model_name, 0, 1)
             await handle_model_timeout(
                 message_id, token, raw_message, self.model_timeout,
                 self.producer, self.cache, self.consumer, MODEL_TIMEOUT_MESSAGE,
@@ -145,7 +124,7 @@ class MessageHandler:
 
         except Exception as exc:
             # Track failure metric: Runtime processing error 
-            await asyncio.to_thread(self._run_db_log, user_id, "model_error", model_name, 0, 1)
+            await asyncio.to_thread(self.run_db_log, user_id, "model_error", model_name, 0, 1)
             await handle_model_error(
                 message_id, token, raw_message, exc,
                 self.producer, self.cache, self.consumer, MODEL_ERROR_MESSAGE,
