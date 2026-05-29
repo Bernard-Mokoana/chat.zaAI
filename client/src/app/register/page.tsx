@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { register } from "@/services/auth/authApi";
-import { setAccessToken, setChatName } from "@/services/storage/chatStorage";
+import { setAccessToken, setAuthUser } from "@/services/storage/chatStorage";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -44,7 +44,7 @@ export default function RegisterPage() {
     try {
       const auth = await register({ name: trimmedName, email: trimmedEmail, password: trimmedPassword });
       setAccessToken(auth.access_token);
-      setChatName(trimmedName);
+      setAuthUser(auth.user);
 
       router.push("/chat");
     } catch (error: unknown) {

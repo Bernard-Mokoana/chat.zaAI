@@ -12,6 +12,7 @@ import {
   getChatMessages,
   setChatMessages,
   clearChatMessages,
+  clearAuthState,
 } from "@/services/storage/chatStorage";
 import ChatInterface from "@/features/chat/ChatInterface";
 import type { ChatMessage, ChatPanelProps, ChatSession, ConnectionState } from "@/types/types";
@@ -81,42 +82,46 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
   useEffect(() => {
     let alive = true;
 
+    function openSocket(chatToken: string) {
+      const accessToken = getAccessToken();
+
+      if (!accessToken) {
+        throw new Error("Access token is required to connect to chat");
+      }
+
+      socketRef.current = createChatSocket({
+        accessToken,
+        chatToken,
+        onOpen: () => setConnectionState("connected"),
+        onClose: () => {
+          setConnectionState("disconnected");
+          setIsAssistantTyping(false);
+        },
+        onError: () => {
+          setConnectionState("error");
+          setIsAssistantTyping(false);
+        },
+        onMessage: (message: string) => {
+          setIsAssistantTyping(false);
+          setMessages((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), role: "assistant", content: message },
+          ]);
+        },
+      });
+    }
+
     async function initSession() {
       setConnectionState("connecting");
       try {
         const existingToken = getChatToken();
-        const accessToken = getAccessToken();
-        if (!accessToken) {
-          console.warn("Missing access token, redirecting to login");
-          router.push("/");
-          return
-        }
 
         if (existingToken) {
           try {
             const history = await refreshChatSession(existingToken);
             if (!alive) return;
 
-            socketRef.current = createChatSocket({
-              accessToken,
-              chatToken: existingToken,
-              onOpen: () => setConnectionState("connected"),
-              onClose: () => {
-                setConnectionState("disconnected");
-                setIsAssistantTyping(false);
-              },
-              onError: () => {
-                setConnectionState("error");
-                setIsAssistantTyping(false);
-              },
-              onMessage: (message: string) => {
-                setIsAssistantTyping(false);
-                setMessages((prev) => [
-                  ...prev,
-                  { id: crypto.randomUUID(), role: "assistant", content: message },
-                ]);
-              },
-            });
+            openSocket(existingToken);
 
             if (history?.messages?.length) {
               const mapped = history.messages.map((m) => {
@@ -134,9 +139,13 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
             return;
           } catch (error: unknown) {
             const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-            if (status === 401 || status === 403) {
+            if (status === 403) {
               clearChatToken();
               clearChatMessages();
+            } else if (status === 401) {
+              clearAuthState();
+              router.push("/");
+              return;
             } else {
               throw error;
             }
@@ -147,28 +156,15 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
         if (!alive) return;
 
         setChatToken(session.token);
-
-        socketRef.current = createChatSocket({
-          accessToken,
-          chatToken: session.token,
-          onOpen: () => setConnectionState("connected"),
-          onMessage: (message: string) => {
-            setIsAssistantTyping(false);
-            setMessages((prev) => [
-              ...prev,
-              { id: crypto.randomUUID(), role: "assistant", content: message },
-            ]);
-          },
-          onClose: () => {
-            setConnectionState("disconnected");
-            setIsAssistantTyping(false);
-          },
-          onError: () => {
-            setConnectionState("error");
-            setIsAssistantTyping(false);
-          },
-        });
+        openSocket(session.token);
       } catch (error) {
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+        if (status === 401) {
+          clearAuthState();
+          router.push("/");
+          return;
+        }
+
         clearChatToken();
         clearChatMessages();
         console.error("Failed to init chat session", error);

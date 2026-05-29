@@ -3,24 +3,40 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import ChatPanel from "@/features/chat/ChatPanel";
-import { getChatName } from "@/services/storage/chatStorage";
+import { refreshAccessToken } from "@/services/auth/authApi";
+import {clearAuthState, getAccessToken, getAuthUser } from "@/services/storage/chatStorage";
 
 export default function ChatPage() {
   const router = useRouter();
   const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
-    const name = getChatName();
-    if (!name) {
-      router.push("/");
-      return;
+    let alive = true;
+
+    async function authorizeChat() {
+      const accessToken = getAccessToken();
+      const authUser = getAuthUser();
+
+      if (accessToken && authUser) {
+        if (alive) setDisplayName(authUser.name);
+        return;
+      }
+
+      try {
+        const auth = await refreshAccessToken();
+
+        if (alive) setDisplayName(auth.user.name);
+      } catch {
+        clearAuthState();
+        if (alive) router.push("/");
+      }
     }
 
-    const timeoutId = window.setTimeout(() => {
-      setDisplayName(name);
-    }, 0);
+    authorizeChat();
 
-    return () => window.clearTimeout(timeoutId);
+    return () => {
+      alive = false;
+    };
   }, [router]);
 
   if (!displayName) {

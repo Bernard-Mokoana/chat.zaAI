@@ -1,7 +1,10 @@
+import type { StoredAuthUser } from "@/types/types";
+
 const CHAT_TOKEN_KEY = "chat_token";
 const CHAT_MESSAGES_KEY = "chat_messages";
 const CHAT_NAME = "chat_name";
 const ACCESS_TOKEN_KEY = "access_token";
+const AUTH_USER_KEY = "auth_user";
 
 export function getChatToken() {
   if (typeof window === "undefined") return null;
@@ -59,6 +62,30 @@ export function clearChatName() {
   localStorage.removeItem(CHAT_NAME);
 }
 
+export function getAuthUser() {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(AUTH_USER_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as StoredAuthUser;
+  } catch (error) {
+    console.warn("Failed to parse auth user from storage", error);
+    return null;
+  }
+}
+
+export function setAuthUser(user: StoredAuthUser) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  localStorage.setItem(CHAT_NAME, user.name);
+}
+
+export function clearAuthUser() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(AUTH_USER_KEY);
+}
+
 export function getAccessToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -72,4 +99,12 @@ export function setAccessToken(token: string) {
 export function clearAccessToken() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(ACCESS_TOKEN_KEY);
+}
+
+export function clearAuthState() {
+  clearAccessToken();
+  clearAuthUser();
+  clearChatName();
+  clearChatToken();
+  clearChatMessages();
 }

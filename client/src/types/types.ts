@@ -67,3 +67,9 @@ export type ChatSessionResponse = {
   token: string;
   messages?: RedisHistoryMessage[];
 };
+
+export type StoredAuthUser = {
+  id: string;
+  name: string;
+  email: string;
+};

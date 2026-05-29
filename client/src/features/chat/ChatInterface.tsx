@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Send } from "lucide-react";
 import type { ChatInterfaceProps } from "@/types/types";
-import { clearChatToken, clearChatName, clearChatMessages, clearAccessToken} from "@/services/storage/chatStorage";
-import { loadSessions, saveSession, getActiveSessionId, setActiveSessionId, createSession} from "@/services/sessionStorage";
+import { clearAuthState } from "@/services/storage/chatStorage";
+import { loadSessions, saveSession, getActiveSessionId, setActiveSessionId, createSession} from "@/services/storage/sessionStorage";
 import type { ChatMessage, ChatSession, } from "@/types/types";
 import ChatSidebar from "./ChatSidebar";
 import { logout } from "@/services/auth/authApi";
@@ -128,10 +128,7 @@ export default function ChatInterface({
     try {
       await logout();
     } finally {
-      clearAccessToken();
-      clearChatName();
-      clearChatToken();
-      clearChatMessages();
+      clearAuthState();
       router.push("/");
     }
   };
@@ -196,7 +193,7 @@ export default function ChatInterface({
 
               <div>
                 <h2 className="font-semibold text-slate-900">AI Assistant</h2>
-                <p className="text-sm text-slate-500">Chatting with {displayName}</p>
+                <p className="text-sm text-slate-500">Welcome {displayName}</p>
               </div>
             </div>
 

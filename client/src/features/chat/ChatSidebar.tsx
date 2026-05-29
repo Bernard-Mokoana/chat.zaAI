@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageSquare, PanelLeftClose, PanelLeftOpen, Plus, Trash2, Clock } from "lucide-react";
-import { loadSessions, deleteSession } from "@/services/sessionStorage";
+import { loadSessions, deleteSession } from "@/services/storage/sessionStorage";
 import type { ChatSession, ChatSidebarProps } from "@/types/types";
 import { relativeTime, groupSessions } from "@/utils/helpers";
 
