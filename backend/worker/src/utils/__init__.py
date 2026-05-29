@@ -7,6 +7,7 @@ from .error_handlers import (
     handle_model_timeout,
     handle_model_error,
 )
+from .dbHelper import log_worker_usage, save_worker_message
 
 __all__ = [
     "parse_stream_message",
@@ -17,5 +18,7 @@ __all__ = [
     "handle_cache_failure",
     "handle_model_timeout",
     "handle_model_error",
+    "log_worker_usage",
+    "save_worker_message",
 ]
  
