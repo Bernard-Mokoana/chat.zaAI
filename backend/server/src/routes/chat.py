@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect, status
 
-from ..socket.connection import ConnectionManager
-from ..redis.producer import Producer
-from ..redis.config import Redis
-from ..redis.stream import StreamConsumer
-from ..services.conversation_services import ChatOrchestrator, conversation_service
-
+from src.socket.connection import ConnectionManager
+from src.redis.producer import Producer
+from src.redis.config import Redis
+from src.redis.stream import StreamConsumer
+from src.services.conversation_services import ChatOrchestrator
 from src.middlewares.jwt_validation import get_current_user
+from src.utils.dbUtils import conversation_service
 
 from backend.database.models.users import User
 

@@ -1,5 +1,5 @@
 from typing import Optional
-from backend.server.src.utils.token import Token
+from src.utils.token import Token
 
 token_util = Token()
 

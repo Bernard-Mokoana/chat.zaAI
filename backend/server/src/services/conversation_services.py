@@ -10,13 +10,17 @@ from fastapi import WebSocket
 from backend.database.models.conversations import Conversation
 from backend.database.models.messages import Message
 
-from backend.server.src.schema.chat import Chat
-from backend.server.src.socket.utils import validate_token
+from src.schema.chat import Chat
+from src.socket.utils import validate_token
+from src.middlewares.rateLimiter import RateLimiterStore, WS_MESSAGE_RULE
+
 
 logger = logging.getLogger(__name__)
 
 MESSAGE_CHANNEL = "message_channel"
 RESPONSE_CHANNEL = "response_channel"
+
+ws_message_limiter = RateLimiterStore()
 
 class ConversationService:
     def save_chat_message(self, db: Session, user_id: str, chat_token: str, role: str, content: str) -> Message:
@@ -121,11 +125,23 @@ class ChatOrchestrator:
 
             while True:
                 data = await websocket.receive_text()
+
+                result = ws_message_limiter.check(
+                    key=chat_token,
+                    rule=WS_MESSAGE_RULE,
+                )
+
+                if not result.allowed:
+                    await self.manager.send_personal_message(
+                        "Too many messages. Please wait a moment before sending another one",
+                        websocket,
+                    )
+                    continue
+
                 await self.producer.add_to_stream(
                     {chat_token: data},
                     MESSAGE_CHANNEL,
                 )
-
         finally:
             try:
                 self.manager.disconnect(websocket)
@@ -189,4 +205,3 @@ class ChatOrchestrator:
             return value.decode("utf-8")
         return value
     
-

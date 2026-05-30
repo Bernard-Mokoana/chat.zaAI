@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from backend.server.src.services.conversation_services import ConversationService
+from src.services.conversation_services import ConversationService
 
 conversation_service = ConversationService()
 
