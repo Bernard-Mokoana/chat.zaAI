@@ -14,9 +14,12 @@ import {
   clearChatMessages,
   clearAuthState,
 } from "@/services/storage/chatStorage";
+import { showToast } from "@/services/toast/toastEvents";
 import ChatInterface from "@/features/chat/ChatInterface";
 import type { ChatMessage, ChatPanelProps, ChatSession, ConnectionState } from "@/types/types";
 import { useRouter } from "next/navigation";
+
+const WS_RATE_LIMIT_MESSAGE = "Too many messages.";
 
 export default function ChatPanel({ displayName }: ChatPanelProps) {
   const [input, setInput] = useState("");
@@ -94,15 +97,37 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
         chatToken,
         onOpen: () => setConnectionState("connected"),
         onClose: () => {
+          if (!alive) return;
           setConnectionState("disconnected");
           setIsAssistantTyping(false);
+          showToast({
+            title: "Chat disconnected",
+            description: "Messages pause until the connection is restored.",
+            tone: "warning",
+          });
         },
         onError: () => {
+          if (!alive) return;
           setConnectionState("error");
           setIsAssistantTyping(false);
+          showToast({
+            title: "Chat connection problem",
+            description: "The live chat connection could not stay open.",
+            tone: "error",
+          });
         },
         onMessage: (message: string) => {
           setIsAssistantTyping(false);
+
+          if (message.startsWith(WS_RATE_LIMIT_MESSAGE)) {
+            showToast({
+              title: "Message limit reached",
+              description: "Please wait a moment before sending another message.",
+              tone: "warning",
+            });
+            return;
+          }
+
           setMessages((prev) => [
             ...prev,
             { id: crypto.randomUUID(), role: "assistant", content: message },
@@ -142,8 +167,18 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
             if (status === 403) {
               clearChatToken();
               clearChatMessages();
+              showToast({
+                title: "Chat session expired",
+                description: "A fresh chat session is being created.",
+                tone: "info",
+              });
             } else if (status === 401) {
               clearAuthState();
+              showToast({
+                title: "Sign in again",
+                description: "Your session expired. Please sign in to continue.",
+                tone: "warning",
+              });
               router.push("/");
               return;
             } else {
@@ -161,6 +196,11 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
         const status = axios.isAxiosError(error) ? error.response?.status : undefined;
         if (status === 401) {
           clearAuthState();
+          showToast({
+            title: "Sign in again",
+            description: "Your session expired. Please sign in to continue.",
+            tone: "warning",
+          });
           router.push("/");
           return;
         }
@@ -168,6 +208,11 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
         clearChatToken();
         clearChatMessages();
         console.error("Failed to init chat session", error);
+        showToast({
+          title: "Could not start chat",
+          description: "The chat session could not be prepared. Please try again.",
+          tone: "error",
+        });
         setConnectionState("error");
       }
     }
@@ -192,11 +237,20 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
       socketRef.current.send(trimmed);
     } catch(error) {
       console.error("Failed to send message", error);
-      // add setError() state
+      showToast({
+        title: "Message not sent",
+        description: "The chat connection rejected the message. Try again in a moment.",
+        tone: "error",
+      });
       return;
     }
     } else {
       console.warn("Cannot send message: socket not connected");
+      showToast({
+        title: "Chat is not connected",
+        description: "Wait for the connection to come back before sending another message.",
+        tone: "warning",
+      });
       return;
     }
 

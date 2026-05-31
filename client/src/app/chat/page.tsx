@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ChatPanel from "@/features/chat/ChatPanel";
 import { refreshAccessToken } from "@/services/auth/authApi";
 import {clearAuthState, getAccessToken, getAuthUser } from "@/services/storage/chatStorage";
+import { showToast } from "@/services/toast/toastEvents";
 
 export default function ChatPage() {
   const router = useRouter();
@@ -28,7 +29,14 @@ export default function ChatPage() {
         if (alive) setDisplayName(auth.user.name);
       } catch {
         clearAuthState();
-        if (alive) router.push("/");
+        if (alive) {
+          showToast({
+            title: "Sign in again",
+            description: "Your session expired. Please sign in to continue.",
+            tone: "warning",
+          });
+          router.push("/");
+        }
       }
     }
 

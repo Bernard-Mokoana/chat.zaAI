@@ -10,6 +10,7 @@ import { loadSessions, saveSession, getActiveSessionId, setActiveSessionId, crea
 import type { ChatMessage, ChatSession, } from "@/types/types";
 import ChatSidebar from "./ChatSidebar";
 import { logout } from "@/services/auth/authApi";
+import { showToast } from "@/services/toast/toastEvents";
 
 
 const connectionTone = {
@@ -127,6 +128,17 @@ export default function ChatInterface({
   const confirmLogout = async () => {
     try {
       await logout();
+      showToast({
+        title: "Signed out",
+        description: "Your session has been closed.",
+        tone: "success",
+      });
+    } catch {
+      showToast({
+        title: "Signed out locally",
+        description: "We could not reach the server, but your local session was cleared.",
+        tone: "warning",
+      });
     } finally {
       clearAuthState();
       router.push("/");

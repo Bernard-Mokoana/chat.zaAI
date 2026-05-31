@@ -3,43 +3,47 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { login } from "@/services/auth/authApi";
+import { getAuthErrorToast } from "@/services/auth/authMessages";
 import { setAccessToken, setAuthUser } from "@/services/storage/chatStorage";
+import { showToast } from "@/services/toast/toastEvents";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedEmail = email.trim().toLowerCase();
 
     if (!trimmedEmail || !password) {
-      setError("Please fill in all fields");
+      showToast({
+        title: "Missing sign-in details",
+        description: "Enter both your email address and password.",
+        tone: "warning",
+      });
       return;
     };
     if (isSubmitting) return;
 
     setIsSubmitting(true);
-    setError(null);
 
     try {
       const auth = await login({ email: trimmedEmail, password });
       setAccessToken(auth.access_token);
       setAuthUser(auth.user);
+      showToast({
+        title: "Signed in",
+        description: `Welcome back, ${auth.user.name}.`,
+        tone: "success",
+      });
 
       router.push("/chat");
     } catch (error: unknown) {
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.detail || error.message
-        : error instanceof Error
-          ? error.message
-          : "Login failed.";
-      setError(typeof message === "string" ? message : "Login failed.");
+      const toast = getAuthErrorToast("login", error);
+      if (toast) showToast(toast);
     } finally {
       setIsSubmitting(false);
     }
@@ -54,8 +58,6 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: "0.9rem", marginTop: "1rem" }}>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
-
-          {error ? <p style={{ margin: 0, color: "#b91c1c", fontSize: "0.9rem" }}>{error}</p> : null}
 
           <button type="submit" disabled={isSubmitting} style={{ padding: "0.8rem", borderRadius: 10, border: "none", background: "#1d4ed8", color: "#fff", fontWeight: 600, cursor: "pointer", opacity: isSubmitting ? 0.75 : 1 }}>
             {isSubmitting ? "Signing in..." : "Sign In"}

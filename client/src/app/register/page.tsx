@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { register } from "@/services/auth/authApi";
+import { getAuthErrorToast } from "@/services/auth/authMessages";
 import { setAccessToken, setAuthUser } from "@/services/storage/chatStorage";
+import { showToast } from "@/services/toast/toastEvents";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,7 +14,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -22,38 +22,50 @@ export default function RegisterPage() {
     const trimmedPassword = password.trim();
 
     if (trimmedPassword.length < 8) {
-      setError("Password must be at least 8 characters long");
+      showToast({
+        title: "Password is too short",
+        description: "Use at least 8 characters.",
+        tone: "warning",
+      });
       return;
     }
 
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
 
     if (!passwordRegex.test(password)) {
-      setError("Password must include uppercase, lowercase, number, and special character");
+      showToast({
+        title: "Password needs more variety",
+        description: "Include uppercase, lowercase, a number, and a special character.",
+        tone: "warning",
+      });
       return;
     }
 
     if (!trimmedName || !trimmedEmail || !trimmedPassword) {
-      setError("Please fill in all fields");
+      showToast({
+        title: "Missing registration details",
+        description: "Enter your name, email address, and password.",
+        tone: "warning",
+      });
       return;
     }
 
     setIsSubmitting(true);
-    setError(null);
 
     try {
       const auth = await register({ name: trimmedName, email: trimmedEmail, password: trimmedPassword });
       setAccessToken(auth.access_token);
       setAuthUser(auth.user);
+      showToast({
+        title: "Account created",
+        description: `Welcome, ${auth.user.name}. Your chat is ready.`,
+        tone: "success",
+      });
 
       router.push("/chat");
     } catch (error: unknown) {
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.detail || error.message
-        : error instanceof Error
-          ? error.message
-          : "Registration failed.";
-      setError(typeof message === "string" ? message : "Registration failed.");
+      const toast = getAuthErrorToast("register", error);
+      if (toast) showToast(toast);
     } finally {
       setIsSubmitting(false);
     }
@@ -69,8 +81,6 @@ export default function RegisterPage() {
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password (min 8 chars)" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
-
-          {error ? <p style={{ margin: 0, color: "#b91c1c", fontSize: "0.9rem" }}>{error}</p> : null}
 
           <button type="submit" disabled={isSubmitting} style={{ padding: "0.8rem", borderRadius: 10, border: "none", background: "#0f766e", color: "#fff", fontWeight: 600, cursor: "pointer", opacity: isSubmitting ? 0.75 : 1 }}>
             {isSubmitting ? "Creating account..." : "Register"}

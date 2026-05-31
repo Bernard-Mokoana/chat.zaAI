@@ -9,7 +9,13 @@ import {
   setAccessToken,
   setAuthUser,
 } from "./storage/chatStorage";
+import {
+  getRateLimitDescription,
+  getRateLimitTitle,
+} from "./rateLimit/rateLimitMessages";
+import { showToast } from "./toast/toastEvents";
 import type { AuthResponse } from "@/types/types";
+import type { RateLimitResponse } from "@/types/types";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:3500";
@@ -76,6 +82,20 @@ httpClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetriableRequestConfig | undefined;
     const status = error.response?.status;
+
+    if (status === 429) {
+      const payload = error.response?.data as RateLimitResponse | undefined;
+      showToast({
+        title: getRateLimitTitle(payload?.rate_limit?.scope),
+        description: getRateLimitDescription(
+          payload,
+          error.response?.headers["retry-after"],
+        ),
+        tone: "warning",
+      });
+
+      return Promise.reject(error);
+    }
 
     if (
       status !== 401 ||

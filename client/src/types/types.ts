@@ -73,3 +73,24 @@ export type StoredAuthUser = {
   name: string;
   email: string;
 };
+
+export type ToastTone = "info" | "success" | "warning" | "error";
+
+export type ToastPayload = {
+  title: string;
+  description?: string;
+  tone?: ToastTone;
+};
+
+export type ToastItem = ToastPayload & {
+  id: string;
+  tone: ToastTone;
+};
+
+export type RateLimitResponse = {
+  detail?: string;
+  rate_limit?: {
+    scope?: string;
+    retry_after?: number;
+  };
+};
