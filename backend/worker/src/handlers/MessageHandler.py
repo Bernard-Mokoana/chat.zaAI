@@ -9,7 +9,7 @@ from src.redis.producer import Producer
 from src.redis.stream import StreamConsumer
 from src.schema.chat import Message
 
-from src.config.settings import (RESPONSE_CHANNEL, STREAM_CHANNEL, MODEL_ERROR_MESSAGE, MODEL_TIMEOUT_MESSAGE, CHAT_HISTORY_WINDOW)
+from src.config.settings import (RESPONSE_CHANNEL, STREAM_CHANNEL, MODEL_ERROR_MESSAGE, DEAD_LETTER_CHANNEL, MODEL_TIMEOUT_MESSAGE, CHAT_HISTORY_WINDOW, MAX_RETRIES)
 from src.services.model import query_model
 from src.utils.parsing import parse_stream_message
 from src.utils.error_handlers import (handle_invalid_envelope, handle_cache_failure, handle_model_timeout, handle_model_error)
@@ -35,8 +35,44 @@ class MessageHandler:
             await handle_invalid_envelope(message, self.producer, self.consumer)
             return
 
-        message_id, token, text = parsed
-        await self._process(message_id, token, text, raw_message=message)
+        message_id, token, text, retry_count = parsed
+
+        try:
+            await self._process(message_id, token, text, raw_message=message)
+        except Exception as exc:
+            await self._handle_retry(message_id, token, text, retry_count, exc)
+
+    async def _handle_retry(self, message_id, token: str, text: str, retry_count: int, exception: Exception) -> None:
+        if retry_count < MAX_RETRIES:
+            new_retry_count = retry_count + 1
+            logger.warning(
+                "Processing failed for message %s (Token: %s). Retrying execution attempt %d/%d. Error: %s",
+                message_id, token, new_retry_count, MAX_RETRIES, exception
+            )
+
+            retry_payload = {
+                "token": token,
+                "text": text,
+                "retry_count": str(new_retry_count)
+            }
+
+            await self.producer.add_to_stream(retry_payload, STREAM_CHANNEL)
+
+            await self.consumer.delete_message(stream_channel=STREAM_CHANNEL, message_id=message_id)
+        else:
+            logger.error(
+                "Message %s (Token: %s) exceeded maximum retries (%d). Sending payload to dead-letter state",
+                message_id, token, MAX_RETRIES
+            )
+            dead_letter_payload = {
+                "token": token,
+                "text": text,
+                "retry_count": str(retry_count),
+                "error": str(exception)
+            }
+            await self.producer.add_to_stream(dead_letter_payload, DEAD_LETTER_CHANNEL)
+
+            await self.consumer.delete_message(stream_channel=STREAM_CHANNEL, message_id=message_id)
 
     async def _process(self, message_id, token: str, text: str, raw_message) -> None:
         # Fetch session metadata from cache to acquire user_id
@@ -71,9 +107,9 @@ class MessageHandler:
         try:
             response_text = await self._call_model_with_logging(message_id, token, raw_message, prompt, user_id, model_name)
             if response_text is None:
-                return  
+                raise RuntimeError("Model execution returned empty response context.")
         except Exception as e:
-            return
+            raise
 
         # Publish response
         await self._publish_response(message_id, token, response_text)

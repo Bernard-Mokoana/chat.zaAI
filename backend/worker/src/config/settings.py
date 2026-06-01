@@ -14,6 +14,8 @@ MODEL_TIMEOUT_MESSAGE = "Sorry, the model took too long to respond. Please try a
 
 CHAT_HISTORY_WINDOW = 4
 
+MAX_RETRIES = 3
+
 def get_model_query_timeout() -> float:
     raw_timeout = os.environ.get("MODEL_QUERY_TIMEOUT_SEC")
     if not raw_timeout:
