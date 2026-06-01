@@ -21,7 +21,7 @@ export async function refreshChatSession(
   const response = await httpClient.get<ChatSessionResponse>(
     "/api/v1/chat/refresh_token",
     {
-      params: { token },
+      headers: { "x-Chat-Token": token },
     },
   );
 

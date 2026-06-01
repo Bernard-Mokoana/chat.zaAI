@@ -1,6 +1,10 @@
 import { httpClient } from "../httpClient";
 import type { AuthResponse } from "@/types/types";
-import { setAccessToken, setAuthUser } from "../storage/chatStorage";
+import {
+  clearAuthState,
+  setAccessToken,
+  setAuthUser,
+} from "../storage/chatStorage";
 
 export async function login(payload: { email: string; password: string }) {
   const response = await httpClient.post<AuthResponse>(
@@ -24,6 +28,7 @@ export async function register(payload: {
 
 export async function logout() {
   const response = await httpClient.post("/api/v1/auth/logout");
+  clearAuthState();
   return response.data;
 }
 

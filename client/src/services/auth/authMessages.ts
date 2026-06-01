@@ -1,11 +1,5 @@
 import axios from "axios";
-import type { ToastPayload } from "@/types/types";
-
-type AuthAction = "login" | "register";
-
-type ApiErrorPayload = {
-  detail?: unknown;
-};
+import type { ToastPayload, AuthAction, ApiErrorPayload } from "@/types/types";
 
 function getDetail(error: unknown) {
   if (!axios.isAxiosError<ApiErrorPayload>(error)) return null;
@@ -13,10 +7,14 @@ function getDetail(error: unknown) {
   return typeof detail === "string" ? detail : null;
 }
 
-export function getAuthErrorToast(action: AuthAction, error: unknown): ToastPayload | null {
+export function getAuthErrorToast(
+  action: AuthAction,
+  error: unknown,
+): ToastPayload | null {
   if (!axios.isAxiosError(error)) {
     return {
-      title: action === "login" ? "Could not sign in" : "Could not create account",
+      title:
+        action === "login" ? "Could not sign in" : "Could not create account",
       description: "Something went wrong. Please try again.",
       tone: "error",
     };
@@ -25,7 +23,15 @@ export function getAuthErrorToast(action: AuthAction, error: unknown): ToastPayl
   const status = error.response?.status;
 
   if (status === 429) {
-    return null;
+    return {
+      title:
+        action === "login" ? "Could not sign in" : "Could not create account",
+      description:
+        action === "login"
+          ? "Too many login attempts. Try again later."
+          : "Too many registration attempts. Try again later.",
+      tone: "error",
+    };
   }
 
   if (action === "login") {
@@ -39,7 +45,8 @@ export function getAuthErrorToast(action: AuthAction, error: unknown): ToastPayl
 
     return {
       title: "Could not sign in",
-      description: getDetail(error) ?? "The sign-in request could not be completed.",
+      description:
+        getDetail(error) ?? "The sign-in request could not be completed.",
       tone: "error",
     };
   }
@@ -47,7 +54,8 @@ export function getAuthErrorToast(action: AuthAction, error: unknown): ToastPayl
   if (status === 409) {
     return {
       title: "Email already registered",
-      description: "Use the sign-in page or register with a different email address.",
+      description:
+        "Use the sign-in page or register with a different email address.",
       tone: "error",
     };
   }
@@ -55,14 +63,16 @@ export function getAuthErrorToast(action: AuthAction, error: unknown): ToastPayl
   if (status === 400) {
     return {
       title: "Check your registration details",
-      description: getDetail(error) ?? "Update the highlighted details and try again.",
+      description:
+        getDetail(error) ?? "Update the highlighted details and try again.",
       tone: "error",
     };
   }
 
   return {
     title: "Could not create account",
-    description: getDetail(error) ?? "The registration request could not be completed.",
+    description:
+      getDetail(error) ?? "The registration request could not be completed.",
     tone: "error",
   };
 }

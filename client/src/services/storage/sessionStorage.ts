@@ -4,6 +4,7 @@ const SESSIONS_KEY = "chat_sessions";
 const ACTIVE_SESSION_KEY = "active_session_id";
 
 export function loadSessions(): ChatSession[] {
+  if (typeof window === "undefined") return [];
   try {
     const parsed = JSON.parse(localStorage.getItem(SESSIONS_KEY) ?? "[]");
     return Array.isArray(parsed) ? parsed : [];
@@ -13,6 +14,7 @@ export function loadSessions(): ChatSession[] {
 }
 
 export function saveSession(session: ChatSession): void {
+  if (typeof window === "undefined") return;
   try {
     const sessions = loadSessions();
     const idx = sessions.findIndex((s) => s.id === session.id);
@@ -23,8 +25,8 @@ export function saveSession(session: ChatSession): void {
     console.error("Failed to save session:", error);
   }
 }
-
 export function deleteSession(id: string): void {
+  if (typeof window === "undefined") return;
   try {
     const sessions = loadSessions().filter((s) => s.id !== id);
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
@@ -32,16 +34,16 @@ export function deleteSession(id: string): void {
     console.error("Failed to delete session:", error);
   }
 }
-
 export function getActiveSessionId(): string | null {
+  if (typeof window === "undefined") return null;
   try {
     return localStorage.getItem(ACTIVE_SESSION_KEY);
   } catch {
     return null;
   }
 }
-
 export function setActiveSessionId(id: string | null): void {
+  if (typeof window === "undefined") return;
   try {
     if (id) localStorage.setItem(ACTIVE_SESSION_KEY, id);
     else localStorage.removeItem(ACTIVE_SESSION_KEY);

@@ -15,7 +15,7 @@ async def send_error_response(message_id, token: str, error_text: str, producer:
     error_msg = Message(msg=error_text)
     await producer.add_to_stream({str(token): error_msg.msg}, RESPONSE_CHANNEL)
     await cache.add_message_to_cache(
-        token=token, source="Bot", message_data=error_msg.model_dump()
+        token=token, source="Bot", message_data=error_msg.model_dump(mode="json")
     )
     await consumer.delete_message(stream_channel=STREAM_CHANNEL, message_id=message_id)
 

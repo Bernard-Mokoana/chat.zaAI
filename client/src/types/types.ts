@@ -94,3 +94,9 @@ export type RateLimitResponse = {
     retry_after?: number;
   };
 };
+
+export type AuthAction = "login" | "register";
+
+export type ApiErrorPayload = {
+  detail?: unknown;
+};

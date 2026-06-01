@@ -26,7 +26,9 @@ async def register(payload: RegisterSchema, response: Response, request: Request
 @auth.post("/login")
 async def login(payload: LoginSchema, response: Response, request: Request, db: Session = Depends(get_write_db)):
 
-    user = db.query(User).filter(User.email == payload.email).first()
+    normalized_email = payload.email.strip().lower()
+
+    user = db.query(User).filter(User.email == normalized_email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     

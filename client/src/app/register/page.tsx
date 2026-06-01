@@ -32,7 +32,7 @@ export default function RegisterPage() {
 
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
 
-    if (!passwordRegex.test(password)) {
+    if (!passwordRegex.test(trimmedPassword)) {
       showToast({
         title: "Password needs more variety",
         description: "Include uppercase, lowercase, a number, and a special character.",

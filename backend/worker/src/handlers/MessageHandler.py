@@ -49,7 +49,7 @@ class MessageHandler:
         
         user_id = chat_metadata["user_id"]
         # Extract model name
-        model_name = getattr(self.gpt_client, "model_name", "GPT-J")
+        model_name = getattr(self.gpt_client, "model_id", "GPT-J")
 
         # Store incoming user message
         user_msg = Message(msg=text)

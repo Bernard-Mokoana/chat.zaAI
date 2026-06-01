@@ -6,7 +6,7 @@ import ChatPanel from "@/features/chat/ChatPanel";
 import { refreshAccessToken } from "@/services/auth/authApi";
 import {clearAuthState, getAccessToken, getAuthUser } from "@/services/storage/chatStorage";
 import { showToast } from "@/services/toast/toastEvents";
-
+import { isTokenExpired } from "@/utils/isTokenExpired";
 export default function ChatPage() {
   const router = useRouter();
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -18,14 +18,15 @@ export default function ChatPage() {
       const accessToken = getAccessToken();
       const authUser = getAuthUser();
 
-      if (accessToken && authUser) {
+      // Valid token, use not close to expiry(Use it directly)
+      if (accessToken && authUser && !isTokenExpired(accessToken)) {
         if (alive) setDisplayName(authUser.name);
         return;
       }
 
+      // No valid token, silent refresh before expiry
       try {
         const auth = await refreshAccessToken();
-
         if (alive) setDisplayName(auth.user.name);
       } catch {
         clearAuthState();
@@ -47,9 +48,7 @@ export default function ChatPage() {
     };
   }, [router]);
 
-  if (!displayName) {
-    return null; // both server and client agree on this initial render
-  }
+  if (!displayName) return null; // both server and client agree on this initial render
 
   return (
     <main style={{ minHeight: "100vh" }}>

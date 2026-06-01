@@ -48,7 +48,7 @@ class GPT:
             if not response.choices:
                 raise RuntimeError("Empty response from model")
             
-            text = response.choices[0].message.content
+            text = response.choices[0].message.content or ""
             
             if "Human: " in text:
                 res = text.split("Human: ")[0].strip()

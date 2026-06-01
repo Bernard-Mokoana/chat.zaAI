@@ -39,12 +39,14 @@ class ConversationService:
 
         if not conversation:
             conversation = Conversation(
-                id=UUID(chat_token),
+                id=conversation_uuid,
                 user_id=UUID(user_id),
                 title=self._build_title(content, normalized_role),
             )
             db.add(conversation)
             db.flush()
+        elif str(conversation.user_id) != str(user_id):
+            raise PermissionError("Conversation does not belong to user")
 
         message = Message(
             conversation_id=conversation.id,
