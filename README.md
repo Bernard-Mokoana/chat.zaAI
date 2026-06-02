@@ -52,6 +52,7 @@ Data persistence is currently hybrid:
 The backend entity relationships are documented here:
 
 - [AI Chatbot ERD documentation](docs/ai-chatbot-erd.md)
+- [Database read/write strategy and failover runbook](docs/database-read-write-strategy.md)
 - Editable Draw.io source: [docs/AI Chatbot ERD.drawio](docs/AI%20Chatbot%20ERD.drawio)
 - Image export: [Application Architecture/AI Chatbot ERD.jpg](Application%20Architecture/AI%20Chatbot%20ERD.jpg)
 
@@ -182,13 +183,17 @@ pip install -r requirements.txt
 ```env
 APP_ENV=development
 REDIS_URL=redis://localhost:6379/0
-DATABASE_URL=postgresql+psycopg://postgres:password@localhost:5432/chatbot
+DATABASE_PRIMARY_URL=postgresql+psycopg://postgres:password@localhost:5432/chatbot
+DATABASE_REPLICA_URL=postgresql+psycopg://postgres:password@localhost:5432/chatbot
+DATABASE_READ_FROM_REPLICA=true
+DATABASE_ALLOW_REPLICA_FALLBACK=true
 ```
 
 Notes:
 
 - `server/src/redis/config.py` currently reads `REDIS_URL`.
-- `server/src/database/config/databaseConfig.py` requires `DATABASE_URL` and will raise an error if it is missing.
+- `backend/database/config/databaseConfig.py` requires `DATABASE_PRIMARY_URL`.
+- `DATABASE_REPLICA_URL` is optional in local development when `DATABASE_ALLOW_REPLICA_FALLBACK=true`; production should provide a real read-replica URL or explicitly set `DATABASE_READ_FROM_REPLICA=false` during maintenance.
 - `python server/main.py` only starts Uvicorn when `APP_ENV=development`.
 
 ### Database migrations (Alembic)
