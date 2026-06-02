@@ -138,7 +138,6 @@ class MessageHandler:
             await asyncio.wait_for(
                 asyncio.to_thread(
                     save_worker_message,
-                    self.session_factory,
                     user_id,
                     token,
                     role,
@@ -146,10 +145,9 @@ class MessageHandler:
                 ),
                 timeout=10.0,
             )
-        except asyncio.TimeoutError:
-            logger.error("Timed out persisting %s message to DB (token: %s)", role, token)
-        except Exception as exc:
+        except (asyncio.TimeoutError, Exception) as exc:
             logger.error("Failed to persist %s message to DB: %s", role, exc)
+            raise exc
 
     async def _log_usage(self, user_id: str, event_type: str, model_name: str | None, total_tokens: int | None, message_count: int | None) -> None:
         try:
