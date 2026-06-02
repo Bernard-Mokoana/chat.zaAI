@@ -1,3 +1,4 @@
+from sqlalchemy.orm import Session
 from fastapi import APIRouter, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect, status
 
 from src.socket.connection import ConnectionManager
@@ -6,9 +7,11 @@ from src.redis.config import Redis
 from src.redis.stream import StreamConsumer
 from src.services.conversation_services import ChatOrchestrator
 from src.middlewares.jwt_validation import get_current_user
-from src.utils.dbUtils import conversation_service
+from src.utils.dbUtils import conversation_service, get_conversation_history_from_db
 
 from backend.database.models.users import User
+
+from backend.database.config.databaseConfig import get_read_db
 
 chat = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -83,3 +86,23 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         pass  # orchestrator.run's finally block handles disconnect
     # Update connectionManager disconnect to be idempotence
+
+@chat.get("/history/{chat_token}")
+async def get_chat_history(
+    chat_token: str,
+    db: Session = Depends(get_read_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        history = get_conversation_history_from_db(
+            db=db,
+            user_id=str(current_user.id),
+            chat_token=chat_token,
+            limit=50,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+
+    return {"status": "success", "history": history}

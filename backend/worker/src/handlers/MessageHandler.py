@@ -13,7 +13,9 @@ from src.config.settings import (RESPONSE_CHANNEL, STREAM_CHANNEL, MODEL_ERROR_M
 from src.services.model import query_model
 from src.utils.parsing import parse_stream_message
 from src.utils.error_handlers import (handle_invalid_envelope, handle_cache_failure, handle_model_timeout, handle_model_error)
-from src.utils.dbHelper import log_worker_usage, save_worker_message
+from src.utils.dbHelper import log_worker_usage, save_worker_message, get_conversation_history_from_db
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +58,7 @@ class MessageHandler:
             )
 
             retry_payload = {
-                "token": token,
-                "text": text,
+                token: text,
                 "retry_count": str(new_retry_count),
             }
 
@@ -101,15 +102,16 @@ class MessageHandler:
         self.cache.add_message_to_cache(
             token=token, source="Human", message_data=user_msg.model_dump()
         )
+        # Persist the incoming Human message to postgres
         await self._save_message(user_id, token, "human", text)
 
         # Build prompt from recent chat history (includes the message just added)
-        prompt = self._build_prompt(token)
+        prompt = await self._build_prompt_from_db(user_id, token)
         if prompt is None:
             await handle_cache_failure(
                 message_id, token, raw_message, self.producer, self.cache, self.consumer
             )
-            return
+            raise RuntimeError("Database history retrieval failure")
 
         # Query the model; propagate exceptions so _handle_retry can act on them
         response_text = await self._call_model_with_logging(
@@ -126,18 +128,32 @@ class MessageHandler:
         estimated_tokens = len(prompt + response_text) // 4
         await self._log_usage(user_id, "inference_success", model_name, estimated_tokens, 1)
 
-    def _build_prompt(self, token: str) -> str | None:
-        data = self.cache.get_chat_history(token=token)
-        if not data:
+    async def _build_prompt_from_db(self, user_id: str, token: str) -> str | None:
+        try:
+            def fetch_action():
+                with self.session_factory() as session:
+                    return get_conversation_history_from_db(
+                        session=session,
+                        user_id=user_id,
+                        token=token,
+                        limit=CHAT_HISTORY_WINDOW,
+                    )
+            
+            history_rounds = await asyncio.to_thread(fetch_action)
+            if not history_rounds:
+                return None
+            
+            return " ".join(m["msg"] for m in history_rounds)
+        except Exception as exc:
+            logger.error(f"Error compiling prompt window from database: {exc}")
             return None
-        messages = data.get("messages", [])[-CHAT_HISTORY_WINDOW:]
-        return " ".join(m["msg"] for m in messages) if messages else None
 
     async def _save_message(self, user_id: str, token: str, role: str, content: str) -> None:
         try:
             await asyncio.wait_for(
                 asyncio.to_thread(
                     save_worker_message,
+                    self.session_factory,
                     user_id,
                     token,
                     role,
