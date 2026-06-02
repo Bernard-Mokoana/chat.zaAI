@@ -32,7 +32,6 @@ class Base(DeclarativeBase):
     pass
 
 def get_write_db():
-    """Use for writes and reads that must observe a just-committed write."""
     db = SessionPrimary()
     try:
         yield db
@@ -44,7 +43,6 @@ def get_write_db():
         db.close()
 
 def get_read_db():
-    """Use for replica-safe reads that can tolerate normal replication lag."""
     db = SessionReplica()
     try:
         yield db

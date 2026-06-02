@@ -1,6 +1,9 @@
 import os
 import sys
 
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -8,15 +11,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
-
-from src.database.config.databaseConfig import Base
-
-from src.database.models import users
-from src.database.models import messages
-from src.database.models import conversations
-from src.database.models import refresh_token
-from src.database.models import usage_logs
+from backend.database.config.databaseConfig import Base
 
 target_metadata = Base.metadata
 
@@ -52,7 +47,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = config.get_main_option("sqlalchemy.url", os.environ.get("DATABASE_PRIMARY_URL"))
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -71,6 +67,8 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_PRIMARY_URL"))
+    
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
