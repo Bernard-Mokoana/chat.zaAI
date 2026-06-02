@@ -11,7 +11,7 @@ from backend.database.config.databaseConfig import SessionPrimary
 
 from redis.exceptions import ConnectionError as RedisConnectionError
 
-from src.redis.config import Redis
+from src.redis.config import RedisManager
 from src.redis.cache import Cache
 from src.redis.stream import StreamConsumer
 from src.redis.producer import Producer
@@ -23,7 +23,7 @@ from src.handlers.MessageHandler import MessageHandler
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-redis_client = Redis()
+redis_manager = RedisManager()
 shutdown_event = asyncio.Event()
 
 RETRY_BACKOFF_SEC = 5
@@ -37,11 +37,11 @@ signal.signal(signal.SIGINT, handle_shutdown)
 
 
 async def main() -> None:
-    json_client = redis_client.create_json_connection()
-    redis_conn = await redis_client.create_connection()
+    async_client = await redis_manager.get_async_client()
+    json_client = redis_manager.get_sync_json_client()
 
-    consumer = StreamConsumer(redis_conn)
-    producer = Producer(redis_conn)
+    consumer = redis_manager.consumer
+    producer = Producer(async_client)
     cache = Cache(json_client)
     gpt_client = GPT()
     model_timeout = get_model_query_timeout()
@@ -60,7 +60,7 @@ async def main() -> None:
     while not shutdown_event.is_set():
         try:
             response = await consumer.consume_stream(
-                stream_channel=STREAM_CHANNEL, count=1, block=5000
+                stream_channel=STREAM_CHANNEL, count=10, block=0
             )
             if not response:
                 continue

@@ -8,7 +8,7 @@ from src.redis.stream import StreamConsumer
 
 load_dotenv()
 
-class Redis():
+class RedisManager:
     def __init__(self):
         self.url = os.environ.get("REDIS_URL")
         if not self.url:
@@ -17,7 +17,7 @@ class Redis():
         self.shared_redis_client = redis_async.from_url(
             self.url,
             decode_responses=True,
-            socket_timeout=300,            
+            socket_timeout=None,            
             socket_connect_timeout=10,     
             health_check_interval=30
         )
@@ -26,6 +26,9 @@ class Redis():
 
     async def get_async_client(self) -> redis_async.Redis:
         return self.shared_redis_client
+    
+    def get_sync_json_client(self) -> redis.Redis:
+        return redis.Redis.from_url(self.url, decode_responses=True)
 
     async def create_connection(self):
         return redis_async.from_url(self.url, db=0)

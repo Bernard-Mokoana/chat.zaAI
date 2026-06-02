@@ -1,4 +1,3 @@
-from .config import Redis
 from redis.commands.json.path import Path
 from datetime import datetime
 from uuid import UUID
