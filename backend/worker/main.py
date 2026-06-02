@@ -57,7 +57,6 @@ async def main() -> None:
 
     logger.info("Stream consumer started, waiting for messages on '%s'", STREAM_CHANNEL)
 
-    # while True:
     while not shutdown_event.is_set():
         try:
             response = await consumer.consume_stream(

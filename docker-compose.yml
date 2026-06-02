@@ -4,7 +4,11 @@ services:
     image: redis/redis-stack-server:latest
     container_name: chatbot-redis
     ports:
+<<<<<<< HEAD
       - "6379"
+=======
+      - "6380:6379"
+>>>>>>> 9bf6be7 (Refactor Dockerfiles and add async Redis client)
     volumes:
       - redis_data:/data
     restart: always
@@ -28,7 +32,11 @@ services:
       - redis
     restart: always
 
+<<<<<<< HEAD
   # Background Python Worker
+=======
+  # Background Worker
+>>>>>>> 9bf6be7 (Refactor Dockerfiles and add async Redis client)
   worker:
     build:
       context: .

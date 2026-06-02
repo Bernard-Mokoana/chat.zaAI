@@ -10,8 +10,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+RUN pip install --no-cache-dir psycopg2-binary "pydantic[email]"
+
+COPY backend/ /app/backend/
+
+WORKDIR /app/backend/server
 
 EXPOSE 3500
+
+ENV PYTHONPATH=/app
 
 CMD ["uvicorn", "main:api", "--host", "0.0.0.0", "--port", "3500"]
