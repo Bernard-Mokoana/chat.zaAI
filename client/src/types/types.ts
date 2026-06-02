@@ -29,6 +29,7 @@ export type ChatMessage = {
 
 export type ChatInterfaceProps = {
   displayName: string;
+  chatToken: string | null;
   connectionState: ConnectionState;
   messages: ChatMessage[];
   input: string;
@@ -43,6 +44,7 @@ export type ChatPanelProps = {
 
 export interface ChatSession {
   id: string;
+  chatToken?: string;
   title: string;
   preview: string;
   messages: ChatMessage[];
@@ -61,11 +63,17 @@ export interface ChatSidebarProps {
 export type RedisHistoryMessage = {
   id?: string;
   msg?: string;
+  role?: string;
 };
 
 export type ChatSessionResponse = {
   token: string;
   messages?: RedisHistoryMessage[];
+};
+
+export type ChatHistoryResponse = {
+  status: string;
+  history: RedisHistoryMessage[];
 };
 
 export type StoredAuthUser = {

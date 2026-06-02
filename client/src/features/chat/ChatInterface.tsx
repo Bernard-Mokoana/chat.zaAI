@@ -38,6 +38,7 @@ const connectionTone = {
 
 export default function ChatInterface({
   displayName,
+  chatToken,
   connectionState,
   messages,
   input,
@@ -62,6 +63,7 @@ export default function ChatInterface({
 
     const updated: ChatSession = {
       id: activeSessionId,
+      chatToken: existing?.chatToken ?? chatToken ?? undefined,
       title: existing?.title ?? messages[0]?.content?.slice(0, 40) ?? "New conversation",
       preview: lastMsg?.content?.slice(0, 80) ?? "",
       messages: messages as ChatMessage[],
@@ -70,13 +72,13 @@ export default function ChatInterface({
     };
 
     saveSession(updated);
-  }, [messages, activeSessionId]);
+  }, [messages, activeSessionId, chatToken]);
 
   // Create a new session when there's no active one and the first message arrives
   useEffect(() => {
     if (activeSessionId || messages.length === 0) return;
 
-    const newSession = createSession(messages[0] as ChatMessage);
+    const newSession = createSession(messages[0] as ChatMessage, chatToken ?? undefined);
     saveSession(newSession);
 
     const timeoutId = window.setTimeout(() => {
@@ -85,7 +87,7 @@ export default function ChatInterface({
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [messages, activeSessionId]);
+  }, [messages, activeSessionId, chatToken]);
 
 
   const handleSelectSession = useCallback(

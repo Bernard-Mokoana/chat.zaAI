@@ -1,4 +1,4 @@
-import type { ChatSessionResponse } from "@/types/types";
+import type { ChatHistoryResponse, ChatSessionResponse } from "@/types/types";
 import { httpClient } from "../httpClient";
 
 export async function createChatSession(
@@ -21,8 +21,18 @@ export async function refreshChatSession(
   const response = await httpClient.get<ChatSessionResponse>(
     "/api/v1/chat/refresh_token",
     {
-      headers: { "x-Chat-Token": token },
+      params: { token },
     },
+  );
+
+  return response.data;
+}
+
+export async function getChatHistory(
+  token: string,
+): Promise<ChatHistoryResponse> {
+  const response = await httpClient.get<ChatHistoryResponse>(
+    `/api/v1/chat/history/${token}`,
   );
 
   return response.data;

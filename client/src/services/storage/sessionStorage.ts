@@ -52,14 +52,15 @@ export function setActiveSessionId(id: string | null): void {
   }
 }
 
-export function createSession(firstMessage?: ChatMessage): ChatSession {
+export function createSession(firstMessage?: ChatMessage, chatToken?: string): ChatSession {
   const now = Date.now();
   const title = firstMessage
     ? firstMessage.content.slice(0, 40) +
       (firstMessage.content.length > 40 ? "…" : "")
     : "New conversation";
   return {
-    id: `session_${now}_${Math.random().toString(36).slice(2, 7)}`,
+    id: chatToken ?? `session_${now}_${Math.random().toString(36).slice(2, 7)}`,
+    chatToken,
     title,
     preview: firstMessage?.content ?? "",
     messages: firstMessage ? [firstMessage] : [],

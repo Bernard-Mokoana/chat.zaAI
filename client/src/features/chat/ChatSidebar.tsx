@@ -119,6 +119,7 @@ export default function ChatSidebar({
   onSelectSession,
   onNewChat,
   onDeleteSession,
+  liveMessages = [],
   refreshTrigger = 0,
 }: ChatSidebarProps & { refreshTrigger?: number}) {
   const [isOpen, setIsOpen] = useState(true);
@@ -130,7 +131,7 @@ export default function ChatSidebar({
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [activeSessionId, refreshTrigger]);
+  }, [activeSessionId, refreshTrigger, liveMessages.length]);
 
 
 
