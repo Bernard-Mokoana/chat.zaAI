@@ -8,14 +8,32 @@ DEAD_LETTER_CHANNEL = "dead_letter_channel"
 
 
 async def route_to_dead_letter_queue(producer: Producer, original_message: tuple, error_reason: str) -> None:
-    try:
-        message_id, raw_fields = original_message[0], original_message[1]
+    if not original_message or len(original_message) < 2:
+        logger.error(
+            "Cannot route to dead-letter queue: malformed message envelope %r",
+            original_message,
+        )
+        return
 
-        payload = {
-            "original_id": str(message_id),
-            "error_reason": error_reason,
-            "payload": str(decode_fields(raw_fields)),
-        } 
+    message_id, raw_fields = original_message[0], original_message[1]
+
+    try:
+        decoded = decode_fields(raw_fields)
+    except Exception as exc:
+        logger.error(
+            "Failed to decode fields for message %s before dead-letter routing: %s",
+            message_id,
+            exc,
+        )
+        decoded = raw_fields 
+
+    payload = {
+        "original_id": str(message_id),
+        "error_reason": error_reason,
+        "payload": str(decoded),
+    }
+
+    try:
         await producer.add_to_stream(payload, DEAD_LETTER_CHANNEL)
         logger.warning(
             "Message %s routed to %s. Reason: %s",
@@ -23,7 +41,9 @@ async def route_to_dead_letter_queue(producer: Producer, original_message: tuple
             DEAD_LETTER_CHANNEL,
             error_reason,
         )
-
     except Exception as exc:
-        logger.error(f"Critical failure while attempting to route to Dead Letter Queue: {exc}")
-
+        logger.error(
+            "Critical failure routing message %s to dead-letter queue: %s",
+            message_id,
+            exc,
+        )

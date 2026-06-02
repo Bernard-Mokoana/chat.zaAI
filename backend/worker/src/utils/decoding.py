@@ -4,7 +4,7 @@ def decode_bytes(value) -> str:
     return str(value)
 
 def decode_fields(raw_fields) -> dict:
-    # Decodes byte keys/values from a Redis stream message into readable string
+    # Decodes byte values from a Redis stream message into readable string
     if not isinstance(raw_fields, dict):
         return {"raw_fallback_content": str(raw_fields)}
     
