@@ -1,0 +1,62 @@
+services:
+  # Redis Stack
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: chatbot-redis
+    ports:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  # FastAPI Gateway Server
+  server:
+    build:
+      context: .
+      dockerfile: backend/server/Dockerfile
+    container_name: chatbot-server
+    ports:
+      - "3500:3500"
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=${{Redis.REDIS_URL}}
+      - DATABASE_PRIMARY_URL=${{Postgres.DATABASE_URL}}
+      - DATABASE_REPLICA_URL=${{Postgres.DATABASE_URL}}
+      - DATABASE_READ_FROM_REPLICA=false
+      - DATABASE_ALLOW_REPLICA_FALLBACK=true
+    depends_on:
+      - redis
+    restart: always
+
+  # Background Python Worker
+  worker:
+    build:
+      context: .
+      dockerfile: backend/worker/Dockerfile
+    container_name: chatbot-worker
+    environment:
+      - REDIS_URL=${{Redis.REDIS_URL}}
+      - HUGGINFACE_INFERENCE_TOKEN=${{HUGGINGFACE_INFERENCE_TOKEN}}
+      - MODEL_ID=katanemo/Arch-Router-1.5B
+      - MAX_NEW_TOKENS=25
+    depends_on:
+      - redis
+    restart: always
+
+  # Next.js Web Interface
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${{SERVER_PUBLIC_URL}}
+        - NEXT_PUBLIC_WS_URL=${{SERVER_PUBLIC_WS_URL}}
+    container_name: chatbot-client
+    ports:
+      - "3001:3001"
+    depends_on:
+      - server
+    restart: always
+
+volumes:
+  redis_data:
