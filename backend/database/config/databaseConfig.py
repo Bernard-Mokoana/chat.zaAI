@@ -1,8 +1,10 @@
 import os
+import time
+
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.exc import OperationalError
 
 load_dotenv()
 
@@ -27,6 +29,19 @@ read_engine = engine_replica if READ_FROM_REPLICA and REPLICA_URL else engine_pr
 
 SessionPrimary = sessionmaker(autocommit=False, autoflush=False, bind=engine_primary) 
 SessionReplica = sessionmaker(autocommit=False, autoflush=False, bind=read_engine)
+
+def get_resilient_engine(url, max_retries=5, delay=5):
+    for attempt in range(max_retries):
+        try:
+            engine = create_engine(url, pool_pre_ping=True)
+            with engine.connect() as conn:
+                return engine
+        except OperationalError:
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(delay)
+
+engine_primary = get_resilient_engine(PRIMARY_URL)
 
 class Base(DeclarativeBase):
     pass

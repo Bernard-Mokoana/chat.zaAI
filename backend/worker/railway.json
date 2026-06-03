@@ -6,6 +6,7 @@
     "context": "."
   },
   "deploy": {
+    "startCommand": "python main.py",
     "numReplicas": 1
   }
 }
