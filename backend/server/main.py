@@ -72,6 +72,12 @@ allowed_origins = [
     'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001'
 ).split(',')
 ]
+
+raw_origins = os.getenv("CORS_ALLOWED_ORIGINS")
+if raw_origins:
+    production_origins = [origin.strip() for origin in raw_origins.split(",") if origin.split]
+    allowed_origins.extend(production_origins)
+
 api.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -79,6 +85,8 @@ api.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+
 
 @api.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
