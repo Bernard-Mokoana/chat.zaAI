@@ -20,4 +20,4 @@ EXPOSE 3500
 
 ENV PYTHONPATH=/app
 
-CMD ["uvicorn", "main:api", "--host", "0.0.0.0", "--port", "3500"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:api --host 0.0.0.0 --port ${PORT:-3500}"]
