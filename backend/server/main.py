@@ -75,7 +75,7 @@ allowed_origins = [
 
 raw_origins = os.getenv("CORS_ALLOWED_ORIGINS")
 if raw_origins:
-    production_origins = [origin.strip() for origin in raw_origins.split(",") if origin.split]
+    production_origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
     allowed_origins.extend(production_origins)
 
 api.add_middleware(
