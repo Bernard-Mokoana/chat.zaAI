@@ -8,6 +8,7 @@ from backend.database.models.users import User
 from backend.database.models.refresh_token import RefreshToken
 from src.utils.token import Token
 
+from src.utils.emailUtils import send_email_verification
 class AuthService:
     def __init__(self):
         self.token = Token()
@@ -46,6 +47,9 @@ class AuthService:
             password.encode("utf-8"),
             bcrypt.gensalt()
         ).decode("utf-8")
+
+        verification_token = self.token.sign_verification_token({"email": normalized_email})
+        send_email_verification(normalized_email,verification_token)
 
         new_user = User(
             name=normalized_name,
