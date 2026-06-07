@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from src.utils.token import Token
 from backend.database.config.databaseConfig import get_write_db
 from backend.database.models.users import User
-from src.schema.auth import LoginSchema, RegisterSchema
+from src.schema.auth import LoginSchema, RegisterSchema, ForgetPasswordSchema, ResetPasswordSchema
 from src.services.auth_services import AuthService
 
 import bcrypt
@@ -45,4 +45,15 @@ async def refresh_token(request: Request, response: Response, db: Session = Depe
 async def logout(request: Request, response: Response, db: Session = Depends(get_write_db)):
     return auth_service.logout(db=db, request=request, response=response)
 
+@auth.get("/verify-email")
+async def verify_email(token: str, db: Session = Depends(get_write_db)):
+    return auth_service.verify_email_token(db=db, token_str=token)
+
+@auth.post("/forgot-password")
+async def forgot_password(payload: ForgetPasswordSchema, db: Session = Depends(get_write_db)):
+    return auth_service.request_password_reset(db=db, email=payload.email)
+
+@auth.post("/reset-password")
+async def reset_password(payload: ResetPasswordSchema, db: Session = Depends(get_write_db)):
+    return auth_service.reset_password(db=db, token_str=payload.token, new_password=payload.new_password)
     

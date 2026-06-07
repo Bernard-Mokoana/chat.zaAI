@@ -8,7 +8,7 @@ from backend.database.models.users import User
 from backend.database.models.refresh_token import RefreshToken
 from src.utils.token import Token
 
-from src.utils.emailUtils import send_email_verification
+from src.utils.emailUtils import send_email_verification, send_password_reset_email
 class AuthService:
     def __init__(self):
         self.token = Token()
@@ -88,7 +88,63 @@ class AuthService:
         self.token.set_refresh_cookie(response, refresh_token)
 
         return {"access_token": access_token, "token_type": "bearer", "user": user_payload}
+    
+    def verify_email_token(self, db: Session, token_str: str):
+       
+        payload = self.token.decode_email_verification_token(token_str)
 
+        email = payload.get("email")
+        if not email:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Malformed token payload")
+        
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        if hasattr(user, 'is_verified'):
+            user.is_verified = True
+            db.commit()
+
+        return {"message": "Email verified successfully"}
+        
+    def request_password_reset(self, db: Session, email: str):
+        normalized_email = email.strip().lower()
+        user = db.query(User).filter(User.email == normalized_email).first()
+
+        if not user:
+            return {"message": "If the email exists, a password reset link has been sent"}
+        
+        jti = self.token.create_jti()
+        reset_token = self.token.sign_forgot_password_token({"email": normalized_email}, jti)
+        send_password_reset_email(normalized_email, reset_token())
+
+        return {"message": "If the email exits, a password reset link has been sent."}
+    
+    def reset_password(self, db: Session, token_str: str, new_password: str):
+        if len(new_password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Password must at least be 8 characters long"
+            )
+        
+        payload = self.token.decode_forgot_password_verification_token(token_str)
+   
+        email = payload.get("email")
+        if not email:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Malformed token payload")
+        
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+        password_hash = bcrypt.hashpw(
+            new_password.encode("utf-8"), bcrypt.gensalt()
+        ).decode("utf-8")
+
+        user.password_hash = password_hash
+        db.commit()
+
+        return {"message": "Password reset successfully"}
+        
     def refresh_access_token(self, db: Session, request: Request, response: Response):
         raw_refresh = request.cookies.get("refreshToken")
 

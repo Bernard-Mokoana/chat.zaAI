@@ -15,6 +15,8 @@ from backend.database.models.refresh_token import RefreshToken
 load_dotenv()
 
 REFRESH_TTL_SEC = 60 * 60 * 24 * 7
+PASSWORD_RESET_TTL_SEC = 60 * 15
+EMAIL_VERIFY_TTL_SEC = 60 * 60 * 24
 
 
 class Token:
@@ -22,6 +24,7 @@ class Token:
         self.jwt_secret = os.environ.get("JWT_SECRET")
         self.expires_in = os.environ.get("EXPIRES_IN")
         self.refresh_jwt_secret = os.environ.get("REFRESH_JWT_SECRET")
+        self.verify_jwt_secret = os.environ.get("VERIFY_JWT_SECRET")
 
         if not self.jwt_secret:
             raise ValueError("JWT_SECRET environment variable is required")
@@ -29,6 +32,8 @@ class Token:
             raise ValueError("EXPIRES_IN environment variable is required")
         if not self.refresh_jwt_secret:
             raise ValueError("REFRESH_JWT_SECRET environment variable is required")
+        if not self.verify_jwt_secret:
+            raise ValueError("VERIFY_JWT_SECRET environment variable is required")
 
         self.algorithm = "HS256"
 
@@ -64,6 +69,24 @@ class Token:
             "exp": expire,
         }
         return jwt.encode(payload, self.refresh_jwt_secret, algorithm=self.algorithm)
+    
+    def sign_email_verification_token(self, user: dict, jti: str) -> str:
+        expire = datetime.now(timezone.utc) + timedelta(seconds=EMAIL_VERIFY_TTL_SEC)
+        payload = {
+            "email": user.get("email"),
+            "jti": jti,
+            "exp": expire
+        }
+        return jwt.encode(payload, self.verify_jwt_secret, algorithm=self.algorithm) 
+
+    def sign_forgot_password_token(self, user: dict, jti: str) -> str:
+        expire = datetime.now(timezone.utc) + timedelta(seconds=PASSWORD_RESET_TTL_SEC)
+        payload = {
+            "email": user.get("email"),
+            "jti": jti,
+            "exp": expire
+        }
+        return jwt.encode(payload, self.verify_jwt_secret, algorithm=self.algorithm)
 
     def decode_access_token(self, token: str) -> Dict[str, Any]:
         try:
@@ -80,6 +103,22 @@ class Token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
         except InvalidTokenError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        
+    def decode_email_verification_token(self, token: str) -> Dict[str, Any]:
+        try:
+            return jwt.decode(token, self.verify_jwt_secret, algorithms=[self.algorithm])
+        except ExpiredSignatureError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verification token expired")
+        except InvalidTokenError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid verification token")
+        
+    def decode_forgot_password_verification_token(self, token: str) -> Dict[str, Any]:
+        try:
+            return jwt.decode(token, self.verify_jwt_secret, algorithms=[self.algorithm])
+        except ExpiredSignatureError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verification token expired")
+        except InvalidTokenError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid verification token")
 
     def set_refresh_cookie(self, response: Response, refresh_token: str):
         is_prod = os.environ.get("NODE_ENV") == "production"

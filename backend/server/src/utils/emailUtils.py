@@ -21,11 +21,11 @@ def create_email_transporter():
         raise ValueError(f"EMAIL_PORT must be a valid integer, got: {os.getenv('EMAIL_PORT')}")
     
     config = {
-        "host": os.getenv(),
+        "host": os.getenv("EMAIL_HOST"),
         "port": port,
         "secure": os.getenv("EMAIL_SECURE", "false").lower() == "true",
-        "user": os.getenv(),
-        "password": os.getenv()
+        "user": os.getenv("EMAIL_USER"),
+        "password": os.getenv("EMAIL_PASSWORD")
     }
     return config
 
@@ -58,6 +58,17 @@ def send_email_verification(email, token):
     html = build_email_verification_html(verification_url)
     send_email(config, email, "Bbot email verification", html)
 
+def send_password_reset_email(email, token):
+    config = create_email_transporter()
+    cors_origin = os.getenv("CORS_ORIGIN")
+    if not cors_origin:
+        raise ValueError("CORS_ORIGIN environment variable is not set")
+    
+    query_params = urlencode({"token": token})
+    reset_url = f"{cors_origin}/reset-password?{query_params}"
+
+    html = build_reset_password_html(reset_url)
+    send_email(config, email, "Bbot password reset", html)
 
 def build_email_verification_html(verification_url):
     safe_url = escape(verification_url, quote=True)

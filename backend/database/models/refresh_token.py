@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
@@ -28,14 +28,14 @@ class RefreshToken(TimestampMixin, Base):
 
     user: Mapped["User"] = relationship("User", back_populates="refresh_tokens")
     replacement: Mapped[Optional["RefreshToken"]] = relationship("RefreshToken", remote_side="RefreshToken.id", foreign_keys=[replaced_by])
-    
+
     def revoke(self) -> None:
         self.is_revoked = True
-        self.revoked_at = datetime.utcnow()
+        self.revoked_at = datetime.now(timezone.utc)
 
     @property
     def is_expired(self) -> bool:
-        return datetime.utcnow() > self.expires_at.replace(tzinfo=None)
+        return datetime.now(timezone.utc) > self.expires_at.replace(tzinfo=None)
 
     @property
     def is_valid(self) -> bool:
