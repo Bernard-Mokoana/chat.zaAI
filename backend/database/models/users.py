@@ -6,7 +6,7 @@ from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database.config.databaseConfig import Base
+from backend.database.config.databaseConfig import Base
 
 from .base import SoftDeleteMixin, TimestampMixin
 

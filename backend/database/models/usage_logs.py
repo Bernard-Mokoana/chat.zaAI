@@ -6,7 +6,7 @@ from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstr
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from config.databaseConfig import Base
+from backend.database.config.databaseConfig import Base
 
 if TYPE_CHECKING:
     from .user import User

@@ -6,7 +6,7 @@ from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from config.databaseConfig import Base
+from backend.database.config.databaseConfig import Base
 
 if TYPE_CHECKING:
     from .user import User
@@ -19,7 +19,7 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     ip: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     user_agent: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    mdata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
     user: Mapped[Optional["User"]] = relationship("User", back_populates="audit_logs")

@@ -1,7 +1,3 @@
-"""
-Message model — a single turn inside a conversation.
-"""
-
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -10,7 +6,7 @@ from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from config.databaseConfig import Base
+from backend.database.config.databaseConfig import Base
 
 from .base import MessageRole, SoftDeleteMixin
 

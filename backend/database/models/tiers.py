@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import TimestampMixin
 
-from database.config.databaseConfig import Base
+from backend.database.config.databaseConfig import Base
 
 if TYPE_CHECKING:
     from .users import User
