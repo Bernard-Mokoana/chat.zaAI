@@ -69,7 +69,7 @@ allowed_origins = [
     origin.strip()
     for origin in os.environ.get(
     'ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002,http://127.0.0.1:3001'
 ).split(',')
 ]
 
@@ -139,7 +139,7 @@ async def root():
 
 if __name__ == "__main__":
     if os.environ.get('APP_ENV') == "development":
-        uvicorn.run("main:api", host="0.0.0.0", port=3500, reload=True)
+        uvicorn.run("main:api", host="0.0.0.0", port=3500 | 3501, reload=True)
     else:
-        uvicorn.run("main:api", host="0.0.0.0", port=3500, reload=False)
+        uvicorn.run("main:api", host="0.0.0.0", port=3500 | 3501, reload=False)
         
