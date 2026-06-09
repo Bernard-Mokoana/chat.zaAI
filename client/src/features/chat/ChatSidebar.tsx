@@ -7,7 +7,6 @@ import { loadSessions, deleteSession } from "@/services/storage/sessionStorage";
 import type { ChatSession, ChatSidebarProps } from "@/types/types";
 import { relativeTime, groupSessions } from "@/utils/helpers";
 
-// Sub-component
 function SessionItem({session, isActive, onSelect, onDelete}: {
   session: ChatSession;
   isActive: boolean;

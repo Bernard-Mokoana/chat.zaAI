@@ -1,73 +1,124 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import type { FormEvent } from "react";
 import { login } from "@/services/auth/authApi";
 import { getAuthErrorToast } from "@/services/auth/authMessages";
 import { setAccessToken, setAuthUser } from "@/services/storage/chatStorage";
 import { showToast } from "@/services/toast/toastEvents";
+import { validateLoginForm, getFieldError } from "@/utils/validation";
+import AuthLayout from "@/components/AuthLayout";
+import FormField from "@/components/FormField";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<
+    Array<{ field: string; message: string }>
+  >([]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmedEmail = email.trim().toLowerCase();
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
 
-    if (!trimmedEmail || !password) {
-      showToast({
-        title: "Missing sign-in details",
-        description: "Enter both your email address and password.",
-        tone: "warning",
-      });
-      return;
-    };
-    if (isSubmitting) return;
+      const validation = validateLoginForm(email, password);
+      if (!validation.isValid) {
+        setValidationErrors(validation.errors);
+        return;
+      }
 
-    setIsSubmitting(true);
+      setValidationErrors([]);
+      if (isSubmitting) return;
+      setIsSubmitting(true);
 
-    try {
-      const auth = await login({ email: trimmedEmail, password });
-      setAccessToken(auth.access_token);
-      setAuthUser(auth.user);
-      showToast({
-        title: "Signed in",
-        description: `Welcome back, ${auth.user.name}.`,
-        tone: "success",
-      });
-
-      router.push("/chat");
-    } catch (error: unknown) {
-      const toast = getAuthErrorToast("login", error);
-      if (toast) showToast(toast);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      try {
+        const auth = await login({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        setAccessToken(auth.access_token);
+        setAuthUser(auth.user);
+        showToast({
+          title: "Signed in",
+          description: `Welcome back, ${auth.user.name}.`,
+          tone: "success",
+        });
+        router.push("/chat");
+      } catch (error: unknown) {
+        const toast = getAuthErrorToast("login", error);
+        if (toast) showToast(toast);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [email, password, isSubmitting, router]
+  );
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "1.5rem", background: "linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)" }}>
-      <section style={{ width: "100%", maxWidth: 520, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: "2rem", boxShadow: "0 12px 32px rgba(15, 23, 42, 0.08)" }}>
-        <h1 style={{ margin: 0, fontSize: "1.8rem", color: "#0f172a" }}>Sign In</h1>
-        <p style={{ color: "#475569", marginTop: "0.5rem" }}>Welcome back. Continue to your chat.</p>
+    <AuthLayout
+      title="Sign In"
+      subtitle="Welcome back. Continue to your chat."
+      footerLink={{ href: "/register", label: "Create an account" }}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <FormField
+          id="login-email"
+          label="Email Address"
+          type="email"
+          required
+          disabled={isSubmitting}
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            
+            if (validationErrors.length > 0) {
+              setValidationErrors([]);
+            }
+          }}
+          placeholder="you@example.com"
+          error={getFieldError(validationErrors, "email")}
+          autoComplete="email"
+          autoFocus
+        />
 
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: "0.9rem", marginTop: "1rem" }}>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" style={{ padding: "0.75rem", borderRadius: 10, border: "1px solid #cbd5e1" }} />
+        <FormField
+          id="login-password"
+          label="Password"
+          type="password"
+          required
+          disabled={isSubmitting}
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (validationErrors.length > 0) {
+              setValidationErrors([]);
+            }
+          }}
+          placeholder="Enter your password"
+          error={getFieldError(validationErrors, "password")}
+          autoComplete="current-password"
+        />
 
-          <button type="submit" disabled={isSubmitting} style={{ padding: "0.8rem", borderRadius: 10, border: "none", background: "#1d4ed8", color: "#fff", fontWeight: 600, cursor: "pointer", opacity: isSubmitting ? 0.75 : 1 }}>
-            {isSubmitting ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "Signing in..." : "Sign In"}
+        </button>
+      </form>
 
-        <p style={{ marginTop: "1rem", color: "#334155" }}>
-          New here? <Link href="/register">Create an account</Link>
-        </p>
-      </section>
-    </main>
+      <div className="mt-6 text-center">
+        <a
+          href="/forgotPassword"
+          className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+        >
+          Forgot your password?
+        </a>
+      </div>
+    </AuthLayout>
   );
 }

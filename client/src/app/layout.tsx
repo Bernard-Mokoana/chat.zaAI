@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ToastProvider from "@/components/ToastProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
-        <ToastProvider />
+        <ErrorBoundary>
+          {children}
+          <ToastProvider />
+        </ErrorBoundary>
       </body>
     </html>
   );

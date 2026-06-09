@@ -1,122 +1,175 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import type { FormEvent } from "react";
+import axios from "axios";
 import { resetPassword } from "@/services/auth/authApi";
+import { showToast } from "@/services/toast/toastEvents";
+import { validatePassword, getFieldError } from "@/utils/validation";
+import AuthLayout from "@/components/AuthLayout";
+import FormField from "@/components/FormField";
+import AlertBanner from "@/components/AlertBanner";
+import type { PasswordResetState } from "@/types/types";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const verificationToken = searchParams.get("token");
+  const token = searchParams.get("token");
 
-  const [passwordValue, setPasswordValue] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [isPending, setIsPending] = useState(false);
-  const [localValidationMessage, setLocalValidationMessage] = useState("");
-  const [completionState, setCompletionState] = useState(false);
+  const [state, setState] = useState<PasswordResetState>({
+    newPassword: "",
+    confirmPassword: "",
+    isPending: false,
+    errorMessage: "",
+    validationErrors: [],
+  });
 
-  const handlePasswordMutationSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setLocalValidationMessage("");
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
 
-    if (!verificationToken) {
-      setLocalValidationMessage("Unable to execute transaction. Password mutation security token missing from query stream.");
-      return;
-    }
+      const errors: Array<{ field: string; message: string }> = [];
 
-    if (passwordValue.length < 8) {
-      setLocalValidationMessage("Password parameter failed length validation checks (minimum required configuration threshold is 8 entries).");
-      return;
-    }
+      if (!state.newPassword) {
+        errors.push({ field: "newPassword", message: "Password is required" });
+      } else if (!validatePassword(state.newPassword)) {
+        errors.push({
+          field: "newPassword",
+          message:
+            "Password must contain at least 8 characters, including uppercase, lowercase, a number, and a special character (@$!%*?&)",
+        });
+      }
 
-    if (passwordValue !== passwordConfirm) {
-      setLocalValidationMessage("Parameter validation divergence noted: Target password strings do not match.");
-      return;
-    }
+      if (state.newPassword !== state.confirmPassword) {
+        errors.push({
+          field: "confirmPassword",
+          message: "Passwords do not match",
+        });
+      }
 
-    setIsPending(true);
+      if (!token) {
+        setState((prev) => ({
+          ...prev,
+          errorMessage: "Reset token is missing. Please request a new reset link.",
+        }));
+        return;
+      }
 
-    try {
-      await resetPassword({
-        token: verificationToken,
-        new_password: passwordValue,
-      });
-      setCompletionState(true);
-      setTimeout(() => {
-        router.push("/login");
-      }, 3000);
-    } catch (err: any) {
-      setLocalValidationMessage(err.response?.data?.detail || "Failed to commit record mutation. Token has expired or was previously consumed.");
-    } finally {
-      setIsPending(false);
-    }
-  };
+      if (errors.length > 0) {
+        setState((prev) => ({
+          ...prev,
+          validationErrors: errors,
+          errorMessage: "",
+        }));
+        return;
+      }
+
+      setState((prev) => ({ ...prev, isPending: true, validationErrors: [] }));
+
+      try {
+        await resetPassword({
+          token: token!,
+          new_password: state.newPassword,
+        });
+
+        showToast({
+          title: "Password updated",
+          description: "Your password has been changed. Redirecting to sign in...",
+          tone: "success",
+        });
+
+        setTimeout(() => router.push("/login"), 2000);
+      } catch (err: unknown) {
+        const detail =
+          axios.isAxiosError(err) && typeof err.response?.data?.detail === "string"
+            ? err.response.data.detail
+            : "Something went wrong. Please try again.";
+
+        setState((prev) => ({
+          ...prev,
+          errorMessage: detail as string,
+        }));
+      } finally {
+        setState((prev) => ({ ...prev, isPending: false }));
+      }
+    },
+    [state.newPassword, state.confirmPassword, token, router]
+  );
+
+  const clearErrors = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      validationErrors: [],
+      errorMessage: "",
+    }));
+  }, []);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-900">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 text-center mb-6">Update Profile Passwords</h1>
+    <AuthLayout
+      title="Set New Password"
+      subtitle="Choose a new password for your account."
+    >
+      {state.errorMessage && (
+        <div className="mb-4">
+          <AlertBanner
+            tone="error"
+            message={state.errorMessage}
+            onDismiss={() =>
+              setState((prev) => ({ ...prev, errorMessage: "" }))
+            }
+          />
+        </div>
+      )}
 
-        {completionState ? (
-          <div className="space-y-4 text-center">
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:text-emerald-400">
-              Identity parameters mutation successfully written to disk. Redirecting...
-            </div>
-            <Link href="/login" className="inline-block text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-              Click here to manually override redirection wait times
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handlePasswordMutationSubmit} className="space-y-4">
-            {localValidationMessage && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/30 dark:bg-rose-950/20 dark:text-rose-400">
-                {localValidationMessage}
-              </div>
-            )}
-            
-            <div>
-              <label htmlFor="new-secret" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                New Target Password
-              </label>
-              <input
-                id="new-secret"
-                type="password"
-                required
-                disabled={isPending || !verificationToken}
-                value={passwordValue}
-                onChange={(e) => setPasswordValue(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 disabled:opacity-60"
-              />
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <FormField
+          id="new-password"
+          label="New Password"
+          type="password"
+          required
+          disabled={state.isPending}
+          value={state.newPassword}
+          onChange={(e) => {
+            setState((prev) => ({
+              ...prev,
+              newPassword: e.target.value,
+            }));
+            clearErrors();
+          }}
+          placeholder="Min 8 characters, uppercase, lowercase, number, special char"
+          error={getFieldError(state.validationErrors, "newPassword")}
+          autoComplete="new-password"
+          autoFocus
+        />
 
-            <div>
-              <label htmlFor="confirm-secret" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Confirm Selected Password
-              </label>
-              <input
-                id="confirm-secret"
-                type="password"
-                required
-                disabled={isPending || !verificationToken}
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 disabled:opacity-60"
-              />
-            </div>
+        <FormField
+          id="confirm-password"
+          label="Confirm Password"
+          type="password"
+          required
+          disabled={state.isPending}
+          value={state.confirmPassword}
+          onChange={(e) => {
+            setState((prev) => ({
+              ...prev,
+              confirmPassword: e.target.value,
+            }));
+            clearErrors();
+          }}
+          placeholder="Re-enter your password"
+          error={getFieldError(state.validationErrors, "confirmPassword")}
+          autoComplete="new-password"
+        />
 
-            <button
-              type="submit"
-              disabled={isPending || !verificationToken}
-              className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isPending ? "Updating Database Context..." : "Commit Secure Mutation"}
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
+        <button
+          type="submit"
+          disabled={state.isPending}
+          className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+        >
+          {state.isPending ? "Updating..." : "Update Password"}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }

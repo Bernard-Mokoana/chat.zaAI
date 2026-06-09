@@ -4,86 +4,41 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "2rem",
-        fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI",
-        background:
-          "radial-gradient(circle at 20% 20%, #f5f7ff 0%, #ffffff 45%, #f7fbff 100%)",
-        color: "#0f172a",
-      }}
-    >
-      <section
-        style={{
-          width: "100%",
-          maxWidth: "620px",
-          borderRadius: "16px",
-          padding: "2.5rem",
-          background: "#ffffff",
-          boxShadow:
-            "0 30px 70px rgba(15, 23, 42, 0.12), 0 6px 18px rgba(15, 23, 42, 0.08)",
-          border: "1px solid #e2e8f0",
-        }}
-      >
-        <div style={{ marginBottom: "1.5rem" }}>
-          <p
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: "#64748b",
-              marginBottom: "0.5rem",
-            }}
-          >
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-blue-50 px-4 py-6 sm:py-12">
+      <section className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-8 shadow-lg sm:p-12 dark:border-slate-800 dark:bg-slate-950">
+        {/* Header */}
+        <div className="mb-8 sm:mb-10">
+          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
             AI Chatbot
           </p>
-          <h1 style={{ fontSize: "2rem", margin: 0 }}>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
             Welcome to FullStack AI Chatbot
           </h1>
-          <p style={{ color: "#475569", marginTop: "0.75rem" }}>
+          <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
             Sign in to continue chatting, or create a new account.
           </p>
         </div>
 
-        <div style={{ display: "grid", gap: "0.75rem" }}>
+        {/* Button Group */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
           <Link
             href="/login"
-            style={{
-              display: "inline-block",
-              textAlign: "center",
-              textDecoration: "none",
-              padding: "0.85rem 1.25rem",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #0f172a, #1e293b)",
-              color: "#ffffff",
-              fontWeight: 700,
-              border: "none",
-            }}
+            className="flex-1 rounded-lg bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-3.5 text-center font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-slate-800 hover:to-slate-700 dark:from-slate-700 dark:to-slate-800"
           >
             Sign In
           </Link>
           <Link
             href="/register"
-            style={{
-              display: "inline-block",
-              textAlign: "center",
-              textDecoration: "none",
-              padding: "0.85rem 1.25rem",
-              borderRadius: "10px",
-              background: "#ffffff",
-              color: "#0f172a",
-              fontWeight: 700,
-              border: "1px solid #cbd5e1",
-            }}
+            className="flex-1 rounded-lg border-2 border-slate-200 bg-white px-6 py-3.5 text-center font-semibold text-slate-900 transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:hover:bg-slate-800"
           >
             Create Account
           </Link>
         </div>
+
+        {/* Footer */}
+        <p className="mt-8 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          Your secure AI chatbot platform
+        </p>
       </section>
     </main>
   );

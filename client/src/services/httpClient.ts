@@ -2,6 +2,7 @@ import axios, {
   AxiosError,
   AxiosHeaders,
   InternalAxiosRequestConfig,
+  AxiosResponse,
 } from "axios";
 import {
   clearAuthState,
@@ -14,11 +15,10 @@ import {
   getRateLimitTitle,
 } from "./rateLimit/rateLimitMessages";
 import { showToast } from "./toast/toastEvents";
-import type { AuthResponse } from "@/types/types";
-import type { RateLimitResponse } from "@/types/types";
+import type { AuthResponse, RateLimitResponse } from "@/types/types";
 
-const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:3500";
+const apiBaseUrl: string =
+  process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:3501";
 
 export const httpClient = axios.create({
   baseURL: apiBaseUrl,
@@ -28,13 +28,13 @@ export const httpClient = axios.create({
   },
 });
 
-type RetriableRequestConfig = InternalAxiosRequestConfig & {
+export type RetriableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
 
 let refreshPromise: Promise<AuthResponse> | null = null;
 
-function shouldSkipRefresh(url?: string) {
+function shouldSkipRefresh(url?: string): boolean {
   return (
     !url ||
     url.includes("/api/v1/auth/login") ||
@@ -43,7 +43,7 @@ function shouldSkipRefresh(url?: string) {
   );
 }
 
-async function refreshAccessToken() {
+async function refreshAccessToken(): Promise<AuthResponse> {
   if (!refreshPromise) {
     refreshPromise = axios
       .post<AuthResponse>(`${apiBaseUrl}/api/v1/auth/refresh`, null, {
@@ -52,12 +52,12 @@ async function refreshAccessToken() {
           "Content-Type": "application/json",
         },
       })
-      .then((response) => {
+      .then((response: AxiosResponse<AuthResponse>) => {
         setAccessToken(response.data.access_token);
         setAuthUser(response.data.user);
         return response.data;
       })
-      .catch((error) => {
+      .catch((error: AxiosError) => {
         clearAuthState();
         throw error;
       })
@@ -69,7 +69,7 @@ async function refreshAccessToken() {
   return refreshPromise;
 }
 
-httpClient.interceptors.request.use((config) => {
+httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -78,19 +78,20 @@ httpClient.interceptors.request.use((config) => {
 });
 
 httpClient.interceptors.response.use(
-  (response) => response,
+  (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetriableRequestConfig | undefined;
     const status = error.response?.status;
 
     if (status === 429) {
       const payload = error.response?.data as RateLimitResponse | undefined;
+      const retryAfter = error.response?.headers["retry-after"] as
+        | string
+        | undefined;
+
       showToast({
         title: getRateLimitTitle(payload?.rate_limit?.scope),
-        description: getRateLimitDescription(
-          payload,
-          error.response?.headers["retry-after"],
-        ),
+        description: getRateLimitDescription(payload, retryAfter),
         tone: "warning",
       });
 

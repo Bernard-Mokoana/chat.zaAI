@@ -3,86 +3,102 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { verifyEmail } from "@/services/auth/authApi";
+import AuthLayout from "@/components/AuthLayout";
+import type { VerificationState } from "@/types/types";
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
 
-  const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
-  const [errorDetails, setErrorDetails] = useState("");
+  const hasToken = Boolean(token);
+  const [state, setState] = useState<VerificationState>({
+    status: hasToken ? "verifying" : "error",
+    errorMessage: hasToken
+      ? ""
+      : "No verification token found in the URL. Please check your email link and try again.",
+  });
+
   const effectRan = useRef(false);
 
   useEffect(() => {
-    // Standard React 18 / NextJS mount protection for write-once API interactions
-    if (effectRan.current) return;
-
-    if (!token) {
-      setStatus("error");
-      setErrorDetails("A validation token was not found in the URL parameter list.");
-      return;
-    }
+    if (effectRan.current || !token) return;
 
     const executeVerification = async () => {
       try {
         await verifyEmail(token);
-        setStatus("success");
-        setTimeout(() => {
+        setState({ status: "success", errorMessage: "" });
+
+        // Redirect after 3 seconds
+        const timeoutId = setTimeout(() => {
           router.push("/login");
         }, 3500);
-      } catch (err: any) {
-        setStatus("error");
-        setErrorDetails(err.response?.data?.detail || "Verification failed. The token may be structurally invalid or expired.");
+
+        return () => clearTimeout(timeoutId);
+      } catch (error) {
+        setState({
+          status: "error",
+          errorMessage:
+            "Verification failed. The link may have expired. Please request a new one.",
+        });
       }
     };
 
     executeVerification();
-    return () => {
-      effectRan.current = true;
-    };
+    effectRan.current = true;
   }, [token, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-900">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-950">
-        {status === "verifying" && (
-          <div className="space-y-4">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Confirming Email Address</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Communicating secure parameters to our server cluster...</p>
-          </div>
-        )}
+    <AuthLayout title="Email Verification">
+      {state.status === "verifying" && (
+        <div className="space-y-4 text-center">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-blue-600" />
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Verifying your email address...
+          </p>
+        </div>
+      )}
 
-        {status === "success" && (
-          <div className="space-y-4">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Account Confirmed!</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Verification complete. Transferring you to authentication panel...</p>
+      {state.status === "success" && (
+        <div className="space-y-4 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           </div>
-        )}
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+              Email Verified
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Your account is confirmed. Redirecting to sign in...
+            </p>
+          </div>
+        </div>
+      )}
 
-        {status === "error" && (
-          <div className="space-y-4">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">Verification Timed Out</h1>
-            <p className="text-sm text-rose-600 dark:text-rose-400">{errorDetails}</p>
-            <div className="pt-2">
-              <Link href="/register" className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-                Return to Registration
-              </Link>
-            </div>
+      {state.status === "error" && (
+        <div className="space-y-4 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/50">
+            <XCircle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
           </div>
-        )}
-      </div>
-    </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+              Verification Failed
+            </h2>
+            <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">
+              {state.errorMessage}
+            </p>
+          </div>
+          <Link
+            href="/register"
+            className="inline-block rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          >
+            Back to Registration
+          </Link>
+        </div>
+      )}
+    </AuthLayout>
   );
 }
+

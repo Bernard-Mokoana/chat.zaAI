@@ -1,83 +1,115 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import Link from "next/link";
+import { useState, useCallback } from "react";
+import axios from "axios";
+import type { FormEvent } from "react";
 import { forgotPassword } from "@/services/auth/authApi";
+import { showToast } from "@/services/toast/toastEvents";
+import { validateForgotPasswordForm, getFieldError } from "@/utils/validation";
+import AuthLayout from "@/components/AuthLayout";
+import FormField from "@/components/FormField";
+import AlertBanner from "@/components/AlertBanner";
 
 export default function ForgotPasswordPage() {
-  const [emailValue, setEmailValue] = useState("");
+  const [email, setEmail] = useState("");
   const [isPending, setIsPending] = useState(false);
-  const [statusFeedback, setStatusFeedback] = useState("");
+  const [validationErrors, setValidationErrors] = useState<
+    Array<{ field: string; message: string }>
+  >([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handlePasswordResetDispatch = async (event: FormEvent) => {
-    event.preventDefault();
-    setIsPending(true);
-    setErrorMessage("");
-    setStatusFeedback("");
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
 
-    try {
-      const serverResponse = await forgotPassword({ email: emailValue });
-      setStatusFeedback(serverResponse.message);
-    } catch (err: any) {
-      setErrorMessage(err.response?.data?.detail || "An internal client routing error occurred.");
-    } finally {
-      setIsPending(false);
-    }
-  };
+      const validation = validateForgotPasswordForm(email);
+      if (!validation.isValid) {
+        setValidationErrors(validation.errors);
+        return;
+      }
+
+      setValidationErrors([]);
+      setErrorMessage("");
+      setSuccessMessage("");
+      setIsPending(true);
+
+      try {
+        const response = await forgotPassword({ email: email.trim().toLowerCase() });
+        showToast({
+          title: "Recovery email sent",
+          description: response.message,
+          tone: "success",
+        });
+        setSuccessMessage(response.message);
+        setEmail("");
+      } catch (err: unknown) {
+        const detail =
+          axios.isAxiosError(err) && typeof err.response?.data?.detail === "string"
+            ? err.response.data.detail
+            : "Something went wrong. Please try again.";
+        setErrorMessage(detail);
+      } finally {
+        setIsPending(false);
+      }
+    },
+    [email]
+  );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-900">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 text-center">Recover Password</h1>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 text-center mb-6">
-          Enter your email address to receive a password reset link
-        </p>
-
-        {statusFeedback ? (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:text-emerald-400 text-center">
-            {statusFeedback}
-          </div>
-        ) : (
-          <form onSubmit={handlePasswordResetDispatch} className="space-y-4">
-            {errorMessage && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/30 dark:bg-rose-950/20 dark:text-rose-400">
-                {errorMessage}
-              </div>
-            )}
-            
-            <div>
-              <label htmlFor="recovery-email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Account Email
-              </label>
-              <input
-                id="recovery-email"
-                type="email"
-                required
-                disabled={isPending}
-                value={emailValue}
-                onChange={(e) => setEmailValue(e.target.value)}
-                placeholder="developer@domain.local"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 disabled:opacity-60"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-            >
-              {isPending ? "Validating Account..." : "Dispatch Link Parameters"}
-            </button>
-          </form>
-        )}
-
-        <div className="mt-6 text-center">
-          <Link href="/login" className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-            Return to Identity Validation
-          </Link>
+    <AuthLayout
+      title="Reset Password"
+      subtitle="Enter your email address and we'll send you a reset link."
+      footerLink={{ href: "/login", label: "Back to Sign In" }}
+    >
+      {errorMessage && (
+        <div className="mb-4">
+          <AlertBanner
+            tone="error"
+            message={errorMessage}
+            onDismiss={() => setErrorMessage("")}
+          />
         </div>
-      </div>
-    </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-4">
+          <AlertBanner
+            tone="success"
+            message={successMessage}
+            onDismiss={() => setSuccessMessage("")}
+          />
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <FormField
+          id="recovery-email"
+          label="Email Address"
+          type="email"
+          required
+          disabled={isPending}
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (validationErrors.length > 0) {
+              setValidationErrors([]);
+            }
+          }}
+          placeholder="you@example.com"
+          error={getFieldError(validationErrors, "email")}
+          autoComplete="email"
+          autoFocus
+        />
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+        >
+          {isPending ? "Sending..." : "Send Reset Link"}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }

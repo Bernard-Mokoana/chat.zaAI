@@ -1,24 +1,17 @@
-import type { OnMessage, OnClose, OnError, OnOpen } from "@/types/types";
+import type { ChatSocketParams } from "@/types/types";
 
 export class ChatSocket {
   private socket: WebSocket | null = null;
   private readonly baseWsUrl: string;
 
   constructor(
-    baseWsUrl = process.env.NEXT_PUBLIC_WS_URL ||
+    baseWsUrl: string = process.env.NEXT_PUBLIC_WS_URL ||
       "ws://localhost:3500/api/v1/chat/chat",
   ) {
     this.baseWsUrl = baseWsUrl;
   }
 
-  connect(params: {
-    accessToken: string;
-    chatToken: string;
-    onMessage: OnMessage;
-    onOpen?: OnOpen;
-    onError?: OnError;
-    onClose?: OnClose;
-  }) {
+  connect(params: ChatSocketParams): void {
     const { accessToken, chatToken, onMessage, onOpen, onError, onClose } =
       params;
 
@@ -33,50 +26,43 @@ export class ChatSocket {
 
     this.socket = new WebSocket(url.toString());
 
-    this.socket.onopen = (event) => {
+    this.socket.onopen = (event: Event) => {
       if (onOpen) onOpen(event);
     };
 
-    this.socket.onmessage = (event) => {
-      onMessage(event.data);
+    this.socket.onmessage = (event: MessageEvent) => {
+      onMessage(event.data as string);
     };
 
-    this.socket.onerror = (event) => {
+    this.socket.onerror = (event: Event) => {
       if (onError) onError(event);
     };
 
-    this.socket.onclose = (event) => {
+    this.socket.onclose = (event: CloseEvent) => {
       if (onClose) onClose(event);
     };
   }
 
-  send(message: string) {
-    if (!this.socket || this.socket.readyState != WebSocket.OPEN) {
+  send(message: string): void {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new Error("WebSocket is not connected");
     }
     this.socket.send(message);
   }
 
-  disconnect() {
+  disconnect(): void {
     if (this.socket) {
       this.socket.close();
       this.socket = null;
     }
   }
 
-  isConnected() {
+  isConnected(): boolean {
     return this.socket?.readyState === WebSocket.OPEN;
   }
 }
 
-export function createChatSocket(params: {
-  accessToken: string;
-  chatToken: string;
-  onMessage: OnMessage;
-  onOpen?: OnOpen;
-  onError?: OnError;
-  onClose?: OnClose;
-}) {
+export function createChatSocket(params: ChatSocketParams): ChatSocket {
   const ws = new ChatSocket();
   ws.connect(params);
   return ws;
