@@ -66,7 +66,7 @@ export async function resetPassword(
 
 export async function verifyEmail(token: string) {
   const response = await httpClient.get<GenericAuthResponse>(
-    `/api/v1/verify-email?token=${encodeURIComponent(token)}`,
+    `/api/v1/auth/verify-email?token=${encodeURIComponent(token)}`,
   );
   return response.data;
 }

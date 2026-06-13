@@ -51,10 +51,9 @@ export default function RegisterPage() {
         setAuthUser(auth.user);
         showToast({
           title: "Account created",
-          description: `Welcome, ${auth.user.name}. Your chat is ready.`,
+          description: `${auth.user.name}, check your email to verify your account so that you can access the chat.`,
           tone: "success",
         });
-        router.push("/chat");
       } catch (error: unknown) {
         const toast = getAuthErrorToast("register", error);
         if (toast) showToast(toast);

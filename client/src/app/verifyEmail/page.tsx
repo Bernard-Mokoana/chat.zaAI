@@ -24,19 +24,23 @@ export default function VerifyEmailPage() {
   const effectRan = useRef(false);
 
   useEffect(() => {
-    if (effectRan.current || !token) return;
+    if (effectRan.current) return;
+
+    if (!token) {
+      router.replace("/register");
+      return;
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const executeVerification = async () => {
       try {
         await verifyEmail(token);
         setState({ status: "success", errorMessage: "" });
 
-        // Redirect after 3 seconds
-        const timeoutId = setTimeout(() => {
+        timeoutId = setTimeout(() => {
           router.push("/login");
         }, 3500);
-
-        return () => clearTimeout(timeoutId);
       } catch (error) {
         setState({
           status: "error",
@@ -48,7 +52,11 @@ export default function VerifyEmailPage() {
 
     executeVerification();
     effectRan.current = true;
-  }, [token, router]);
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [router, token]);
 
   return (
     <AuthLayout title="Email Verification">

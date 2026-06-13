@@ -161,7 +161,7 @@ class Token:
 
         new_token = RefreshToken(
             user_id=user_id,
-            token=token_hash,
+            token_hash=token_hash,
             jwt_id=jti,
             ip=ip,
             user_agent=user_agent,

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,6 +27,7 @@ class User(TimestampMixin, SoftDeleteMixin, Base):
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(250), nullable=True)
+    is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     tier_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tiers.id", ondelete="RESTRICT"), nullable=False, index=True)
     last_active_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 

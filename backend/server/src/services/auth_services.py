@@ -6,6 +6,8 @@ import re
 
 from backend.database.models.users import User
 from backend.database.models.refresh_token import RefreshToken
+from backend.database.models.tiers import Tier as TierModel
+
 from src.utils.token import Token
 
 from src.utils.emailUtils import send_email_verification, send_password_reset_email
@@ -48,14 +50,31 @@ class AuthService:
             bcrypt.gensalt()
         ).decode("utf-8")
 
-        verification_token = self.token.sign_verification_token({"email": normalized_email})
-        send_email_verification(normalized_email,verification_token)
+        jti = self.token.create_jti()
+        verification_token = self.token.sign_email_verification_token(
+            {"email": normalized_email},
+            jti,
+        )
+        send_email_verification(normalized_email, verification_token)
+
+        tier_obj = db.query(TierModel).filter(TierModel.name == "free").first()
+        if not tier_obj:
+            tier_obj = TierModel(
+                name="free",
+                token_limit=0,  
+                message_limit=0, 
+                price_cents=0,
+                is_active=True
+            )
+            db.add(tier_obj)
+            db.commit()
+            db.refresh(tier_obj)
 
         new_user = User(
             name=normalized_name,
             email=normalized_email,
             password_hash=password_hash,
-            tier="free",
+            tier_id=tier_obj.id,
         )
 
         db.add(new_user)
@@ -88,7 +107,7 @@ class AuthService:
         self.token.set_refresh_cookie(response, refresh_token)
 
         return {"access_token": access_token, "token_type": "bearer", "user": user_payload}
-    
+
     def verify_email_token(self, db: Session, token_str: str):
        
         payload = self.token.decode_email_verification_token(token_str)
@@ -116,9 +135,9 @@ class AuthService:
         
         jti = self.token.create_jti()
         reset_token = self.token.sign_forgot_password_token({"email": normalized_email}, jti)
-        send_password_reset_email(normalized_email, reset_token())
+        send_password_reset_email(normalized_email, reset_token)
 
-        return {"message": "If the email exits, a password reset link has been sent."}
+        return {"message": "If the email exists, a password reset link has been sent."}
     
     def reset_password(self, db: Session, token_str: str, new_password: str):
         if len(new_password) < 8:
