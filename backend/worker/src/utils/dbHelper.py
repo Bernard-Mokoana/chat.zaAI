@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy.orm import sessionmaker, Session
@@ -15,7 +16,7 @@ def save_worker_message(session_factory: sessionmaker, user_id: str, token: str,
     session = session_factory()
     try:
         conversation_id = UUID(token)
-        normalized_role = role.lower()
+        normalized_role = _normalize_message_role(role)
         user_uuid = UUID(user_id)
 
         conversation = (
@@ -28,7 +29,7 @@ def save_worker_message(session_factory: sessionmaker, user_id: str, token: str,
             conversation = Conversation(
                 id=conversation_id,
                 user_id=user_uuid,
-                title=content[:50] if normalized_role == "human" and content else "New Chat",
+                title=content[:50] if normalized_role == "user" and content else "New Chat",
             )
             session.add(conversation)
             session.flush()
@@ -38,6 +39,7 @@ def save_worker_message(session_factory: sessionmaker, user_id: str, token: str,
         session.add(
             Message(
                 conversation_id=conversation.id,
+                user_id=user_uuid,
                 role=normalized_role,
                 content=content,
             )
@@ -58,16 +60,31 @@ def save_worker_message(session_factory: sessionmaker, user_id: str, token: str,
     finally:
          session.close()
 
-def log_worker_usage(session_factory: sessionmaker, user_id: str, event_type: str, model_name: str | None, total_tokens: int | None, message_count: int | None):
+
+def _normalize_message_role(role: str) -> str:
+    role_map = {
+        "human": "user",
+        "user": "user",
+        "bot": "assistant",
+        "assistant": "assistant",
+        "system": "system",
+    }
+    normalized_role = role.lower().strip()
+    if normalized_role not in role_map:
+        raise ValueError(f"Invalid message role: {role}")
+    return role_map[normalized_role]
+
+
+def log_worker_usage(session_factory: sessionmaker, user_id: str, model: str | None, total_tokens: int | None, message_count: int | None):
     try:
         with session_factory() as db:
             db.add(
                 UsageLog(
                     user_id=user_id,
-                    events=event_type,
-                    model_name=model_name,
-                    total_tokens=total_tokens,
-                    message_count=message_count,
+                    log_date=date.today(),
+                    model=model or "unknown",
+                    total_tokens=total_tokens or 0,
+                    message_count=message_count or 0,
                 )
             )
             db.commit()

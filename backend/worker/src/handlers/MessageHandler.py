@@ -165,15 +165,14 @@ class MessageHandler:
             logger.error("Failed to persist %s message to DB: %s", role, exc)
             raise exc
 
-    async def _log_usage(self, user_id: str, event_type: str, model_name: str | None, total_tokens: int | None, message_count: int | None) -> None:
+    async def _log_usage(self, user_id: str, event_type: str, model: str | None, total_tokens: int | None, message_count: int | None) -> None:
         try:
             await asyncio.wait_for(
                 asyncio.to_thread(
                     log_worker_usage,
                     self.session_factory,
                     user_id,
-                    event_type,
-                    model_name,
+                    model,
                     total_tokens,
                     message_count,
                 ),

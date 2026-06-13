@@ -24,7 +24,7 @@ ws_message_limiter = RateLimiterStore()
 
 class ConversationService:
     def save_chat_message(self, db: Session, user_id: str, chat_token: str, role: str, content: str) -> Message:
-        normalized_role = role.lower()
+        normalized_role = self._normalize_message_role(role)
 
         try:
             conversation_uuid = UUID(chat_token)
@@ -50,6 +50,7 @@ class ConversationService:
 
         message = Message(
             conversation_id=conversation.id,
+            user_id=UUID(user_id),
             role=normalized_role,
             content=content,
         )
@@ -59,6 +60,19 @@ class ConversationService:
         db.refresh(message)
 
         return message
+
+    def _normalize_message_role(self, role: str) -> str:
+        role_map = {
+            "human": "user",
+            "user": "user",
+            "bot": "assistant",
+            "assistant": "assistant",
+            "system": "system",
+        }
+        normalized_role = role.lower().strip()
+        if normalized_role not in role_map:
+            raise ValueError(f"Invalid message role: {role}")
+        return role_map[normalized_role]
 
     async def create_chat_session(self, redis_client, user_id: str, name: str) -> dict:
         token = str(uuid.uuid4())

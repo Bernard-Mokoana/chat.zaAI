@@ -6,7 +6,7 @@ export class ChatSocket {
 
   constructor(
     baseWsUrl: string = process.env.NEXT_PUBLIC_WS_URL ||
-      "ws://localhost:3500/api/v1/chat/chat",
+      "ws://localhost:3501/api/v1/chat/chat",
   ) {
     this.baseWsUrl = baseWsUrl;
   }

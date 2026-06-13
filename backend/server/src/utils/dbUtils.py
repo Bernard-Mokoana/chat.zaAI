@@ -36,7 +36,7 @@ def get_conversation_history_from_db(
     )
 
     if not conversation:
-        raise ValueError("Conversation not found")
+        return []
 
     if conversation.user_id != user_uuid:
         raise PermissionError("Conversation does not belong to user")
