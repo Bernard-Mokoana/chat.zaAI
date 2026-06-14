@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect} from "react";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import type { ChatInterfaceProps, ChatMessage, ChatSession } from "@/types/types";
@@ -32,14 +32,13 @@ export default function ChatInterface({
     deleteCurrentSession,
   } = useSessionManagement();
 
-  // Persist messages to active session
   useEffect(() => {
     if (!activeSessionId || messages.length === 0) return;
 
     const lastMsg = messages[messages.length - 1];
     const session: ChatSession = {
       id: activeSessionId,
-      chatToken,
+      chatToken: chatToken ?? undefined,
       title: messages[0]?.content?.slice(0, 40) ?? "New conversation",
       preview: lastMsg?.content?.slice(0, 80) ?? "",
       messages: messages as ChatMessage[],
@@ -103,8 +102,7 @@ export default function ChatInterface({
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900">
-      {/* Sidebar */}
+    <div className="flex h-screen w-full overflow-hidden bg-slate-50">
       <ChatSidebar
         activeSessionId={activeSessionId}
         onSelectSession={handleSelectSession}
@@ -113,23 +111,18 @@ export default function ChatInterface({
         liveMessages={messages as ChatMessage[]}
       />
 
-      {/* Main Chat Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
         <ChatHeader
           displayName={displayName}
           connectionState={connectionState}
           onLogout={handleLogout}
         />
 
-        {/* Messages */}
         <ChatMessageList
           messages={messages}
           connectionState={connectionState}
           isAssistantTyping={isAssistantTyping}
         />
-
-        {/* Input */}
         <ChatInput
           value={input}
           onChange={onInputChange}

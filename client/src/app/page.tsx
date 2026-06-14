@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 via-white to-blue-50 px-4 py-6 sm:py-12">
+    <main className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-100 via-white to-blue-50 px-4 py-6 sm:py-12">
       <section className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-8 shadow-lg sm:p-12 dark:border-slate-800 dark:bg-slate-950">
         {/* Header */}
         <div className="mb-8 sm:mb-10">
@@ -12,7 +12,7 @@ export default function Home() {
             AI Chatbot
           </p>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-            Welcome to FullStack AI Chatbot
+            Welcome to 3DoT
           </h1>
           <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
             Sign in to continue chatting, or create a new account.
@@ -23,7 +23,7 @@ export default function Home() {
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
           <Link
             href="/login"
-            className="flex-1 rounded-lg bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-3.5 text-center font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-slate-800 hover:to-slate-700 dark:from-slate-700 dark:to-slate-800"
+            className="flex-1 rounded-lg bg-linear-to-r from-slate-900 to-slate-800 px-6 py-3.5 text-center font-semibold text-white shadow-md transition-all hover:shadow-lg hover:from-slate-800 hover:to-slate-700 dark:from-slate-700 dark:to-slate-800"
           >
             Sign In
           </Link>

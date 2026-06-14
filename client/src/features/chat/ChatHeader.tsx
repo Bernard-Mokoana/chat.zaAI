@@ -2,7 +2,6 @@
 
 import { ArrowLeft } from "lucide-react";
 import { useCallback, useState } from "react";
-import type { ConnectionState } from "@/types/types";
 import Modal from "@/components/Modal";
 import type { ChatHeaderProps } from "@/types/types";
 
@@ -28,10 +27,6 @@ const connectionTone = {
     dot: "bg-rose-500",
   },
 } as const;
-
-/**
- * Chat interface header with status and logout button
- */
 export default function ChatHeader({
   displayName,
   connectionState,
@@ -65,10 +60,10 @@ export default function ChatHeader({
             </button>
 
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                AI Assistant
+              <h2 className="text-lg font-semibold text-slate-900">
+                3DoT
               </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-slate-900">
                 Welcome {displayName}
               </p>
             </div>
@@ -83,7 +78,6 @@ export default function ChatHeader({
         </div>
       </header>
 
-      {/* Logout Confirmation Modal */}
       <Modal
         isOpen={isLogoutModalOpen}
         title="Logout"

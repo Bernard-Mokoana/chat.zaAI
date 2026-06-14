@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
-import type { ChatSocket, ChatSocketParams } from "@/services/ws/chatSocket";
+import type { ChatSocket } from "@/services/ws/chatSocket";
+import type { ChatSocketParams } from "@/types/types";
 import { createChatSocket } from "@/services/ws/chatSocket";
 import { getAccessToken } from "@/services/storage/chatStorage";
 import { showToast } from "@/services/toast/toastEvents";

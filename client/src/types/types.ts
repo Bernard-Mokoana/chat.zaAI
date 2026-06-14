@@ -54,6 +54,12 @@ export interface ResetPasswordPayload {
   new_password: string;
 }
 
+export type AuthAction = "login" | "register";
+
+export interface ApiErrorPayload {
+  detail?: string;
+}
+
 export interface GenericAuthResponse {
   message: string;
 }
