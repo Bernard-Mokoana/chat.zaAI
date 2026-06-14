@@ -31,6 +31,33 @@ export default function ChatInterface({
     saveCurrentSession,
     deleteCurrentSession,
   } = useSessionManagement();
+  useEffect(() => {
+    if (!chatToken) return;
+    if (activeSessionId) return;
+    setActiveSessionId(chatToken);
+  }, [chatToken, activeSessionId, setActiveSessionId]);
+
+  useEffect(() => {
+    const handleSessionReady = (event: Event) => {
+      const { token } = (event as CustomEvent<{ token: string }>).detail;
+      if (token && token !== activeSessionId) {
+        setActiveSessionId(token);
+        const placeholder: ChatSession = {
+          id: token,
+          chatToken: token,
+          title: "New conversation",
+          preview: "",
+          messages: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        saveCurrentSession(placeholder);
+      }
+    };
+
+    window.addEventListener("chat:session-ready", handleSessionReady);
+    return () => window.removeEventListener("chat:session-ready", handleSessionReady);
+  }, [activeSessionId, setActiveSessionId, saveCurrentSession]);
 
   useEffect(() => {
     if (!activeSessionId || messages.length === 0) return;

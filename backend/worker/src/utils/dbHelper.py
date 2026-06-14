@@ -2,8 +2,10 @@ import logging
 from datetime import date
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.postgresql import insert
 
 from backend.database.models.conversations import Conversation
 from backend.database.models.messages import Message
@@ -78,15 +80,21 @@ def _normalize_message_role(role: str) -> str:
 def log_worker_usage(session_factory: sessionmaker, user_id: str, model: str | None, total_tokens: int | None, message_count: int | None):
     try:
         with session_factory() as db:
-            db.add(
-                UsageLog(
-                    user_id=user_id,
-                    log_date=date.today(),
-                    model=model or "unknown",
-                    total_tokens=total_tokens or 0,
-                    message_count=message_count or 0,
-                )
+            stmt = insert(UsageLog).values(
+                user_id=user_id,
+                log_date=date.today(),
+                model=model or "unknown",
+                total_tokens=total_tokens or 0,
+                message_count=message_count or 0, 
+            ).on_conflict_do_update(
+                constraint="uq_usage_logs_user_date_model",
+                set_={
+                    "total_tokens": UsageLog.total_tokens + (total_tokens or 0),
+                    "message_count": UsageLog.message_count + (message_count or 0),
+                    "updated_at": func.now(),
+                }
             )
+            db.execute(stmt)
             db.commit()
     except Exception as e:
         logger.error("Failed to write metrics to usage_logs database: %s", e)

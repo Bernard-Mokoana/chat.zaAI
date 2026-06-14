@@ -206,7 +206,11 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
     };
 
     const handleNewSession = () => {
-      startNewBackendSession().catch((error) => {
+      startNewBackendSession().then((token) => {
+        window.dispatchEvent(
+          new CustomEvent("chat:session-ready", { detail: { token } })
+        );
+      }).catch((error) => {
         const status = axios.isAxiosError(error) ? error.response?.status : undefined;
         if (status === 401) {
           clearAuthState();
