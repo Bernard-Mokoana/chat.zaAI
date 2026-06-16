@@ -1,4 +1,6 @@
 from typing import Optional
+
+import redis.exceptions
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,6 +14,10 @@ class Producer():
             logger.info(f"Message id {msg_id} added to {stream_channel} stream")
             return msg_id
         
+        except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
+            logger.warning(f"Transient error sending message to stream: {e}")
+            return None
+        
         except Exception as e:
             logger.error(f"Error sending message to stream => {e}")
-            return None
+            raise

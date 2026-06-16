@@ -50,26 +50,10 @@ class AuthService:
             bcrypt.gensalt()
         ).decode("utf-8")
 
-        jti = self.token.create_jti()
-        verification_token = self.token.sign_email_verification_token(
-            {"email": normalized_email},
-            jti,
-        )
-        send_email_verification(normalized_email, verification_token)
-
         tier_obj = db.query(TierModel).filter(TierModel.name == "free").first()
         if not tier_obj:
-            tier_obj = TierModel(
-                name="free",
-                token_limit=0,  
-                message_limit=0, 
-                price_cents=0,
-                is_active=True
-            )
-            db.add(tier_obj)
-            db.commit()
-            db.refresh(tier_obj)
-
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="System configuration error: free tier not found")
+        
         new_user = User(
             name=normalized_name,
             email=normalized_email,
@@ -80,6 +64,14 @@ class AuthService:
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
+
+        jti = self.token.create_jti()
+        verification_token = self.token.sign_email_verification_token(
+            {"email": normalized_email},
+            jti,
+        )
+        
+        send_email_verification(normalized_email, verification_token)
 
         return new_user
     
@@ -106,7 +98,7 @@ class AuthService:
 
         self.token.set_refresh_cookie(response, refresh_token)
 
-        return {"access_token": access_token, "token_type": "bearer", "user": user_payload}
+        return {"access_token": access_token, "token_type": "Bearer", "user": user_payload}
 
     def verify_email_token(self, db: Session, token_str: str):
        
@@ -185,7 +177,7 @@ class AuthService:
             db.query(RefreshToken).filter(
                 RefreshToken.user_id == user_id,
                 RefreshToken.jwt_id == jti,
-                RefreshToken.token == token_hash,
+                RefreshToken.token_hash == token_hash,
                 RefreshToken.is_revoked.is_(False),
             )
             .first()
@@ -244,7 +236,7 @@ class AuthService:
                         .filter(
                             RefreshToken.user_id == user_id,
                             RefreshToken.jwt_id == jti,
-                            RefreshToken.token == token_hash,
+                            RefreshToken.token_hash == token_hash,
                             RefreshToken.is_revoked.is_(False),
                             )
                             .first()

@@ -20,7 +20,12 @@ class GPT:
             api_key=token
         )
         self.model_id = self._resolve_model_id()
-        self.max_new_tokens = int(os.environ.get("MAX_NEW_TOKENS", self.DEFAULT_MAX_TOKENS))
+
+        try:
+            self.max_new_tokens = int(os.environ.get("MAX_NEW_TOKENS", self.DEFAULT_MAX_TOKENS))
+        except ValueError as exc:
+            logger.warning*(f"Invalid MAX_NEW_TOKENS value, using default {self.DEFAULT_MAX_TOKENS}: {exc}")
+            self.max_new_tokens = self.DEFAULT_MAX_TOKENS
 
     def _resolve_model_id(self) -> str:
         model_id = os.environ.get("MODEL_ID")

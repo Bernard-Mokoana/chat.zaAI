@@ -10,6 +10,7 @@ import { showToast } from "@/services/toast/toastEvents";
 import { validateLoginForm, getFieldError } from "@/utils/validation";
 import AuthLayout from "@/components/AuthLayout";
 import FormField from "@/components/FormField";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -112,12 +113,12 @@ export default function LoginPage() {
       </form>
 
       <div className="mt-6 text-center">
-        <a
+        <Link
           href="/forgotPassword"
           className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
         >
           Forgot your password?
-        </a>
+        </Link>
       </div>
     </AuthLayout>
   );

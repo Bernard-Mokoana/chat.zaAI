@@ -19,11 +19,11 @@ services:
       - "3500:3500"
     environment:
       - APP_ENV=production
-      - REDIS_URL=${{Redis.REDIS_URL}}
-      - DATABASE_PRIMARY_URL=${{Postgres.DATABASE_URL}}
-      - DATABASE_REPLICA_URL=${{Postgres.DATABASE_URL}}
-      - DATABASE_READ_FROM_REPLICA=false
-      - DATABASE_ALLOW_REPLICA_FALLBACK=true
+        - REDIS_URL=${REDIS_URL}
+        - DATABASE_PRIMARY_URL=${DATABASE_PRIMARY_URL}
+        - DATABASE_REPLICA_URL=${DATABASE_REPLICA_URL:-${DATABASE_PRIMARY_URL}}
+        - DATABASE_READ_FROM_REPLICA=false
+        - DATABASE_ALLOW_REPLICA_FALLBACK=true
     depends_on:
       - redis
     restart: always
@@ -35,8 +35,8 @@ services:
       dockerfile: backend/worker/Dockerfile
     container_name: chatbot-worker
     environment:
-      - REDIS_URL=${{Redis.REDIS_URL}}
-      - HUGGINFACE_INFERENCE_TOKEN=${{HUGGINGFACE_INFERENCE_TOKEN}}
+      - REDIS_URL=${Redis.REDIS_URL}
+      - HUGGINFACE_INFERENCE_TOKEN=${HUGGINGFACE_INFERENCE_TOKEN}
       - MODEL_ID=katanemo/Arch-Router-1.5B
       - MAX_NEW_TOKENS=25
     depends_on:
@@ -49,8 +49,8 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${{SERVER_PUBLIC_URL}}
-        - NEXT_PUBLIC_WS_URL=${{SERVER_PUBLIC_WS_URL}}
+        - NEXT_PUBLIC_API_URL=${SERVER_PUBLIC_URL}
+        - NEXT_PUBLIC_WS_URL=${SERVER_PUBLIC_WS_URL}
     container_name: chatbot-client
     ports:
       - "3001:3001"

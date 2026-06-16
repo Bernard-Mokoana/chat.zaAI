@@ -1,11 +1,12 @@
 import { useEffect, useCallback } from "react";
-import type { ChatMessage, ChatSession } from "@/types/types";
+import type { ChatSession } from "@/types/types";
 import { useRouter } from "next/navigation";
 import { clearAuthState } from "@/services/storage/chatStorage";
 import { showToast } from "@/services/toast/toastEvents";
 import { getChatHistory } from "@/services/chat/chatApi";
 import axios from "axios";
 import type { UseSessionEventsParams } from "@/types/types";
+import { normalizeHistoryMessage } from "@/utils/messageUtils";
 
 export function useSessionEvents({
   onLoadSession,
@@ -27,24 +28,7 @@ export function useSessionEvents({
         if (chatToken && !chatToken.startsWith("session_")) {
           try {
             const response = await getChatHistory(chatToken);
-            mappedMessages = (response.history ?? [])
-              .map((m) => {
-                const normalizedRole = m.role?.toLowerCase();
-                const isUser =
-                  normalizedRole === "human" || normalizedRole === "user";
-                const role = isUser
-                  ? ("user" as const)
-                  : ("assistant" as const);
-
-                return {
-                  id: m.id ?? crypto.randomUUID(),
-                  role,
-                  content: (m.msg ?? "")
-                    .trim()
-                    .replace(/^(human|bot):\s*/i, ""),
-                };
-              })
-              .filter((m) => m.content.length > 0);
+            mappedMessages = normalizeHistoryMessage(response.history ?? []);
           } catch (error) {
             const status = axios.isAxiosError(error)
               ? error.response?.status

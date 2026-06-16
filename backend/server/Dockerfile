@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install --no-cache-dir psycopg2-binary "pydantic[email]"
+RUN pip install --no-cache-dir "pydantic[email]"
 
 COPY backend/ /app/backend/
 
@@ -20,4 +20,4 @@ EXPOSE 3500
 
 ENV PYTHONPATH=/app
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:api --host 0.0.0.0 --port ${PORT:-3500}"]
+CMD ["uvicorn", "main:api", "--host", "0.0.0.0", "--port", "${PORT:-3500}"]

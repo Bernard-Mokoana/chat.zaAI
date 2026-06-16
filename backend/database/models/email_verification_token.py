@@ -43,7 +43,7 @@ class EmailVerificationToken(TimestampMixin, Base):
         return (
             not self.is_revoked
             and not self.is_verified
-            and datetime.now(timezone.utc) < self.expires_at.replace(tzinfo=None)
+            and datetime.now(timezone.utc) < self.expires_at
         )
 
     def __repr__(self) -> str:

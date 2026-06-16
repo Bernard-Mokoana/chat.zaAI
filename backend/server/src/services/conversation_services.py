@@ -1,10 +1,13 @@
 import asyncio
 import contextlib
 import logging
+import redis.exceptions
 import uuid
 
 from uuid import UUID
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+
 from fastapi import WebSocket
 
 from backend.database.models.conversations import Conversation
@@ -30,34 +33,40 @@ class ConversationService:
             conversation_uuid = UUID(chat_token)
         except ValueError:
             raise ValueError(f"Invalid chat_token format: {chat_token}")
+        
+        try:
+             conversation = (
+                 db.query(Conversation)
+                 .filter(Conversation.id == conversation_uuid)
+                 .first()
+                 )   
+             
+             if not conversation:
+                 conversation = Conversation(
+                     id=conversation_uuid,
+                     user_id=UUID(user_id),
+                     title=self._build_title(content, normalized_role),
+                     )
+                 db.add(conversation)
+                 db.flush()
+                 
+             elif str(conversation.user_id) != str(user_id):
+                 raise PermissionError("Conversation does not belong to user")
+             
+             message = Message(
+                 conversation_id=conversation.id,
+                 user_id=UUID(user_id),
+                 role=normalized_role,
+                 content=content,
+                 )
+             
+             db.add(message)
+             db.commit()
+             db.refresh(message)
 
-        conversation = (
-            db.query(Conversation)
-            .filter(Conversation.id == conversation_uuid)
-            .first()
-        )   
-
-        if not conversation:
-            conversation = Conversation(
-                id=conversation_uuid,
-                user_id=UUID(user_id),
-                title=self._build_title(content, normalized_role),
-            )
-            db.add(conversation)
-            db.flush()
-        elif str(conversation.user_id) != str(user_id):
-            raise PermissionError("Conversation does not belong to user")
-
-        message = Message(
-            conversation_id=conversation.id,
-            user_id=UUID(user_id),
-            role=normalized_role,
-            content=content,
-        )
-
-        db.add(message)
-        db.commit()
-        db.refresh(message)
+        except SQLAlchemyError as e:
+             db.rollback()
+             logger.error(f"Database error saving chat message: {e}")
 
         return message
 
@@ -79,14 +88,18 @@ class ConversationService:
         chat_session = Chat(token=token, user_id=str(user_id), messages=[], name=name)
         payload = chat_session.model_dump()
 
-        await redis_client.json().set(token, "$", payload)
-        await redis_client.expire(token, 3600)
+        try:
+            await redis_client.json().set(token, "$", payload)
+            await redis_client.expire(token, 3600)
+        except redis.exceptions.RedisError as e:
+            logger.error(f"Failed to create chat session in Redis: {e}")
+            raise
 
         return payload
     
     async def get_chat_session(self, redis_client, token: str, user_id: str) -> dict:
         data = await redis_client.json().get(token, "$")
-        session = self._unwrap_redis_json(data)
+        session = self._uwrap_redis_json(data)
 
         if not session:
             raise ValueError("Session expired or does not exist")
@@ -121,7 +134,7 @@ class ConversationService:
         return data
     
     def _build_title(self, content: str, role: str) -> str:
-        if role == "human" and content:
+        if role == "user" and content:
             return content[:50]
         return "New Chat"
     
@@ -196,10 +209,13 @@ class ChatOrchestrator:
                         if chat_token != str(response_token):
                             continue
 
-                        await self.manager.send_personal_message(
-                            response_message,
-                            websocket,
-                        )
+                        try:
+                            await self.manager.send_personal_message(
+                                response_message,
+                                websocket,
+                                )
+                        except Exception as e:
+                            logger.warning(f"Failed to send response message: {e}")
 
                         await self.consumer.delete_message(
                             stream_channel=RESPONSE_CHANNEL,

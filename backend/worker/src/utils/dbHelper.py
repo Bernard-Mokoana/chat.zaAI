@@ -17,9 +17,13 @@ logger = logging.getLogger(__name__)
 def save_worker_message(session_factory: sessionmaker, user_id: str, token: str, role: str, content: str):
     session = session_factory()
     try:
-        conversation_id = UUID(token)
-        normalized_role = _normalize_message_role(role)
-        user_uuid = UUID(user_id)
+        try:
+            conversation_id = UUID(token)
+            normalized_role = normalized_role(role)
+            user_uuid = UUID(user_id)
+        except ValueError as exc:
+            logger.error(f"Invalid UUID format - token: {token}, user_id: {user_id}: {exc}")
+            raise ValueError(f"Invalid token or user_id format: {exc} from exc")
 
         conversation = (
             session.query(Conversation)
@@ -50,14 +54,14 @@ def save_worker_message(session_factory: sessionmaker, user_id: str, token: str,
         logger.info("Successfully persisted %s message to DB for session token %s", role, token)
 
     except SQLAlchemyError as exc:
-         session.rollback()
-         logger.error(f"SQLAlchemy error during save_worker_message for token {token}: {exc}")
-         raise
+        session.rollback()
+        logger.error(f"SQLAlchemy error during save_worker_message for token {token}: {exc}")
+        raise
     
     except Exception as exc:
-         session.rollback()
-         logger.error(f"Unexpected error during save_worker_message for token: {token}: {exc}")
-         raise
+        session.rollback()
+        logger.error(f"Unexpected error during save_worker_message for token: {token}: {exc}")
+        raise
     
     finally:
          session.close()
@@ -101,8 +105,12 @@ def log_worker_usage(session_factory: sessionmaker, user_id: str, model: str | N
 
 def get_conversation_history_from_db(session: Session, user_id: str, token: str, limit: int = 20) -> list:
     try:
-        conversation_id = UUID(token)
-        user_uuid = UUID(user_id)
+        try:
+            conversation_id = UUID(token)
+            user_uuid = UUID(user_id)
+        except ValueError as exc:
+            logger.error(f"Invalid UUID format - token: {token}, user_id: {user_id}: {exc}")
+            return []
 
         conversation = (
             session.query(Conversation)
@@ -130,5 +138,7 @@ def get_conversation_history_from_db(session: Session, user_id: str, token: str,
             ]
     
     except Exception as exc:
+        if isinstance(exc, PermissionError):
+            raise
         logger.error(f"Failed to fetch conversation history from DB for conversation_id: {token}: {exc}")
         return []

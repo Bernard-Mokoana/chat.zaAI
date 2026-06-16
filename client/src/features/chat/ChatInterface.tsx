@@ -62,6 +62,7 @@ export default function ChatInterface({
   useEffect(() => {
     if (!activeSessionId || messages.length === 0) return;
 
+    const existing = sessions.find((s) => s.id === activeSessionId);
     const lastMsg = messages[messages.length - 1];
     const session: ChatSession = {
       id: activeSessionId,
@@ -69,12 +70,12 @@ export default function ChatInterface({
       title: messages[0]?.content?.slice(0, 40) ?? "New conversation",
       preview: lastMsg?.content?.slice(0, 80) ?? "",
       messages: messages as ChatMessage[],
-      createdAt: Date.now(),
+      createdAt: existing?.createdAt ?? Date.now(),
       updatedAt: Date.now(),
     };
 
     saveCurrentSession(session);
-  }, [messages, activeSessionId, chatToken, saveCurrentSession]);
+  }, [messages, activeSessionId, chatToken, saveCurrentSession, sessions]);
 
   const handleSelectSession = useCallback(
     (session: ChatSession) => {

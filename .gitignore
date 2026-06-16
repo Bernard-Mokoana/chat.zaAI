@@ -1,7 +1,7 @@
-.env
-.env.local
-notes.txt
-design.md
-requirements.md
-tasks.txt
-dataflow.txt
+/.env
+/.env.local
+/notes.txt
+/design.md
+/requirements.md
+/tasks.txt
+/dataflow.txt

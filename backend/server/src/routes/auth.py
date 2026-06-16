@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, Response, Request, HTTPException, status
 from sqlalchemy.orm import Session
 
-from src.utils.token import Token
 from backend.database.config.databaseConfig import get_write_db
 from backend.database.models.users import User
 from src.schema.auth import LoginSchema, RegisterSchema, ForgetPasswordSchema, ResetPasswordSchema

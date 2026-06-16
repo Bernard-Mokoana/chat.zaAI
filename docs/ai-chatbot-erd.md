@@ -4,7 +4,7 @@ This document captures the core data model for the AI chatbot backend.
 
 ## ERD Diagram
 
-![AI Chatbot ERD](../Application%20Architecture/AI%20Chatbot%20ERD.jpg)
+![AI Chatbot ERD](AI%20Chatbot%20ERD.drawio)
 
 ## Editable Source
 
@@ -16,7 +16,11 @@ This document captures the core data model for the AI chatbot backend.
 - `conversations`: groups messages by chat thread and owner.
 - `messages`: stores user/assistant message history for each conversation.
 - `refresh_token`: manages refresh-token lifecycle and user linkage.
+- `tiers`: defines subscription tiers with token and message limits.
+- `email_verification_token`: tracks email verification tokens and their state.
+- `reset_password_token`: manages password reset token lifecycle.
 - `usage_logs`: tracks usage and telemetry events.
+- `audit-log`: records user actions for security and compliance auditing.
 
 ## Relationship Summary
 

@@ -12,7 +12,7 @@ from .base import MessageRole, SoftDeleteMixin
 
 if TYPE_CHECKING:
     from .conversations import Conversation
-    from .user import User
+    from .users import User
 
 class Message(SoftDeleteMixin, Base):
     __tablename__ = "messages"

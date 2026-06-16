@@ -26,6 +26,9 @@ async def route_to_dead_letter_queue(producer: Producer, original_message: tuple
             exc,
         )
         decoded = raw_fields 
+    
+    if isinstance(message_id, bytes):
+        message_id = message_id.decode("utf-8", errors="replace")
 
     payload = {
         "original_id": str(message_id),

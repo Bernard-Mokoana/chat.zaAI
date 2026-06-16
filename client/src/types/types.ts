@@ -1,4 +1,4 @@
-import type { FormEvent, ChangeEvent, ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 
 /**
  * Connection state for WebSocket connections
@@ -176,17 +176,6 @@ export interface ChatSidebarProps {
   liveMessages?: ChatMessage[];
   refreshTrigger?: number;
 }
-
-export interface AuthLayoutProps {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
-  footerLink?: {
-    href: string;
-    label: string;
-  };
-}
-
 export interface FormFieldProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   "id"

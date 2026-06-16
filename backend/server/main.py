@@ -101,7 +101,7 @@ async def rate_limit_middleware(request: Request, call_next):
 
     result = limiter.check(key=client_ip, rule=rule)
 
-# Check if the client has tokens available
+    # Check if the client has tokens available
     if not result.allowed:
         return JSONResponse(
             status_code=429,
@@ -138,8 +138,9 @@ async def root():
     return {"message": "API is Online"}
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", "3500"))
     if os.environ.get('APP_ENV') == "development":
-        uvicorn.run("main:api", host="0.0.0.0", port=3500 | 3501, reload=True)
+        uvicorn.run("main:api", host="0.0.0.0", port=port, reload=True)
     else:
-        uvicorn.run("main:api", host="0.0.0.0", port=3500 | 3501, reload=False)
+        uvicorn.run("main:api", host="0.0.0.0", port=port, reload=False)
         

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from src.services.conversation_services import ConversationService
+from backend.server.src.services.conversation_services import ConversationService
 from backend.database.models.conversations import Conversation
 from backend.database.models.messages import Message
 

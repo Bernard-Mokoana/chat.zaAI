@@ -40,14 +40,13 @@ export function useChatSession(): UseChatSessionReturn {
 
   const startNewSession = useCallback(
     async (displayName: string): Promise<string> => {
+      const session = await createChatSession(displayName);
+
       setInput("");
       setIsAssistantTyping(false);
       setMessagesState([]);
       clearChatMessages();
       clearChatToken();
-      setActiveChatToken(null);
-
-      const session = await createChatSession(displayName);
       setChatToken(session.token);
       setActiveChatToken(session.token);
       return session.token;

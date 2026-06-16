@@ -65,14 +65,14 @@ The backend entity relationships are documented here:
 |   |-- src/features/chat/          Chat UI and session logic
 |   |-- src/services/               HTTP, WebSocket, and localStorage helpers
 |   `-- package.json
-|-- server/                         FastAPI API + WebSocket gateway
+|-- backend/server/                         FastAPI API + WebSocket gateway
 |   |-- src/routes/chat.py          Token + refresh + WebSocket routes
 |   |-- src/socket/                 WebSocket helpers
 |   |-- src/database/               SQLAlchemy config + relational models
 |   `-- src/redis/                  Redis connection and stream helpers
 |   |-- alembic/                    Migration environment
 |   `-- alembic.ini                 Alembic configuration
-|-- worker/                         Redis consumer + model caller
+|-- backend/worker/                         Redis consumer + model caller
 |   |-- src/model/gptj.py           Hugging Face inference client
 |   `-- src/redis/                  Redis cache/stream helpers
 |-- docs/                           Notes on design and requirements
@@ -238,7 +238,7 @@ Notes:
 
 ## Running Locally
 
-You need three processes:
+You need four processes:
 
 1. Redis with Redis JSON support
 2. FastAPI server

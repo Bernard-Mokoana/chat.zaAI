@@ -27,6 +27,7 @@ redis_manager = RedisManager()
 shutdown_event = asyncio.Event()
 
 RETRY_BACKOFF_SEC = 5
+BLOCK_TIMEOUT_MS = 5000 
 
 def handle_shutdown(signum, frame):
     logger.info("Received shutdown signal, stopping worker...")
@@ -60,9 +61,10 @@ async def main() -> None:
     while not shutdown_event.is_set():
         try:
             response = await consumer.consume_stream(
-                stream_channel=STREAM_CHANNEL, count=10, block=0
+                stream_channel=STREAM_CHANNEL, count=10, block=BLOCK_TIMEOUT_MS
             )
             if not response:
+                continue
                 continue
 
             for _stream_name, messages in response:
@@ -79,7 +81,7 @@ async def main() -> None:
             logger.exception("Unexpected error in consumer loop; continuing")
     
     logger.info("Worker shutdown complete")
-    await redis_conn.aclose()
+    await async_client.aclose()
     json_client.close()
 
 

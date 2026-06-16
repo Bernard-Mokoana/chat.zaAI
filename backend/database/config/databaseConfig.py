@@ -22,13 +22,13 @@ if READ_FROM_REPLICA and not REPLICA_URL and not ALLOW_REPLICA_FALLBACK:
         "and DATABASE_ALLOW_REPLICA_FALLBACK=false."
     )
 
-engine_primary = create_engine(PRIMARY_URL, pool_pre_ping=True)
-engine_replica = create_engine(REPLICA_URL, pool_pre_ping=True) if REPLICA_URL else engine_primary
+# engine_primary = create_engine(PRIMARY_URL, pool_pre_ping=True)
+# engine_replica = create_engine(REPLICA_URL, pool_pre_ping=True) if REPLICA_URL else engine_primary
 
-read_engine = engine_replica if READ_FROM_REPLICA and REPLICA_URL else engine_primary
+# read_engine = engine_replica if READ_FROM_REPLICA and REPLICA_URL else engine_primary
 
-SessionPrimary = sessionmaker(autocommit=False, autoflush=False, bind=engine_primary) 
-SessionReplica = sessionmaker(autocommit=False, autoflush=False, bind=read_engine)
+# SessionPrimary = sessionmaker(autocommit=False, autoflush=False, bind=engine_primary) 
+# SessionReplica = sessionmaker(autocommit=False, autoflush=False, bind=read_engine)
 
 def get_resilient_engine(url, max_retries=5, delay=5):
     for attempt in range(max_retries):
@@ -42,7 +42,12 @@ def get_resilient_engine(url, max_retries=5, delay=5):
             time.sleep(delay)
 
 engine_primary = get_resilient_engine(PRIMARY_URL)
+engine_replica = get_resilient_engine(REPLICA_URL) if REPLICA_URL else engine_primary
 
+read_engine = engine_replica if READ_FROM_REPLICA and REPLICA_URL else engine_primary
+
+sessionPrimary = sessionmaker(autocommit=False, autoflush=False, bind=engine_primary)
+sessionReplica = sessionmaker(autocommit=False, autoflush=False, bind=read_engine)
 class Base(DeclarativeBase):
     pass
 

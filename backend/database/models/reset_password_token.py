@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
@@ -34,14 +34,14 @@ class ResetPasswordToken(TimestampMixin, Base):
 
     def revoke(self) -> None:
         self.is_revoked = True
-        self.revoked_at = datetime.utcnow()
+        self.revoked_at = datetime.now(timezone.utc)
 
     @property
     def is_valid(self) -> bool:
         return (
             not self.is_revoked
             and not self.is_used
-            and datetime.utcnow() < self.expires_at.replace(tzinfo=None)
+            and datetime.now(timezone.utc) < self.expires_at
         )
 
     def __repr__(self) -> str:

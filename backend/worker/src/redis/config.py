@@ -17,7 +17,7 @@ class RedisManager:
         self.shared_redis_client = redis_async.from_url(
             self.url,
             decode_responses=True,
-            socket_timeout=None,            
+            socket_timeout=60,            
             socket_connect_timeout=10,     
             health_check_interval=30
         )

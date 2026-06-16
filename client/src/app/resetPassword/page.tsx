@@ -79,7 +79,8 @@ function ResetPasswordForm() {
           tone: "success",
         });
 
-        setTimeout(() => router.push("/login"), 2000);
+      const timeoutId = setTimeout(() => router.push("/login"), 2000);
+      return () => clearTimeout(timeoutId)
       } catch (err: unknown) {
         const detail =
           axios.isAxiosError(err) && typeof err.response?.data?.detail === "string"

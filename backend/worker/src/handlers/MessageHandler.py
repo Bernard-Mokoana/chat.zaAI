@@ -140,10 +140,10 @@ class MessageHandler:
                     )
             
             history_rounds = await asyncio.to_thread(fetch_action)
-            if not history_rounds:
+            if history_rounds is None:
                 return None
             
-            return " ".join(m["msg"] for m in history_rounds)
+            return " ".join(m["msg"] for m in history_rounds) if history_rounds else " "
         except Exception as exc:
             logger.error(f"Error compiling prompt window from database: {exc}")
             return None

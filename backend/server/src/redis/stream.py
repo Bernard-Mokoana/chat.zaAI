@@ -19,5 +19,8 @@ class StreamConsumer:
             return []
     
     async def delete_message(self, stream_channel, message_id):
-        await self.redis_client.xdel(stream_channel, message_id)
+        try:
+            await self.redis_client.xdel(stream_channel, message_id)
+        except Exception as e: 
+            logger.warning(f"Failed to delete message {message_id} from {stream_channel}: {e}")
         

@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect, status
 
@@ -18,16 +20,19 @@ chat = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 manager = ConnectionManager()
 redis = Redis()
 
+logger = logging.getLogger(__name__)
 
 @chat.post("/token")
 async def token_generator(name: str, request: Request, current_user: User = Depends(get_current_user)):
     redis_client = await redis.create_connection()
-
-    return await conversation_service.create_chat_session(
-        redis_client=redis_client,
-        user_id=str(current_user.id),
-        name=name,
-    )
+    try:
+        return await conversation_service.create_chat_session(
+            redis_client=redis_client,
+            user_id=str(current_user.id),
+            name=name,
+        )
+    finally:
+        await redis_client.close()
 
 @chat.get("/refresh_token")
 async def refresh_token(request: Request, token: str, current_user: User = Depends(get_current_user)):
@@ -69,6 +74,7 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     except Exception:
+        logger.exception("Unexpected error during websocket session validation")
         await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
         return
     

@@ -47,7 +47,9 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url", os.environ.get("DATABASE_PRIMARY_URL"))
+    url = os.environ.get("DATABASE_PRIMARY_URL")
+    if not url:
+        raise ValueError("DATABASE_PRIMARY_URL environment variable is required for offline migrations")
 
     context.configure(
         url=url,
@@ -67,7 +69,10 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_PRIMARY_URL"))
+    db_url = os.environ.get("DATABASE_PRIMARY_URL")
+    if not db_url:
+        raise ValueError("DATABASE_PRIMARY_URL environment variable is required for migration")
+    config.set_main_option("sqlalchemy.url", db_url)
     
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),

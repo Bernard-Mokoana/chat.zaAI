@@ -1,52 +1,22 @@
 import type { FormValidationResult, ValidationError } from "@/types/types";
 
-/**
- * Email validation regex (RFC 5322 simplified)
- */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/**
- * Password requirements regex
- * - At least 8 characters
- * - At least one uppercase letter
- * - At least one lowercase letter
- * - At least one digit
- * - At least one special character
- */
 const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-/**
- * Validates an email address
- */
 export function validateEmail(email: string): boolean {
   return EMAIL_REGEX.test(email.trim());
 }
 
-/**
- * Validates password strength
- * Requirements:
- * - Minimum 8 characters
- * - At least one uppercase letter
- * - At least one lowercase letter
- * - At least one digit
- * - At least one special character (@$!%*?&)
- */
 export function validatePassword(password: string): boolean {
   return PASSWORD_REGEX.test(password);
 }
 
-/**
- * Validates a name (non-empty, reasonable length)
- */
 export function validateName(name: string): boolean {
   const trimmed = name.trim();
   return trimmed.length > 0 && trimmed.length <= 100;
 }
-
-/**
- * Validates login form data
- */
 export function validateLoginForm(
   email: string,
   password: string,
@@ -80,10 +50,6 @@ export function validateLoginForm(
     errors,
   };
 }
-
-/**
- * Validates registration form data
- */
 export function validateRegisterForm(
   name: string,
   email: string,
@@ -133,7 +99,12 @@ export function validateRegisterForm(
     });
   }
 
-  if (confirmPassword !== undefined && trimmedPassword !== confirmPassword) {
+  const trimmedConfirmPassword = confirmPassword?.trim();
+
+  if (
+    trimmedConfirmPassword !== undefined &&
+    trimmedPassword !== trimmedConfirmPassword
+  ) {
     errors.push({
       field: "confirmPassword",
       message: "Passwords do not match",
@@ -146,9 +117,6 @@ export function validateRegisterForm(
   };
 }
 
-/**
- * Validates forgot password form
- */
 export function validateForgotPasswordForm(
   email: string,
 ): FormValidationResult {
@@ -174,9 +142,6 @@ export function validateForgotPasswordForm(
   };
 }
 
-/**
- * Gets the first error for a specific field
- */
 export function getFieldError(
   errors: ValidationError[],
   field: string,

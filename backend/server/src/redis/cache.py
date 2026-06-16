@@ -1,4 +1,6 @@
 from redis.commands.json.path import Path
+
+import redis.exceptions
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,8 +13,11 @@ class Cache:
         try:
             data = self.json_client.json().get(token, Path.root_path())
             return data
+        except redis.exceptions.ResponseError as e:
+            logger.debug(f"Chat history not found for token {token}: {e}")
+            return None
         except Exception as e:
             logger.error(f"Failed to get chat history: {e}")
-            return None
+            raise
 
 

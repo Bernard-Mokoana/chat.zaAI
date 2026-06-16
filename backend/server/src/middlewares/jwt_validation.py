@@ -19,10 +19,7 @@ def get_current_user(
         if credentials.scheme.lower() != "bearer":
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid auth scheme")
         
-        try:
-                payload = token_util.decode_access_token(credentials.credentials)
-        except (ValueError, KeyError, TypeError) as e:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+        payload = token_util.decode_access_token(credentials.credentials)
 
         user_id = payload.get("id")
         if not user_id:

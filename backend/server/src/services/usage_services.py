@@ -12,6 +12,6 @@ def create_usage_log(db: Session, user_id: str, event_type: str, model_name: str
         message_count=message_count
     )
     db.add(log_entry)
-    db.commit()
+    db.flush()
     db.refresh(log_entry)
     return log_entry

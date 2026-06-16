@@ -24,7 +24,7 @@ export default function FormField({
           error
             ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
             : "border-slate-300 focus:border-blue-500 focus:ring-blue-500 dark:border-slate-700"
-        } disabled:opacity-60 disabled:cursor-not-allowed`}
+        } disabled:opacity-60 disabled:cursor-not-allowed ${className || ""}`}
       />
       {error && (
         <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
