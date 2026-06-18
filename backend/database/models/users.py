@@ -25,7 +25,7 @@ class User(TimestampMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
-    email: Mapped[str] = mapped_column(String(250), nullable=False, unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(250), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(250), nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     tier_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tiers.id", ondelete="RESTRICT"), nullable=False, index=True)

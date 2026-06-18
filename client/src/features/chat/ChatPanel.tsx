@@ -25,7 +25,7 @@ function generateId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 export default function ChatPanel({ displayName }: ChatPanelProps) {
@@ -51,9 +51,9 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
 
   useEffect(() => {
     return () => {
-      setChatMessages(messages);
+      setChatMessages(debouncedMessages);
     }
-  }, [debouncedMessages, messages]);
+  }, [debouncedMessages]);
 
   const parseHistoryMessage = (raw: string, role?: string) => {
     const trimmed = raw.trim();
@@ -140,7 +140,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
 
         setMessages((prev) => [
           ...prev,
-          { id: crypto.randomUUID(), role: "assistant", content: message },
+          { id: generateId(), role: "assistant", content: message },
         ]);
       },
     });
@@ -376,7 +376,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
 
     setMessages((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), role: "user", content: trimmed },
+      { id: generateId(), role: "user", content: trimmed },
     ]);
 
     setIsAssistantTyping(true);

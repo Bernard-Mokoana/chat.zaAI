@@ -39,6 +39,16 @@ function ResetPasswordForm() {
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
+      if (state.isPending) return;
+
+      if (!token) {
+        setState((prev) => ({
+          ...prev,
+          errorMessage: "Reset token is missing. Please request a new reset link.",
+        }));
+        return;
+      }
+
       const errors: Array<{ field: string; message: string }> = [];
 
       if (!state.newPassword) {
@@ -56,14 +66,6 @@ function ResetPasswordForm() {
           field: "confirmPassword",
           message: "Passwords do not match",
         });
-      }
-
-      if (!token) {
-        setState((prev) => ({
-          ...prev,
-          errorMessage: "Reset token is missing. Please request a new reset link.",
-        }));
-        return;
       }
 
       if (errors.length > 0) {

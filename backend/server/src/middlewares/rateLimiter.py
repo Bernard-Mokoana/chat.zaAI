@@ -156,30 +156,30 @@ def _parse_float_env(name: str, default: str) -> float:
 
 AUTH_RULE = RateLimitRule(
     name="auth",
-    max_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_AUTH_MAX", "5")),
-    refill_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_AUTH_REFILL", "5")),
-    refill_interval_seconds=_parse_float_env(os.environ.get("RATE_LIMIT_AUTH_INTERVAL", "60")),
+    max_tokens=_parse_int_env("RATE_LIMIT_AUTH_MAX", "5"),
+    refill_tokens=_parse_int_env("RATE_LIMIT_AUTH_REFILL", "5"),
+    refill_interval_seconds=_parse_float_env("RATE_LIMIT_AUTH_INTERVAL", "60"),
 )
 
 CHAT_SESSION_RULE = RateLimitRule(
     name="chat_session",
-    max_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_CHAT_SESSION_MAX", "20")),
-    refill_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_CHAT_SESSION_REFILL", "20")),
-    refill_interval_seconds=_parse_float_env(os.environ.get("RATE_LIMIT_CHAT_SESSION_INTERVAL", "60")),
+    max_tokens=_parse_int_env("RATE_LIMIT_CHAT_SESSION_MAX", "20"),
+    refill_tokens=_parse_int_env("RATE_LIMIT_CHAT_SESSION_REFILL", "20"),
+    refill_interval_seconds=_parse_float_env("RATE_LIMIT_CHAT_SESSION_INTERVAL", "60"),
 )
 
 API_RULE = RateLimitRule(
     name="api",
-    max_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_API_MAX", "120")),
-    refill_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_API_REFILL", "120")),
-    refill_interval_seconds=_parse_float_env(os.environ.get("RATE_LIMIT_API_INTERVAL", "60")),
+    max_tokens=_parse_int_env("RATE_LIMIT_API_MAX", "120"),
+    refill_tokens=_parse_int_env("RATE_LIMIT_API_REFILL", "120"),
+    refill_interval_seconds=_parse_float_env("RATE_LIMIT_API_INTERVAL", "60"),
 )
 
 WS_MESSAGE_RULE = RateLimitRule(
     name="ws_message",
-    max_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_WS_MESSAGE_MAX", "20")),
-    refill_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_WS_MESSAGE_REFILL", "20")),
-    refill_interval_seconds=_parse_float_env(os.environ.get("RATE_LIMIT_WS_MESSAGE_INTERVAL", "60")),
+    max_tokens=_parse_int_env("RATE_LIMIT_WS_MESSAGE_MAX", "20"),
+    refill_tokens=_parse_int_env("RATE_LIMIT_WS_MESSAGE_REFILL", "20"),
+    refill_interval_seconds=_parse_float_env("RATE_LIMIT_WS_MESSAGE_INTERVAL", "60"),
 )
 
 

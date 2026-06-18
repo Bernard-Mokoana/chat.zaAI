@@ -25,15 +25,18 @@ export default function LoginPage() {
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
+      if (isSubmitting) return;
+      setIsSubmitting(true);
+
       const validation = validateLoginForm(email, password);
       if (!validation.isValid) {
         setValidationErrors(validation.errors);
+        setIsSubmitting(false);
         return;
       }
 
       setValidationErrors([]);
-      if (isSubmitting) return;
-      setIsSubmitting(true);
+      
 
       try {
         const auth = await login({

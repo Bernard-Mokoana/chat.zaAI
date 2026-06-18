@@ -35,7 +35,7 @@ def save_worker_message(session_factory: sessionmaker, user_id: str, token: str,
             conversation = Conversation(
                 id=conversation_id,
                 user_id=user_uuid,
-                title=content[:50] if normalized_role == "user" and content else "New Chat",
+                title=(content[:50] if len(content) <= 50 else content[:47] + "...") if normalized_role == "user" and content else "New Chat",
             )
             session.add(conversation)
             session.flush()

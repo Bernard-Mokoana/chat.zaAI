@@ -26,6 +26,9 @@ export default function RegisterPage() {
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
+       if (isSubmitting) return;
+      setIsSubmitting(true);
+
       const validation = validateRegisterForm(
         name,
         email,
@@ -34,12 +37,12 @@ export default function RegisterPage() {
       );
       if (!validation.isValid) {
         setValidationErrors(validation.errors);
+        setIsSubmitting(false);
         return;
       }
 
       setValidationErrors([]);
-      if (isSubmitting) return;
-      setIsSubmitting(true);
+     
 
       try {
         const auth = await register({

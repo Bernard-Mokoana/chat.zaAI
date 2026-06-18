@@ -24,6 +24,10 @@ class RedisManager:
 
         self.consumer = StreamConsumer(redis_client=self.shared_redis_client)
 
+    async def close(self):
+        if self.shared_redis_client:
+            await self.shared_redis_client.close()
+
     async def get_async_client(self) -> redis_async.Redis:
         return self.shared_redis_client
     

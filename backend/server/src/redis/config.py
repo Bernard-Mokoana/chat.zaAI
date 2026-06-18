@@ -15,6 +15,7 @@ class Redis():
         return redis_async.from_url(
             self.url,
             db=0,
+            decode_responses=True,
             retry_on_timeout=True,
             socket_keepalive=True,
             socket_connect_timeout=10,

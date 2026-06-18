@@ -17,13 +17,13 @@ class Cache:
             return value.isoformat()
         return value
 
-    def get_chat_history(self, token: str):
+    async def get_chat_history(self, token: str):
         data = self.json_client.json().get(
             str(token), Path.root_path())
         
         return data
     
-    def add_message_to_cache(self, token: str, source: str, message_data: dict):
+    async def add_message_to_cache(self, token: str, source: str, message_data: dict):
         key = str(token)
         messages_path = Path(".messages")
 
@@ -31,6 +31,9 @@ class Cache:
         message_data = message_data.copy()
         
         source_normalized = (source or "").lower()
+        if 'msg' not in message_data:
+            raise ValueError("message_data must contain 'msg' key")
+
         if source_normalized == "human":
             message_data['msg'] = "Human: " + (message_data['msg'])
         elif source_normalized == "bot":

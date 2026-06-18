@@ -154,7 +154,11 @@ class ChatOrchestrator:
             await self.manager.connect(websocket)
 
             while True:
-                data = await websocket.receive_text()
+                try:
+                    data = await asyncio.wait_for(websocket.receive_text(), timeout=300.0)
+                except asyncio.TimeoutError:
+                    logger.info(f"Websocket receive timeout for chat_token={chat_token}")
+                    break
 
                 result = ws_message_limiter.check(
                     key=chat_token,
@@ -174,7 +178,7 @@ class ChatOrchestrator:
                 )
         finally:
             try:
-                self.manager.disconnect(websocket)
+                await self.manager.disconnect(websocket)
             except Exception as e:
                 logger.debug(f"Disconnect failed (may already be disconnected): {e}")
 
@@ -210,18 +214,23 @@ class ChatOrchestrator:
                         if chat_token != str(response_token):
                             continue
 
+                        send_success =  False
                         try:
                             await self.manager.send_personal_message(
                                 response_message,
                                 websocket,
                                 )
+                            send_success = True
                         except Exception as e:
                             logger.warning(f"Failed to send response message: {e}")
+                            if send_success:
+                                await self.consumer.delete_message(
+                                    stream_channel=RESPONSE_CHANNEL,
+                                    message_id=message_id,
+                                )
+                            else:
+                                logger.warning(f"Leaving message {message_id} in stream due to send failure")
 
-                        await self.consumer.delete_message(
-                            stream_channel=RESPONSE_CHANNEL,
-                            message_id=message_id,
-                        )
             except asyncio.CancelledError:
                 raise
             except Exception as exc:

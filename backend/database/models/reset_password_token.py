@@ -32,16 +32,15 @@ class ResetPasswordToken(TimestampMixin, Base):
         self.is_used = True
 
     def revoke(self) -> None:
-        self.is_revoked = True
-        self.revoked_at = datetime.now(timezone.utc)
+        self.is_used = True
+        self.used_at = datetime.now(timezone.utc)
 
     @property
     def is_valid(self) -> bool:
         return (
-            not self.is_revoked
-            and not self.is_used
+            not self.is_used
             and datetime.now(timezone.utc) < self.expires_at
         )
 
     def __repr__(self) -> str:
-        return f"<ResetPasswordToken user_id={self.user_id} used={self.is_used} revoked={self.is_revoked}>"
+        return f"<ResetPasswordToken user_id={self.user_id} used={self.is_used} used={self.is_used}>"

@@ -1,4 +1,5 @@
 import type { StoredAuthUser } from "@/types/types";
+import { error } from "console";
 
 const CHAT_TOKEN_KEY = "chat_token";
 const CHAT_MESSAGES_KEY = "chat_messages";
@@ -77,13 +78,18 @@ export function getAuthUser() {
 
 export function setAuthUser(user: StoredAuthUser) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-  localStorage.setItem(CHAT_NAME, user.name);
+  try {
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    localStorage.setItem(CHAT_NAME, user.name);
+  } catch {
+    console.warn("Failed to save auth user to storage", error);
+  }
 }
 
 export function clearAuthUser() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(AUTH_USER_KEY);
+  localStorage.removeItem(CHAT_NAME);
 }
 
 export function getAccessToken() {

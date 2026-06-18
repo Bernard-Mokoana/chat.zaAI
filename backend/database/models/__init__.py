@@ -3,4 +3,7 @@ from .conversations import Conversation
 from .messages import Message
 from .refresh_token import RefreshToken
 from .usage_logs import UsageLog
-
+from .tiers import Tier
+from .audit_log import AuditLog
+from .email_verification_token import EmailVerificationToken
+from .reset_password_token import ResetPasswordToken

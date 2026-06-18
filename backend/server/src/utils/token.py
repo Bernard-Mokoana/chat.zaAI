@@ -241,6 +241,10 @@ class Token:
             user_agent=user_agent,
             expires_at=expires_at,
         )
+        
+        db.add(new_token)
+        db.flush()
+        return new_token
 
     def revoke_email_verification_tokens(self, db: Session, user_id: str) -> None:
         db.query(EmailVerificationToken).filter(

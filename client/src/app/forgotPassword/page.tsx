@@ -23,6 +23,8 @@ export default function ForgotPasswordPage() {
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
+      if (isPending) return;
+
       const validation = validateForgotPasswordForm(email);
       if (!validation.isValid) {
         setValidationErrors(validation.errors);

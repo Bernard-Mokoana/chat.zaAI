@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useCallback, useState } from "react";
 import Modal from "@/components/Modal";
 import type { ChatHeaderProps } from "@/types/types";
@@ -56,7 +56,7 @@ export default function ChatHeader({
               aria-label="Logout"
               title="Logout"
             >
-              <ArrowLeft className="h-5 w-5 text-slate-600" />
+              <LogOut className="h-5 w-5 text-slate-600" />
             </button>
 
             <div>

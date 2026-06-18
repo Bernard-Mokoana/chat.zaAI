@@ -30,6 +30,7 @@ class EmailVerificationToken(TimestampMixin, Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="email_verification_tokens")
+    replacement: Mapped[Optional["EmailVerificationToken"]] = relationship("EmailVerificationToken", remote_side="EmailVerificationToken.id", foreign_keys=[replaced_by])
 
     def mark_verified(self) -> None:
         self.is_verified = True

@@ -40,7 +40,7 @@ signal.signal(signal.SIGINT, handle_shutdown)
 
 async def main() -> None:
     async_client = await redis_manager.get_async_client()
-    json_client = redis_manager.get_sync_json_client()
+    json_client = redis_manager.create_sync_json_client()
 
     consumer = redis_manager.consumer
     producer = Producer(async_client)
@@ -75,7 +75,29 @@ async def main() -> None:
             logger.error(
                 "Redis connection failed. Retrying in %d seconds...", RETRY_BACKOFF_SEC
             )
+            
             await asyncio.sleep(RETRY_BACKOFF_SEC)
+
+            try:
+                await async_client.aclose()
+                json_client.close()
+            except Exception:
+                pass
+
+            async_client = await redis_manager.get_async_client()
+            json_client = redis_manager.get_async_client()
+            consumer = redis_manager.consumer
+            producer = Producer(async_client)
+            cache = Cache(json_client)
+
+            handler = MessageHandler(
+                cache=cache,
+                producer=producer,
+                consumer=consumer,
+                gpt_client=gpt_client,
+                model_timeout=model_timeout,
+                session_factory=sessionPrimary
+            )
 
         except Exception:
             logger.exception("Unexpected error in consumer loop; continuing")

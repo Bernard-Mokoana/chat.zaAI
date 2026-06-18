@@ -88,7 +88,7 @@ class MessageHandler:
 
     async def _process(self, message_id: str, token: str, text: str, raw_message) -> None:
         # Fetch session metadata to acquire user_id
-        chat_metadata = self.cache.get_chat_history(token=token)
+        chat_metadata = await self.cache.get_chat_history(token=token)
         if not chat_metadata or "user_id" not in chat_metadata:
             await handle_cache_failure(
                 message_id, token, raw_message, self.producer, self.cache, self.consumer
@@ -100,7 +100,7 @@ class MessageHandler:
 
         # Store incoming user message in cache and DB
         user_msg = Message(msg=text)
-        self.cache.add_message_to_cache(
+        await self.cache.add_message_to_cache(
             token=token, source="Human", message_data=user_msg.model_dump()
         )
         # Persist the incoming Human message to postgres
@@ -149,7 +149,7 @@ class MessageHandler:
 
             formatted = []
             for m in history_rounds:
-                role_label = "Human" if m.get("role") == "human" else "Bot"
+                role_label = "Human" if m.get("role") == "user" else "Bot"
                 formatted.append(f"{role_label}: {m["msg"]}")
 
             return "\n".join(formatted)
@@ -231,7 +231,7 @@ class MessageHandler:
         await self.producer.add_to_stream(
             {str(token): bot_msg.msg}, RESPONSE_CHANNEL
         )
-        self.cache.add_message_to_cache(
+        await self.cache.add_message_to_cache(
             token=token, source="Bot", message_data=bot_msg.model_dump()
         )
         await self.consumer.delete_message(

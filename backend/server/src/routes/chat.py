@@ -56,6 +56,8 @@ x_chat_token: str = Header(..., alias="X-Chat-Token"),
     
 @chat.websocket("/chat")
 async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+
     query_params = dict(websocket.query_params)
     token = query_params.get("token")
     chat_token = query_params.get("chat_token")

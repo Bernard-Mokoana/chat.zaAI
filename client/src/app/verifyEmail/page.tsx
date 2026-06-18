@@ -31,22 +31,25 @@ function VerifyEmailForm() {
       return;
     }
 
+    let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const executeVerification = async () => {
       try {
         await verifyEmail(token);
-        setState({ status: "success", errorMessage: "" });
+        if (mounted) setState({ status: "success", errorMessage: "" });
 
         timeoutId = setTimeout(() => {
-          router.push("/login");
+          if (mounted) router.push("/login");
         }, 3500);
       } catch (error) {
-        setState({
+        if (mounted) {
+          setState({
           status: "error",
           errorMessage:
             "Verification failed. The link may have expired. Please request a new one.",
         });
+       }
       }
     };
 
@@ -54,6 +57,7 @@ function VerifyEmailForm() {
     effectRan.current = true;
 
     return () => {
+      mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [router, token]);

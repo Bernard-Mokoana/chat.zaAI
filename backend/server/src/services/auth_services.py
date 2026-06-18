@@ -92,16 +92,18 @@ class AuthService:
 
         return new_user
     
-    def authenticate_user(self, db: Session, user: User, payload: LoginSchema):
-          normalized_email = payload.email.strip().lower()
+    def authenticate_user(self, db: Session, email: str, password: str) -> User:
+          normalized_email = email.strip().lower()
           
           user = db.query(User).filter(User.email == normalized_email).first()
           
           if not user:
               raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
           
-          if not bcrypt.checkpw(payload.password.encode('utf-8'), user.password_hash.encode('utf-8')):
+          if not bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
               raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+          
+          return user
 
     def login(self, db: Session, user: User, request: Request, response: Response):
 
@@ -134,13 +136,12 @@ class AuthService:
 
         return {"access_token": access_token, "token_type": "Bearer", "user": user_payload}
     
-
     def verify_email_token(self, db: Session, token_str: str):
        
         payload = self.token.decode_email_verification_token(token_str)
 
         email = payload.get("email")
-        jti = payload("jti")
+        jti = payload.get("jti")
         if not email or not jti:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Malformed token payload")
         
@@ -171,7 +172,8 @@ class AuthService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verification token expired")
         
         user.is_verified = True
-        db.token.mark_verified()
+        db_token.is_verified = True
+        db.token.revoked_at = datetime.now(timezone.utc)
         db.commit()
 
         return {"message": "Email verified successfully"}
@@ -188,7 +190,7 @@ class AuthService:
         jti = self.token.create_jti()
         reset_token = self.token.sign_forgot_password_token({"email": normalized_email}, jti)
 
-        self.token.persist_refresh_token(
+        self.token.persist_reset_password_token(
             db=db,
             user={"id": str(user.id)},
             reset_token=reset_token,
