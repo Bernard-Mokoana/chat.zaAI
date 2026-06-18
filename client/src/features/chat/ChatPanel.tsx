@@ -21,6 +21,13 @@ import { useRouter } from "next/navigation";
 
 const WS_RATE_LIMIT_MESSAGE = "Too many messages.";
 
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
 export default function ChatPanel({ displayName }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const socketRef = useRef<ChatSocket | null>(null);
@@ -43,8 +50,10 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
   }, [messages]);
 
   useEffect(() => {
-    setChatMessages(debouncedMessages);
-  }, [debouncedMessages]);
+    return () => {
+      setChatMessages(messages);
+    }
+  }, [debouncedMessages, messages]);
 
   const parseHistoryMessage = (raw: string, role?: string) => {
     const trimmed = raw.trim();
@@ -71,7 +80,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
     return history.map((m) => {
       const parsed = parseHistoryMessage(m.msg ?? "", m.role);
       return {
-        id: m.id ?? crypto.randomUUID(),
+        id: m.id ?? generateId(),
         role: parsed.role,
         content: parsed.content,
       };

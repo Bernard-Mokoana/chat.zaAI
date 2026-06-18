@@ -12,4 +12,8 @@ WORKDIR /app/backend/worker
 
 ENV PYTHONPATH=/app
 
+RUN addgroup --system worker && adduser --system --ingroup worker worker
+RUN chown -R worker:worker /app
+USER worker
+
 CMD ["python", "main.py"]

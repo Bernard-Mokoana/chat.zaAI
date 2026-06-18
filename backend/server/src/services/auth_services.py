@@ -1,16 +1,24 @@
-from datetime import datetime, timezone
-from fastapi import HTTPException, status, Request, Response
-from sqlalchemy.orm import Session
+import logging
 import bcrypt
 import re
 
+from datetime import datetime, timezone
+from fastapi import HTTPException, status, Request, Response
+from sqlalchemy.orm import Session
+
 from backend.database.models.users import User
 from backend.database.models.refresh_token import RefreshToken
+from backend.database.models.reset_password_token import ResetPasswordToken
+from backend.database.models.email_verification_token import EmailVerificationToken
 from backend.database.models.tiers import Tier as TierModel
+
+from backend.server.src.schema.auth import LoginSchema
 
 from src.utils.token import Token
 
 from src.utils.emailUtils import send_email_verification, send_password_reset_email
+
+logger = logging.getLogger()
 class AuthService:
     def __init__(self):
         self.token = Token()
@@ -70,12 +78,38 @@ class AuthService:
             {"email": normalized_email},
             jti,
         )
+
+        self.token.persist_email_verification_token(
+            db=db,
+            user={"id": str(new_user.id)},
+            verification_token=verification_token,
+            jti=jti,
+            # request=request,
+        )
+        db.commit()
         
         send_email_verification(normalized_email, verification_token)
 
         return new_user
     
+    def authenticate_user(self, db: Session, user: User, payload: LoginSchema):
+          normalized_email = payload.email.strip().lower()
+          
+          user = db.query(User).filter(User.email == normalized_email).first()
+          
+          if not user:
+              raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+          
+          if not bcrypt.checkpw(payload.password.encode('utf-8'), user.password_hash.encode('utf-8')):
+              raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
     def login(self, db: Session, user: User, request: Request, response: Response):
+
+        if not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Email not verified. Please check your inbox."
+            )
 
         user_payload = {
             "id": str(user.id),
@@ -99,22 +133,46 @@ class AuthService:
         self.token.set_refresh_cookie(response, refresh_token)
 
         return {"access_token": access_token, "token_type": "Bearer", "user": user_payload}
+    
 
     def verify_email_token(self, db: Session, token_str: str):
        
         payload = self.token.decode_email_verification_token(token_str)
 
         email = payload.get("email")
-        if not email:
+        jti = payload("jti")
+        if not email or not jti:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Malformed token payload")
         
         user = db.query(User).filter(User.email == email).first()
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         
-        if hasattr(user, 'is_verified'):
-            user.is_verified = True
-            db.commit()
+        token_hash = self.token.hash_token(token_str)
+        db_token = (
+            db.query(EmailVerificationToken).filter(
+                EmailVerificationToken.user_id == user.id,
+                EmailVerificationToken.jwt_id == jti,
+                EmailVerificationToken.token_hash == token_hash
+            )
+            .first()
+        )
+
+        if not db_token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verification token not recognized")
+        
+        if db_token.is_revoked:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verification token has been revoked")
+        
+        if db_token.is_verified:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Token already used")
+        
+        if db_token.expires_at <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verification token expired")
+        
+        user.is_verified = True
+        db.token.mark_verified()
+        db.commit()
 
         return {"message": "Email verified successfully"}
         
@@ -125,8 +183,19 @@ class AuthService:
         if not user:
             return {"message": "If the email exists, a password reset link has been sent"}
         
+        self.token.invalidate_reset_password_tokens(db, user.id)
+        
         jti = self.token.create_jti()
         reset_token = self.token.sign_forgot_password_token({"email": normalized_email}, jti)
+
+        self.token.persist_refresh_token(
+            db=db,
+            user={"id": str(user.id)},
+            reset_token=reset_token,
+            jti=jti,
+        )
+        db.commit()
+
         send_password_reset_email(normalized_email, reset_token)
 
         return {"message": "If the email exists, a password reset link has been sent."}
@@ -140,18 +209,38 @@ class AuthService:
         payload = self.token.decode_forgot_password_verification_token(token_str)
    
         email = payload.get("email")
-        if not email:
+        jti = payload.get("jti")
+        if not email or not jti:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Malformed token payload")
         
         user = db.query(User).filter(User.email == email).first()
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         
+        token_hash = self.token.hash_token(token_str)
+        db_token = (
+            db.query(ResetPasswordToken).filter(
+                ResetPasswordToken.user_id == user.id,
+                ResetPasswordToken.jwt_id == jti,
+                ResetPasswordToken.token_hash == token_hash,
+                ResetPasswordToken.is_used.is_(False),
+            )
+            .first()
+        )
+
+        if not db_token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Reset token not recognized")
+        
+        if db_token.expires_at <= datetime.now(timezone.utc):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Reset token expired")
+        
         password_hash = bcrypt.hashpw(
             new_password.encode("utf-8"), bcrypt.gensalt()
         ).decode("utf-8")
 
         user.password_hash = password_hash
+        db_token.is_used = True
+        db_token.used_at = datetime.now(timezone.utc)
         db.commit()
 
         return {"message": "Password reset successfully"}
@@ -218,7 +307,7 @@ class AuthService:
         }
 
         self.token.set_refresh_cookie(response, new_refresh)
-        return { "access_token": new_access, "token_type": "bearer", "user": new_user}
+        return { "access_token": new_access, "token_type": "Bearer", "user": new_user}
     
     def logout(self, db: Session, request: Request, response: Response):
         raw_refresh = request.cookies.get("refreshToken")
@@ -248,7 +337,7 @@ class AuthService:
                         db.commit()
                         
             except Exception:
-                pass
+                logger.warning("Failed to revoke refresh token during logout", exc_info=True)
         
         self.token.clear_refresh_cookie(response)
         return {"message": "Logged out successfully"}

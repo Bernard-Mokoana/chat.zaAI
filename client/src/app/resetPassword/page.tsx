@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState, useCallback, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import axios from "axios";
@@ -24,6 +24,16 @@ function ResetPasswordForm() {
     errorMessage: "",
     validationErrors: [],
   });
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect (() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    };
+  }, [])
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -78,9 +88,8 @@ function ResetPasswordForm() {
           description: "Your password has been changed. Redirecting to sign in...",
           tone: "success",
         });
+        timeoutRef.current = setTimeout(() => router.push("/login"), 2000)
 
-      const timeoutId = setTimeout(() => router.push("/login"), 2000);
-      return () => clearTimeout(timeoutId)
       } catch (err: unknown) {
         const detail =
           axios.isAxiosError(err) && typeof err.response?.data?.detail === "string"

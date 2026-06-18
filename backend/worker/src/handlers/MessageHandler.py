@@ -58,7 +58,8 @@ class MessageHandler:
             )
 
             retry_payload = {
-                token: text,
+                "token": token,
+                "text": text,
                 "retry_count": str(new_retry_count),
             }
 
@@ -143,7 +144,15 @@ class MessageHandler:
             if history_rounds is None:
                 return None
             
-            return " ".join(m["msg"] for m in history_rounds) if history_rounds else " "
+            if not history_rounds:
+                return ""
+
+            formatted = []
+            for m in history_rounds:
+                role_label = "Human" if m.get("role") == "human" else "Bot"
+                formatted.append(f"{role_label}: {m["msg"]}")
+
+            return "\n".join(formatted)
         except Exception as exc:
             logger.error(f"Error compiling prompt window from database: {exc}")
             return None

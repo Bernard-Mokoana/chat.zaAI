@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect} from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import type { ChatInterfaceProps, ChatMessage, ChatSession } from "@/types/types";
@@ -59,10 +59,16 @@ export default function ChatInterface({
     return () => window.removeEventListener("chat:session-ready", handleSessionReady);
   }, [activeSessionId, setActiveSessionId, saveCurrentSession]);
 
+  // Track createdAt per session to preserve it across re-renders without depending on sessions
+  const createdAtRef = useRef<Record<string, number>>({});
+
   useEffect(() => {
     if (!activeSessionId || messages.length === 0) return;
 
-    const existing = sessions.find((s) => s.id === activeSessionId);
+    if (!createdAtRef.current[activeSessionId]) {
+      createdAtRef.current[activeSessionId] = Date.now();
+    }
+
     const lastMsg = messages[messages.length - 1];
     const session: ChatSession = {
       id: activeSessionId,
@@ -70,12 +76,12 @@ export default function ChatInterface({
       title: messages[0]?.content?.slice(0, 40) ?? "New conversation",
       preview: lastMsg?.content?.slice(0, 80) ?? "",
       messages: messages as ChatMessage[],
-      createdAt: existing?.createdAt ?? Date.now(),
+      createdAt: createdAtRef.current[activeSessionId],
       updatedAt: Date.now(),
     };
 
     saveCurrentSession(session);
-  }, [messages, activeSessionId, chatToken, saveCurrentSession, sessions]);
+  }, [messages, activeSessionId, chatToken, saveCurrentSession]);
 
   const handleSelectSession = useCallback(
     (session: ChatSession) => {

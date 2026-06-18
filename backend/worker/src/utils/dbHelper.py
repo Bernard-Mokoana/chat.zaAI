@@ -19,11 +19,11 @@ def save_worker_message(session_factory: sessionmaker, user_id: str, token: str,
     try:
         try:
             conversation_id = UUID(token)
-            normalized_role = normalized_role(role)
+            normalized_role = _normalize_message_role(role)
             user_uuid = UUID(user_id)
         except ValueError as exc:
             logger.error(f"Invalid UUID format - token: {token}, user_id: {user_id}: {exc}")
-            raise ValueError(f"Invalid token or user_id format: {exc} from exc")
+            raise ValueError(f"Invalid token or user_id format: {exc}")
 
         conversation = (
             session.query(Conversation)
@@ -93,8 +93,8 @@ def log_worker_usage(session_factory: sessionmaker, user_id: str, model: str | N
             ).on_conflict_do_update(
                 constraint="uq_usage_logs_user_date_model",
                 set_={
-                    "total_tokens": UsageLog.total_tokens + (total_tokens or 0),
-                    "message_count": UsageLog.message_count + (message_count or 0),
+                    "total_tokens": UsageLog.total_tokens + stmt.excluded.total_tokens,
+                    "message_count": UsageLog.message_count + stmt.excluded.message_count,
                     "updated_at": func.now(),
                 }
             )

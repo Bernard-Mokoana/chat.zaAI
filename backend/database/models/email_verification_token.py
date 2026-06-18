@@ -11,7 +11,7 @@ from backend.database.config.databaseConfig import Base
 from .base import TimestampMixin
 
 if TYPE_CHECKING:
-    from .user import User
+    from .users import User
 
 
 class EmailVerificationToken(TimestampMixin, Base):
@@ -26,7 +26,7 @@ class EmailVerificationToken(TimestampMixin, Base):
     is_revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    replaced_by: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    replaced_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("email_verification_token.id", ondelete="SET NULL"), nullable=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="email_verification_tokens")

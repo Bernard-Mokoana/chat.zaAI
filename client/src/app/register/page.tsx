@@ -61,7 +61,7 @@ export default function RegisterPage() {
         setIsSubmitting(false);
       }
     },
-    [name, email, password, confirmPassword, isSubmitting, router]
+    [name, email, password, confirmPassword, isSubmitting]
   );
 
   const clearErrors = useCallback(() => {

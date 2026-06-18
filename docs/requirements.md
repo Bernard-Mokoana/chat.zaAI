@@ -40,7 +40,7 @@ General users.
 
 1. User registration and authentication
 2. Create and manage conversations
-3. Send messages and receive streaming Ai responses via websockets
+3. Send messages and receive streaming AI responses via websockets
 4. Save all conversations with full history
 5. Retrieve past conversations
 6. Stream responses token by token

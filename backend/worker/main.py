@@ -6,8 +6,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 import asyncio
 import logging
 import signal
+import threading
 
-from backend.database.config.databaseConfig import SessionPrimary
+from backend.database.config.databaseConfig import sessionPrimary
 
 from redis.exceptions import ConnectionError as RedisConnectionError
 
@@ -24,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 redis_manager = RedisManager()
-shutdown_event = asyncio.Event()
+shutdown_event = threading.Event()
 
 RETRY_BACKOFF_SEC = 5
 BLOCK_TIMEOUT_MS = 5000 
@@ -53,7 +54,7 @@ async def main() -> None:
         consumer=consumer,
         gpt_client=gpt_client,
         model_timeout=model_timeout,
-        session_factory=SessionPrimary
+        session_factory=sessionPrimary
     )
 
     logger.info("Stream consumer started, waiting for messages on '%s'", STREAM_CHANNEL)
@@ -64,7 +65,6 @@ async def main() -> None:
                 stream_channel=STREAM_CHANNEL, count=10, block=BLOCK_TIMEOUT_MS
             )
             if not response:
-                continue
                 continue
 
             for _stream_name, messages in response:

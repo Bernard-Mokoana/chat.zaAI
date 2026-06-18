@@ -16,7 +16,7 @@ class Tier(TimestampMixin, Base):
     __tablename__ = "tiers"
     
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(50), nullable=True, unique=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     token_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=0, comment="0 = unlimited")
     message_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=0, comment="0 = unlimited")
     price_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

@@ -15,8 +15,6 @@ class RateLimitRule:
     max_tokens: int
     refill_tokens: int
     refill_interval_seconds: float
-
-
 @dataclass(frozen=True)
 class RateLimitResult:
     allowed: bool
@@ -24,7 +22,6 @@ class RateLimitResult:
     remaining: int
     reset_at: int
     retry_after: int
-
 
 class TokenBucket:
     def __init__(self, max_tokens: int, refill_tokens: int, refill_interval_seconds: float):
@@ -82,7 +79,6 @@ class TokenBucket:
                 retry_after=max(1, int(reset_after)),
             )
 
-
 class RateLimiterStore:
     def __init__(self):
         self._buckets: dict[str, TokenBucket] = {}
@@ -124,8 +120,7 @@ class RateLimiterStore:
     def size(self) -> int:
         with self._lock:
             return len(self._buckets)
-
-
+        
 async def cleanup_loop(
     store: RateLimiterStore,
     interval_seconds: float = 600.0,
@@ -145,33 +140,46 @@ async def cleanup_loop(
                 before - after,
             )
 
+def _parse_int_env(name: str, default: str) -> int:
+    val = os.environ.get(name, default)
+    try:
+        return int(val)
+    except ValueError:
+        raise ValueError(f"{name} must be a valid integer, got: {val!r}")
+
+def _parse_float_env(name: str, default: str) -> float:
+    val = os.environ.get(name,  default)
+    try:
+        return float(val)
+    except ValueError:
+        raise ValueError(f"{name} must be a valid float, got: {val!r}")
 
 AUTH_RULE = RateLimitRule(
     name="auth",
-    max_tokens=int(os.environ.get("RATE_LIMIT_AUTH_MAX", "5")),
-    refill_tokens=int(os.environ.get("RATE_LIMIT_AUTH_REFILL", "5")),
-    refill_interval_seconds=float(os.environ.get("RATE_LIMIT_AUTH_INTERVAL", "60")),
+    max_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_AUTH_MAX", "5")),
+    refill_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_AUTH_REFILL", "5")),
+    refill_interval_seconds=_parse_float_env(os.environ.get("RATE_LIMIT_AUTH_INTERVAL", "60")),
 )
 
 CHAT_SESSION_RULE = RateLimitRule(
     name="chat_session",
-    max_tokens=int(os.environ.get("RATE_LIMIT_CHAT_SESSION_MAX", "20")),
-    refill_tokens=int(os.environ.get("RATE_LIMIT_CHAT_SESSION_REFILL", "20")),
-    refill_interval_seconds=float(os.environ.get("RATE_LIMIT_CHAT_SESSION_INTERVAL", "60")),
+    max_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_CHAT_SESSION_MAX", "20")),
+    refill_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_CHAT_SESSION_REFILL", "20")),
+    refill_interval_seconds=_parse_float_env(os.environ.get("RATE_LIMIT_CHAT_SESSION_INTERVAL", "60")),
 )
 
 API_RULE = RateLimitRule(
     name="api",
-    max_tokens=int(os.environ.get("RATE_LIMIT_API_MAX", "120")),
-    refill_tokens=int(os.environ.get("RATE_LIMIT_API_REFILL", "120")),
-    refill_interval_seconds=float(os.environ.get("RATE_LIMIT_API_INTERVAL", "60")),
+    max_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_API_MAX", "120")),
+    refill_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_API_REFILL", "120")),
+    refill_interval_seconds=_parse_float_env(os.environ.get("RATE_LIMIT_API_INTERVAL", "60")),
 )
 
 WS_MESSAGE_RULE = RateLimitRule(
     name="ws_message",
-    max_tokens=int(os.environ.get("RATE_LIMIT_WS_MESSAGE_MAX", "20")),
-    refill_tokens=int(os.environ.get("RATE_LIMIT_WS_MESSAGE_REFILL", "20")),
-    refill_interval_seconds=float(os.environ.get("RATE_LIMIT_WS_MESSAGE_INTERVAL", "60")),
+    max_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_WS_MESSAGE_MAX", "20")),
+    refill_tokens=_parse_int_env(os.environ.get("RATE_LIMIT_WS_MESSAGE_REFILL", "20")),
+    refill_interval_seconds=_parse_float_env(os.environ.get("RATE_LIMIT_WS_MESSAGE_INTERVAL", "60")),
 )
 
 

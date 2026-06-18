@@ -32,9 +32,12 @@ export async function register(payload: {
 }
 
 export async function logout() {
-  const response = await httpClient.post("/api/v1/auth/logout");
-  clearAuthState();
-  return response.data;
+  try {
+    const response = await httpClient.post("/api/v1/auth/logout");
+    return response.data;
+  } finally {
+    clearAuthState();
+  }
 }
 
 export async function refreshAccessToken() {

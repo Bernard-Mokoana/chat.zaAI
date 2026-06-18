@@ -27,7 +27,7 @@ class RedisManager:
     async def get_async_client(self) -> redis_async.Redis:
         return self.shared_redis_client
     
-    def get_sync_json_client(self) -> redis.Redis:
+    def create_sync_json_client(self) -> redis.Redis:
         return redis.Redis.from_url(self.url, decode_responses=True)
 
     async def create_connection(self):

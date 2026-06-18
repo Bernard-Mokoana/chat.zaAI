@@ -54,11 +54,13 @@ def send_email(config, to, subject, html):
                     server.starttls()
                     server.ehlo()
                 except Exception as exc:
-                    logging.warning("STARTTLS failed; credentials may be sent in plaintext: %s", exc)
+                    logging.warning("STARTTLS upgrade failed; aborting to protect credentials: %s", exc)
                     raise RuntimeError("STARTTLS is required for non-SSL SMTP connections")
 
             server.login(config["user"], config["password"])
             server.sendmail(config["from"], to, msg.as_string())
+    except RuntimeError:
+        raise
     except Exception as e:
         raise RuntimeError(f"Error occurred while sending email: {e}")
 

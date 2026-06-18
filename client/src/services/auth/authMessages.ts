@@ -23,15 +23,7 @@ export function getAuthErrorToast(
   const status = error.response?.status;
 
   if (status === 429) {
-    return {
-      title:
-        action === "login" ? "Could not sign in" : "Could not create account",
-      description:
-        action === "login"
-          ? "Too many login attempts. Try again later."
-          : "Too many registration attempts. Try again later.",
-      tone: "error",
-    };
+    return null;
   }
 
   if (action === "login") {

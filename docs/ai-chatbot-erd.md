@@ -4,7 +4,7 @@ This document captures the core data model for the AI chatbot backend.
 
 ## ERD Diagram
 
-![AI Chatbot ERD](AI%20Chatbot%20ERD.drawio)
+![AI Chatbot ERD](ai-chatbot-erd.png)
 
 ## Editable Source
 

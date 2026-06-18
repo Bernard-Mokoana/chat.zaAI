@@ -67,6 +67,7 @@ class ConversationService:
         except SQLAlchemyError as e:
              db.rollback()
              logger.error(f"Database error saving chat message: {e}")
+             raise
 
         return message
 
@@ -99,7 +100,7 @@ class ConversationService:
     
     async def get_chat_session(self, redis_client, token: str, user_id: str) -> dict:
         data = await redis_client.json().get(token, "$")
-        session = self._uwrap_redis_json(data)
+        session = self._unwrap_redis_json(data)
 
         if not session:
             raise ValueError("Session expired or does not exist")
@@ -174,8 +175,8 @@ class ChatOrchestrator:
         finally:
             try:
                 self.manager.disconnect(websocket)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Disconnect failed (may already be disconnected): {e}")
 
 
             listener_task.cancel()

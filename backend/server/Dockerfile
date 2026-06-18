@@ -16,8 +16,13 @@ COPY backend/ /app/backend/
 
 WORKDIR /app/backend/server
 
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
 EXPOSE 3500
 
 ENV PYTHONPATH=/app
 
-CMD ["uvicorn", "main:api", "--host", "0.0.0.0", "--port", "${PORT:-3500}"]
+CMD uvicorn main:api --host 0.0.0.0 --port ${PORT:-3500}

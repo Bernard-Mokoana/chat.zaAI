@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.database.config.databaseConfig import Base
 
 if TYPE_CHECKING:
-    from .user import User
+    from .users import User
 
 class AuditLog(Base):
     __tablename__ = "audit_log"

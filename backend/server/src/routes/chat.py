@@ -1,7 +1,7 @@
 import logging
 
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Header, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect, status
 
 from src.socket.connection import ConnectionManager
 from src.redis.producer import Producer
@@ -35,19 +35,24 @@ async def token_generator(name: str, request: Request, current_user: User = Depe
         await redis_client.close()
 
 @chat.get("/refresh_token")
-async def refresh_token(request: Request, token: str, current_user: User = Depends(get_current_user)):
+async def refresh_token(request: Request,
+x_chat_token: str = Header(..., alias="X-Chat-Token"),
+    current_user: User = Depends(get_current_user),
+):
     redis_client = await redis.create_connection()
 
     try:
         return await conversation_service.get_chat_session(
             redis_client=redis_client,
-            token=token,
+            token=x_chat_token,
             user_id=str(current_user.id),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc))
+    finally:
+        await redis_client.close()
     
 @chat.websocket("/chat")
 async def websocket_endpoint(websocket: WebSocket):
@@ -59,11 +64,11 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     
-    redis_client = await redis.create_connection()
+    redis_client_validation = await redis.create_connection()
 
     try:
         await conversation_service.validate_websocket_session(
-            redis_client=redis_client,
+            redis_client=redis_client_validation,
             access_token=token,
             chat_token=chat_token,
         )
@@ -77,7 +82,10 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.exception("Unexpected error during websocket session validation")
         await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
         return
-    
+    finally:
+        await redis_client_validation.close()
+
+    redis_client = await redis.create_connection()
     producer = Producer(redis_client)
     consumer = StreamConsumer(redis_client)
 
@@ -91,7 +99,10 @@ async def websocket_endpoint(websocket: WebSocket):
         await orchestrator.run(websocket, chat_token)
     except WebSocketDisconnect:
         pass  # orchestrator.run's finally block handles disconnect
+    finally:
+        await redis_client.close()
     # Update connectionManager disconnect to be idempotence
+
 
 @chat.get("/history/{chat_token}")
 async def get_chat_history(

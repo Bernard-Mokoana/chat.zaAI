@@ -30,8 +30,11 @@ limiter = RateLimiterStore()
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
-    cleanup_interval = float(os.environ.get("RATE_LIMIT_CLEANUP_INTERVAL", "600"))
-    max_idle_seconds = float(os.environ.get("RATE_LIMIT_MAX_IDLE_SECONDS", "3600"))
+    try:
+        cleanup_interval = float(os.environ.get("RATE_LIMIT_CLEANUP_INTERVAL", "600"))
+        max_idle_seconds = float(os.environ.get("RATE_LIMIT_MAX_IDLE_SECONDS", "3600"))
+    except ValueError as e:
+        raise ValueError("RATE_LIMIT_CLEANUP_INTERVAL and RATE_LIMIT_MAX_IDLE_SECONDS must be numeric") from e
 
     cleanup_tasks = [
         asyncio.create_task(

@@ -1,6 +1,6 @@
 def decode_bytes(value) -> str:
     if isinstance(value, (bytes, bytearray)):
-        return value.decode("utf-8", errors="ignore")
+        return value.decode("utf-8", errors="replace")
     return str(value)
 
 def decode_fields(raw_fields) -> dict:

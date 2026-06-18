@@ -11,7 +11,7 @@ from backend.database.config.databaseConfig import Base
 from .base import TimestampMixin
 
 if TYPE_CHECKING:
-    from .user import User
+    from .users import User
 class RefreshToken(TimestampMixin, Base):
     __tablename__ = "refresh_token"
 

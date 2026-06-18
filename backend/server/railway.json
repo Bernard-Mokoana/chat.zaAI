@@ -6,7 +6,7 @@
     "context": "."
   },
   "deploy": {
-    "startCommand": "uvicorn main:api --host 0.0.0.0 --port 3500",
+    "startCommand": "uvicorn main:api --host 0.0.0.0 --port $PORT",
     "numReplicas": 1
   }
 }

@@ -18,7 +18,7 @@ export default function ChatPage() {
       const accessToken = getAccessToken();
       const authUser = getAuthUser();
 
-      // Valid token, use not close to expiry(Use it directly)
+      // Valid token, user not close to expiry (use it directly)
       if (accessToken && authUser && !isTokenExpired(accessToken)) {
         if (alive) setDisplayName(authUser.name);
         return;
@@ -29,8 +29,8 @@ export default function ChatPage() {
         const auth = await refreshAccessToken();
         if (alive) setDisplayName(auth.user.name);
       } catch {
-        clearAuthState();
         if (alive) {
+          clearAuthState();
           showToast({
             title: "Sign in again",
             description: "Your session expired. Please sign in to continue.",

@@ -13,11 +13,22 @@ logger = logging.getLogger(__name__)
 
 async def send_error_response(message_id, token: str, error_text: str, producer: Producer, cache: Cache, consumer: StreamConsumer) -> None:
     error_msg = Message(msg=error_text)
-    await producer.add_to_stream({str(token): error_msg.msg}, RESPONSE_CHANNEL)
-    await cache.add_message_to_cache(
-        token=token, source="Bot", message_data=error_msg.model_dump(mode="json")
-    )
-    await consumer.delete_message(stream_channel=STREAM_CHANNEL, message_id=message_id)
+    try:   
+        await producer.add_to_stream({str(token): error_msg.msg}, RESPONSE_CHANNEL)
+    except Exception as exc:
+        logger.error("Failed to publish error response for token %s: %s", token, exc)
+
+    try:
+        await cache.add_message_to_cache(
+            token=token, source="Bot", message_data=error_msg.model_dump(mode="json")
+            )
+    except Exception as exc:
+        logger.error("Failed to cache error message for token %s: %s", token, exc)
+
+    try:      
+        await consumer.delete_message(stream_channel=STREAM_CHANNEL, message_id=message_id)
+    except Exception as exc:
+        logger.error("Failed to delete message %s: %s", message_id, exc)
 
 
 def _extract_scalar_id(message) -> bytes | str | None:

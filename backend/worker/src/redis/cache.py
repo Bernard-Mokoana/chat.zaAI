@@ -28,6 +28,7 @@ class Cache:
         messages_path = Path(".messages")
 
         message_data = self._json_safe(message_data)
+        message_data = message_data.copy()
         
         source_normalized = (source or "").lower()
         if source_normalized == "human":

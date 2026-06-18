@@ -24,7 +24,7 @@ class GPT:
         try:
             self.max_new_tokens = int(os.environ.get("MAX_NEW_TOKENS", self.DEFAULT_MAX_TOKENS))
         except ValueError as exc:
-            logger.warning*(f"Invalid MAX_NEW_TOKENS value, using default {self.DEFAULT_MAX_TOKENS}: {exc}")
+            logger.warning(f"Invalid MAX_NEW_TOKENS value, using default {self.DEFAULT_MAX_TOKENS}: {exc}")
             self.max_new_tokens = self.DEFAULT_MAX_TOKENS
 
     def _resolve_model_id(self) -> str:
@@ -48,19 +48,13 @@ class GPT:
             response = self.client.chat.completions.create(
                 model=self.model_id,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=self.max_new_tokens
+                max_tokens=self.max_new_tokens,
+                stop=["Human:", "User:"]
             )
             if not response.choices:
                 raise RuntimeError("Empty response from model")
             
-            text = response.choices[0].message.content or ""
-            
-            if "Human: " in text:
-                res = text.split("Human: ")[0].strip()
-            else:
-                res = text.strip()
-
-            return res
+            return (response.choices[0].message.content or "").strip()
         except Exception as e:
             logger.error(f"Query failed: {e}")
             raise RuntimeError(f"Model query failed: {e}") from e

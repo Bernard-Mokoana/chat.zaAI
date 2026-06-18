@@ -12,7 +12,8 @@ export function useWebSocketChat(): UseWebSocketChatReturn {
   const socketRef = useRef<ChatSocket | null>(null);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("connecting");
-  const suppressNextCloseRef = useRef(false);
+
+  const suppressedSocketsRef = useRef<WeakSet<ChatSocket>>(new WeakSet());
 
   const connect = useCallback(
     (chatToken: string, onMessage: (msg: string) => void) => {
@@ -28,19 +29,21 @@ export function useWebSocketChat(): UseWebSocketChatReturn {
         return;
       }
 
-      // Disconnect existing connection
       if (socketRef.current) {
-        suppressNextCloseRef.current = true;
-        socketRef.current.disconnect();
+        const previousSocket = socketRef.current;
+        suppressedSocketsRef.current.add(previousSocket);
+        previousSocket.disconnect();
       }
+
+      let socket: ChatSocket | undefined;
 
       const params: ChatSocketParams = {
         accessToken,
         chatToken,
         onOpen: () => setConnectionState("connected"),
         onClose: () => {
-          if (suppressNextCloseRef.current) {
-            suppressNextCloseRef.current = false;
+          if (socket && suppressedSocketsRef.current.has(socket)) {
+            suppressedSocketsRef.current.delete(socket);
             return;
           }
 
@@ -74,15 +77,17 @@ export function useWebSocketChat(): UseWebSocketChatReturn {
         },
       };
 
-      socketRef.current = createChatSocket(params);
+      socket = createChatSocket(params);
+      socketRef.current = socket;
     },
     [],
   );
 
   const disconnect = useCallback(() => {
-    if (socketRef.current) {
-      suppressNextCloseRef.current = true;
-      socketRef.current.disconnect();
+    const socket = socketRef.current;
+    if (socket) {
+      suppressedSocketsRef.current.add(socket);
+      socket.disconnect();
       socketRef.current = null;
       setConnectionState("disconnected");
     }

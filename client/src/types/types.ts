@@ -219,6 +219,8 @@ export const isChatMessage = (value: unknown): value is ChatMessage => {
     "id" in value &&
     "role" in value &&
     "content" in value &&
+    typeof (value as ChatMessage).id === "string" &&
+    typeof (value as ChatMessage).content === "string" &&
     ((value as ChatMessage).role === "user" ||
       (value as ChatMessage).role === "assistant")
   );

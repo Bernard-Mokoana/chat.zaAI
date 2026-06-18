@@ -13,27 +13,12 @@ auth_service = AuthService()
 
 @auth.post("/register")
 async def register(payload: RegisterSchema, response: Response, request: Request, db: Session = Depends(get_write_db)):
-    user = auth_service.register_user(
-        db=db,
-        name=payload.name,
-        email=payload.email,
-        password=payload.password,
-    )
-
+    user = auth_service.register_user(db=db, name=payload.name, email=payload.email, password=payload.password)
     return auth_service.login(db=db, user=user, request=request, response=response)
 
 @auth.post("/login")
 async def login(payload: LoginSchema, response: Response, request: Request, db: Session = Depends(get_write_db)):
-
-    normalized_email = payload.email.strip().lower()
-
-    user = db.query(User).filter(User.email == normalized_email).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    
-    if not bcrypt.checkpw(payload.password.encode('utf-8'), user.password_hash.encode('utf-8')):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    
+    user = auth_service.authenticate_user(db=db, email=payload.email, password=payload.password)
     return auth_service.login(db=db, user=user, request=request, response=response)
 
 @auth.post("/refresh")

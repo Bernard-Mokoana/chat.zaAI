@@ -16,6 +16,7 @@ import {
 import { showToast } from "@/services/toast/toastEvents";
 import axios from "axios";
 import type { UseChatSessionReturn } from "@/types/types";
+import { normalizeHistoryMessage } from "@/utils/messageUtils";
 
 export function useChatSession(): UseChatSessionReturn {
   const [activeChatToken, setActiveChatToken] = useState<string | null>(() =>
@@ -60,20 +61,7 @@ export function useChatSession(): UseChatSessionReturn {
     ): Promise<{ messages: ChatMessage[]; success: boolean }> => {
       try {
         const response = await getChatHistory(token);
-        const mappedMessages = (response.history ?? [])
-          .map((m) => {
-            const normalizedRole = m.role?.toLowerCase();
-            const isUser =
-              normalizedRole === "human" || normalizedRole === "user";
-            const role = isUser ? ("user" as const) : ("assistant" as const);
-
-            return {
-              id: m.id ?? crypto.randomUUID(),
-              role,
-              content: (m.msg ?? "").trim().replace(/^(human|bot):\s*/i, ""),
-            };
-          })
-          .filter((m) => m.content.length > 0);
+        const mappedMessages = normalizeHistoryMessage(response.history);
 
         return { messages: mappedMessages, success: true };
       } catch (error) {

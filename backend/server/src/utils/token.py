@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
 from backend.database.models.refresh_token import RefreshToken
+from backend.database.models.reset_password_token import ResetPasswordToken
+from backend.database.models.email_verification_token import EmailVerificationToken
 
 load_dotenv()
 
@@ -121,7 +123,7 @@ class Token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid verification token")
 
     def set_refresh_cookie(self, response: Response, refresh_token: str):
-        is_prod = os.environ.get("NODE_ENV") == "production"
+        is_prod = os.environ.get("APP_ENV") == "production"
         response.set_cookie(
             key="refreshToken",
             value=refresh_token,
@@ -133,7 +135,7 @@ class Token:
         )
 
     def clear_refresh_cookie(self, response: Response):
-        is_prod = os.environ.get('NODE_ENV') == "production"
+        is_prod = os.environ.get('APP_ENV') == "production"
         response.delete_cookie(
             key="refreshToken",
             httponly=True,
@@ -190,3 +192,63 @@ class Token:
             self.set_refresh_cookie(response, new_refresh)
 
         return new_access   
+    
+    def persist_reset_password_token(self, db: Session, user: dict, reset_token: str, jti: str, request: Optional[Request] = None):
+        token_hash = self.hash_token(reset_token)
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=PASSWORD_RESET_TTL_SEC)
+        ip, user_agent = self._client_meta(request)
+
+        user_id = user.get("id")
+        if not user_id:
+            raise ValueError("User id is required to persist password reset token")
+        
+        new_token = ResetPasswordToken(
+            user_id=user_id,
+            token_hash=token_hash,
+            jwt_id=jti,
+            ip=ip,
+            user_agent=user_agent,
+            expires_at=expires_at,
+        )
+
+        db.add(new_token)
+        db.flush()
+        return new_token
+    
+    def invalidate_reset_password_tokens(self, db: Session, user_id: str) -> None:
+        db.query(ResetPasswordToken).filter(
+            ResetPasswordToken.user_id == user_id,
+            ResetPasswordToken.is_used.is_(False),
+        ).update(
+            {"is_used": True, "used_at": datetime.now(timezone.utc)},
+            synchronize_session=False,
+        )
+
+    def persist_email_verification_token(self, db: Session, user: dict, verification_token: str, jti: str, request: Optional[Request] = None): 
+        token_hash = self.hash_token(verification_token)
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=EMAIL_VERIFY_TTL_SEC)
+        ip, user_agent = self._client_meta(request)
+
+        user_id = user.get("id")
+        if not user_id:
+            raise ValueError("User_id is required to persist email verification token")
+        
+        new_token = EmailVerificationToken(
+            user_id=user_id,
+            token_hash=token_hash,
+            jwt_id=jti,
+            ip=ip,
+            user_agent=user_agent,
+            expires_at=expires_at,
+        )
+
+    def revoke_email_verification_tokens(self, db: Session, user_id: str) -> None:
+        db.query(EmailVerificationToken).filter(
+            EmailVerificationToken.user_id == user_id,
+            EmailVerificationToken.is_revoked.is_(False),
+            EmailVerificationToken.is_verified.is_(False),
+        ).update(
+            {"is_revoked": True, "revoked_at": datetime.now(timezone.utc)},
+            synchronize_session=False,
+        )
+

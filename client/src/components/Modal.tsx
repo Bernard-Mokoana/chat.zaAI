@@ -22,7 +22,7 @@ export default function Modal({
   }
 
   async function handleCancel() {
-    const result = onCancel?.();
+    const result = await onCancel?.();
     if (result !== false) onClose();
   }
 

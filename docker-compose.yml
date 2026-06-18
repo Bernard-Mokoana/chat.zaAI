@@ -1,7 +1,7 @@
 services:
   # Redis Stack
   redis:
-    image: redis/redis-stack-server:latest
+    image: redis/redis-stack-server:7.2.0-v11
     container_name: chatbot-redis
     ports:
       - "6380:6379"
@@ -19,11 +19,15 @@ services:
       - "3500:3500"
     environment:
       - APP_ENV=production
-        - REDIS_URL=${REDIS_URL}
-        - DATABASE_PRIMARY_URL=${DATABASE_PRIMARY_URL}
-        - DATABASE_REPLICA_URL=${DATABASE_REPLICA_URL:-${DATABASE_PRIMARY_URL}}
-        - DATABASE_READ_FROM_REPLICA=false
-        - DATABASE_ALLOW_REPLICA_FALLBACK=true
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_PRIMARY_URL=${DATABASE_PRIMARY_URL}
+      - DATABASE_REPLICA_URL=${DATABASE_REPLICA_URL:-${DATABASE_PRIMARY_URL}}
+      - DATABASE_READ_FROM_REPLICA=false
+      - DATABASE_ALLOW_REPLICA_FALLBACK=true
+      - JWT_SECRET=${JWT_SECRET}
+      - REFRESH_JWT_SECRET=${REFRESH_JWT_SECRET}
+      - EXPIRES_IN=${EXPIRES_IN}
+      - HASH_SALT=${HASH_SALT}
     depends_on:
       - redis
     restart: always
@@ -35,8 +39,9 @@ services:
       dockerfile: backend/worker/Dockerfile
     container_name: chatbot-worker
     environment:
-      - REDIS_URL=${Redis.REDIS_URL}
-      - HUGGINFACE_INFERENCE_TOKEN=${HUGGINGFACE_INFERENCE_TOKEN}
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_PRIMARY_URL=${DATABASE_PRIMARY_URL}
+      - HUGGINGFACE_INFERENCE_TOKEN=${HUGGINGFACE_INFERENCE_TOKEN}
       - MODEL_ID=katanemo/Arch-Router-1.5B
       - MAX_NEW_TOKENS=25
     depends_on:

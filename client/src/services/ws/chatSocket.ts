@@ -31,7 +31,11 @@ export class ChatSocket {
     };
 
     this.socket.onmessage = (event: MessageEvent) => {
-      onMessage(event.data as string);
+      if (typeof event.data === "string") {
+        onMessage(event.data);
+      } else {
+        console.error("Received non-text websocket message:", event.data);
+      }
     };
 
     this.socket.onerror = (event: Event) => {

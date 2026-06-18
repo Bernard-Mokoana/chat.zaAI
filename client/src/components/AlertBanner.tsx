@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
-import type { AlertTone } from "@/types/types";
+import type { AlertTone, AlertBannerProps } from "@/types/types";
 
 
 const toneStyles: Record<AlertTone, { icon: typeof Info; className: string; iconClassName: string }> = {
@@ -26,12 +26,6 @@ const toneStyles: Record<AlertTone, { icon: typeof Info; className: string; icon
     iconClassName: "text-amber-600 dark:text-amber-400",
   },
 };
-
-interface AlertBannerProps {
-  tone: AlertTone;
-  message: string;
-  onDismiss?: () => void;
-}
 
 export default function AlertBanner({ tone, message, onDismiss }: AlertBannerProps) {
   const style = toneStyles[tone];
