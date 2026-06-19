@@ -150,7 +150,7 @@ class MessageHandler:
             formatted = []
             for m in history_rounds:
                 role_label = "Human" if m.get("role") == "user" else "Bot"
-                formatted.append(f"{role_label}: {m["msg"]}")
+                formatted.append(f"{role_label}: {m['msg']}")
 
             return "\n".join(formatted)
         except Exception as exc:
