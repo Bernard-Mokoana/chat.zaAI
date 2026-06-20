@@ -11,11 +11,11 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.routes.chat import chat
-from src.routes.auth import auth
-from src.services.conversation_services import ws_message_limiter
+from backend.server.src.routes.chat import chat
+from backend.server.src.routes.auth import auth
+from backend.server.src.services.conversation_services import ws_message_limiter
 
-from src.middlewares.rateLimiter import (
+from backend.server.src.middlewares.rateLimiter import (
     RateLimiterStore,
     cleanup_loop,
     get_client_ip,

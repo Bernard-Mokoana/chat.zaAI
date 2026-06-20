@@ -1,22 +1,22 @@
-from fastapi import APIRouter, Depends, Response, Request, HTTPException, status
+from fastapi import APIRouter, Depends, Response, Request, status
 from sqlalchemy.orm import Session
 
 from backend.database.config.databaseConfig import get_write_db
 from backend.database.models.users import User
-from src.schema.auth import LoginSchema, RegisterSchema, ForgetPasswordSchema, ResetPasswordSchema
-from src.services.auth_services import AuthService
+from backend.server.src.schema.auth import LoginSchema, RegisterSchema, ForgetPasswordSchema, ResetPasswordSchema
+from backend.server.src.services.auth_services import AuthService
 
 import bcrypt
 
 auth = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 auth_service = AuthService()
 
-@auth.post("/register")
+@auth.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(payload: RegisterSchema, response: Response, request: Request, db: Session = Depends(get_write_db)):
     user = auth_service.register_user(db=db, name=payload.name, email=payload.email, password=payload.password)
-    return auth_service.login(db=db, user=user, request=request, response=response)
+    return {"message": "User created successfully", "user": str(user.id), "email": user.email}
 
-@auth.post("/login")
+@auth.post("/login", status_code=status.HTTP_200_OK)
 async def login(payload: LoginSchema, response: Response, request: Request, db: Session = Depends(get_write_db)):
     user = auth_service.authenticate_user(db=db, email=payload.email, password=payload.password)
     return auth_service.login(db=db, user=user, request=request, response=response)
@@ -25,7 +25,7 @@ async def login(payload: LoginSchema, response: Response, request: Request, db: 
 async def refresh_token(request: Request, response: Response, db: Session = Depends(get_write_db)):
     return auth_service.refresh_access_token(db=db, request=request, response=response)
 
-@auth.post("/logout")
+@auth.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(request: Request, response: Response, db: Session = Depends(get_write_db)):
     return auth_service.logout(db=db, request=request, response=response)
 

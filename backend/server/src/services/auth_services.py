@@ -14,9 +14,9 @@ from backend.database.models.tiers import Tier as TierModel
 
 from backend.server.src.schema.auth import LoginSchema
 
-from src.utils.token import Token
+from backend.server.src.utils.token import Token
 
-from src.utils.emailUtils import send_email_verification, send_password_reset_email
+from backend.server.src.utils.emailUtils import send_email_verification, send_password_reset_email
 
 logger = logging.getLogger()
 class AuthService:

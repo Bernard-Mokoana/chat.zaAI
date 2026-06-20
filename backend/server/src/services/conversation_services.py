@@ -13,9 +13,9 @@ from fastapi import WebSocket
 from backend.database.models.conversations import Conversation
 from backend.database.models.messages import Message
 
-from src.schema.chat import Chat
-from src.socket.utils import validate_token
-from src.middlewares.rateLimiter import RateLimiterStore, WS_MESSAGE_RULE
+from backend.server.src.schema.chat import Chat
+from backend.server.src.socket.utils import validate_token
+from backend.server.src.middlewares.rateLimiter import RateLimiterStore, WS_MESSAGE_RULE
 
 
 logger = logging.getLogger(__name__)

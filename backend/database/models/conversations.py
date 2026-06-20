@@ -20,7 +20,6 @@ class Conversation(TimestampMixin, SoftDeleteMixin, Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(500), nullable=False, default="")
     message_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, comment="Cached counter; kept in sync by DB trigger")
-
     user: Mapped["User"] = relationship("User", back_populates="conversations")
     messages: Mapped[list["Message"]] = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
 

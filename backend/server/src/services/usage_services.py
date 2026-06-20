@@ -8,10 +8,10 @@ def create_usage_log(db: Session, user_id: str, event_type: str, model_name: str
     
     log_entry = UsageLog(
         user_id=user_id,
-        events=event_type,
+        event_type=event_type,
         model_name=model_name,
-        total_tokens=total_tokens,
-        message_count=message_count
+        total_tokens=total_tokens if total_tokens is not None else 0,
+        message_count=message_count if message_count is not None else 0
     )
     db.add(log_entry)
     try:

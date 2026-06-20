@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.database.config.databaseConfig import get_write_db
 from backend.database.models.users import User
-from src.utils.token import Token
+from backend.server.src.utils.token import Token
 
 bearer = HTTPBearer(auto_error=False)
 token_util = Token()
