@@ -1,13 +1,15 @@
 import pytest
+import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 from uuid import uuid4, UUID
-from fastapi import HTTPException
+from fastapi import WebSocket
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import redis.exceptions
 
-from backend.server.src.services.conversation_services import ConversationService
+from backend.server.src.services.conversation_services import ConversationService, ChatOrchestrator
 from backend.database.models.conversations import Conversation
+from backend.server.src.socket.connection import ConnectionManager
 from backend.database.models.messages import Message
 
 
@@ -21,9 +23,30 @@ class TestConversationService:
         self.redis_client.json().get = AsyncMock()
         self.redis_client.expire = AsyncMock()
 
+        self.mock_manager = MagicMock(spec=ConnectionManager)
+        self.mock_manager.connect = AsyncMock()
+        self.mock_manager.disconnect - AsyncMock()
+        self.mock_manager.send_personal_message = AsyncMock()
+
+        self.mock_producer = MagicMock()
+        self.mock_producer.add_to_stream = AsyncMock()
+
+        self.mock_consumer = MagicMock()
+        self.mock_consumer.consume_stream = AsyncMock(return_value=[])
+        self.mock_consumer.delete_message = AsyncMock()
+
+        self.mock_ws = AsyncMock(spec=WebSocket)
+        self.chat_token = "orchestrator-test-token"
+
         self.service = ConversationService()
         self.mock_user_id = str(uuid4())
         self.mock_chat_token = str(uuid4())
+
+        self.orchestrator = ChatOrchestrator(
+            manager=self.mock_manager,
+            producer=self.mock_producer,
+            consumer=self.mock_consumer,
+        )
 
     def test_save_chat_message_happy_path_new_conversation(self):
         self.db.query.return_value.filter.return_value.first.return_value = None 
@@ -129,3 +152,66 @@ class TestConversationService:
         with pytest.raises(PermissionError) as exc_info:
             await self.service.get_chat_session(self.redis_client, self.mock_chat_token, self.mock_user_id)
         assert "Forbidden" in str(exc_info.value)
+
+    @pytest.mark.asyncio   
+    @patch("backend.server.src.services.conversation_services.ws_message_limiter")
+    async def test_run_happy_path_produces_to_stream(self, mock_limiter):
+        mock_result = MagicMock()
+        mock_result.allowed = True
+        mock_limiter.check.return_value = mock_result
+
+        self.mock_ws.receive_text.side_effect = ["User prompt message", asyncio.CancelledError()]
+
+        try:
+            await self.orchestrator.run(self.mock_ws, self.chat_token)
+        except asyncio.CancelledError:
+            pass
+
+        self.mock_manager.connect.assert_called_once_with(self.mock_ws)
+        self.mock_producer.add_to_stream.assert_called_once_with(
+            {self.chat_token: "User prompt message"}, "message_channel"
+        )
+        self.mock_manager.disconnect.assert_called_once_with(self.mock_ws)
+
+    @pytest.mark.asyncio
+    @patch("backend.server.src.services.conversation_services.ws_message_limiter")
+    async def test_run_edge_case_rate_limited(self, mock_limiter):
+        mock_result = MagicMock()
+        mock_result.allowed = False
+        mock_limiter.check.return_value = mock_result
+
+        self.mock_ws.receive_text.side_effect = ["Spam message", asyncio.CancelledError()]
+
+        try:
+            await self.orchestrator.run(self.mock_ws, self.chat_token)
+        except asyncio.CancelledError:
+            pass
+
+        self.mock_producer.add_to_stream.assert_not_called()
+        self.mock_manager.send_personal_message.assert_called_once_with(
+            "Too many messages. Please wait a moment before sending another one", self.mock_ws
+        )
+
+    @pytest.mark.asyncio
+    async def test_response_listener_processes_stream_messages(self):
+        token_bytes = self.chat_token.encode("utf-8") if isinstance(self.chat_token, str) else str(self.chat_token).encode("utf-8")
+        
+        mock_stream_data = [
+            (
+                b"stream-channel-id",
+                [
+                    (b"msg-id-1", {token_bytes: b"AI Response Content"}),
+                ]
+            )
+        ]
+        self.mock_consumer.consume_stream.side_effect = [mock_stream_data, asyncio.CancelledError()]
+
+        try:
+            await self.orchestrator._response_listener(self.mock_ws, str(self.chat_token))
+        except asyncio.CancelledError:
+            pass
+
+        self.mock_manager.send_personal_message.assert_called_once_with("AI Response Content", self.mock_ws)
+        self.mock_consumer.delete_message.assert_called_once_with(
+            stream_channel="response_channel", message_id="msg-id-1"
+        )
