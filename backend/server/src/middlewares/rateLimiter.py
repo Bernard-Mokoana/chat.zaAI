@@ -127,7 +127,6 @@ async def cleanup_loop(
     max_idle_seconds: float = 3600.0,
 ) -> None:
     while True:
-        await asyncio.sleep(interval_seconds)
         before = store.size()
         store.cleanup(max_idle_seconds=max_idle_seconds)
         after = store.size()
@@ -139,6 +138,7 @@ async def cleanup_loop(
                 after,
                 before - after,
             )
+        await asyncio.sleep(interval_seconds)
 
 def _parse_int_env(name: str, default: str) -> int:
     val = os.environ.get(name, default)

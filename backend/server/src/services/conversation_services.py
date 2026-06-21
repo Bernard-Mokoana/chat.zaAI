@@ -214,23 +214,19 @@ class ChatOrchestrator:
                         if chat_token != str(response_token):
                             continue
 
-                        send_success =  False
                         try:
                             await self.manager.send_personal_message(
                                 response_message,
                                 websocket,
                                 )
-                            send_success = True
                         except Exception as e:
                             logger.warning(f"Failed to send response message: {e}")
-                            if send_success:
-                                await self.consumer.delete_message(
-                                    stream_channel=RESPONSE_CHANNEL,
-                                    message_id=message_id,
+                            logger.warning(f"Leaving message {message_id} in stream due to send failure")
+                        else:
+                            await self.consumer.delete_message(
+                                stream_channel=RESPONSE_CHANNEL,
+                                message_id=message_id,
                                 )
-                            else:
-                                logger.warning(f"Leaving message {message_id} in stream due to send failure")
-
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
