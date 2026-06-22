@@ -31,7 +31,7 @@ class TestAuthService:
 
         with patch("backend.server.src.services.auth_services.send_email_verification") as mock_send_email:
             user = self.auth_service.register_user(
-                db=self.db, name="Bernard Mokoana", email="bernardmokoana@gmail.com", password="39156117@Mokoana"
+                db=self.db, name="Bernard Mokoana", email="bernardmokoana@gmail.com", password="111123!Example"
             )
 
             assert user.name == "Bernard Mokoana"
@@ -77,7 +77,7 @@ class TestAuthService:
         self.db.query.return_value.filter.return_value.first.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            self.auth_service.authenticate_user(db=self.db, email="bernarddira@gmail.com", password="39156117@Mokoana")
+            self.auth_service.authenticate_user(db=self.db, email="bernarddira@gmail.com", password="password@1235")
 
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
         assert "Invalid credentials" in exc_info.value.detail

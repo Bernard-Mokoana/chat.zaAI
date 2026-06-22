@@ -12,3 +12,4 @@ passlib[bcrypt]>=1.7.4
 python-multipart>=0.0.7
 websockets>=16.0
 websocket>=0.2.1
+pytest>=9.1.0
