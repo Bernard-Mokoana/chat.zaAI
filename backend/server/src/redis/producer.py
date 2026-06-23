@@ -23,6 +23,7 @@ class Producer():
                     continue
                 else:
                     logger.error(f"Failed to send message after {max_retries} attempts: {e}")
-                    raise
+                    return None
             except Exception as e:
                 logger.error(f"Error sending message to stream => {e}")
+                raise

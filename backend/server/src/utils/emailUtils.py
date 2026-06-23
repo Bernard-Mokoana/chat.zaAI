@@ -89,7 +89,7 @@ def send_password_reset_email(email, token):
     send_email(config, email, "Bbot password reset", html)
 
 def build_email_verification_html(verification_url):
-    safe_url = escape(verification_url, quote=True)
+    encoded_link = escape(verification_url, quote=True)
     return f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -109,7 +109,7 @@ def build_email_verification_html(verification_url):
                   <p style="color: #666666; font-size: 16px;">
                     Thank you for registering with Bbot. To complete your registration, please click the button below to verify your email address.
                   </p>
-                  <a href="{safe_url}" style="display: inline-block; padding: 15px 25px; margin: 20px 0; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px;">Verify Email</a>
+                  <a href="{encoded_link}" style="display: inline-block; padding: 15px 25px; margin: 20px 0; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px;">Verify Email</a>
                   <p style="color: #666666; font-size: 14px;">
                     If you did not create an account, no further action is required.
                   </p>
