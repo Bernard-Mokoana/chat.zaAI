@@ -47,11 +47,11 @@ export class ChatSocket {
     };
   }
 
-  send(message: string): void {
+  sendMessage(message: string): void {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new Error("WebSocket is not connected");
     }
-    this.socket.send(message);
+    this.socket.send(JSON.stringify({ message }));
   }
 
   disconnect(): void {

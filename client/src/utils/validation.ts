@@ -2,20 +2,17 @@ import type { FormValidationResult, ValidationError } from "@/types/types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const PASSWORD_REGEX =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
 export function validateEmail(email: string): boolean {
   return EMAIL_REGEX.test(email.trim());
 }
 
 export function validatePassword(password: string): boolean {
-  return PASSWORD_REGEX.test(password);
+  return password.length >= 8;
 }
 
 export function validateName(name: string): boolean {
   const trimmed = name.trim();
-  return trimmed.length > 0 && trimmed.length <= 100;
+  return trimmed.length >= 2 && trimmed.length <= 100;
 }
 export function validateLoginForm(
   email: string,
@@ -70,7 +67,7 @@ export function validateRegisterForm(
   } else if (!validateName(trimmedName)) {
     errors.push({
       field: "name",
-      message: "Name must be between 1 and 100 characters",
+      message: "Name must be between 2 and 100 characters",
     });
   }
 
@@ -94,8 +91,7 @@ export function validateRegisterForm(
   } else if (!validatePassword(trimmedPassword)) {
     errors.push({
       field: "password",
-      message:
-        "Password must contain at least 8 characters, including uppercase, lowercase, a number, and a special character (@$!%*?&)",
+      message: "Password must be at least 8 characters",
     });
   }
 
