@@ -84,17 +84,18 @@ def _normalize_message_role(role: str) -> str:
 def log_worker_usage(session_factory: sessionmaker, user_id: str, model: str | None, total_tokens: int | None, message_count: int | None):
     try:
         with session_factory() as db:
-            stmt = insert(UsageLog).values(
+            base_stmt = insert(UsageLog).values(
                 user_id=user_id,
                 log_date=date.today(),
-                model=model or "unknown",
+                model_name=model or "unknown",
                 total_tokens=total_tokens or 0,
-                message_count=message_count or 0, 
-            ).on_conflict_do_update(
+                message_count=message_count or 0,
+            )
+            stmt = base_stmt.on_conflict_do_update(
                 constraint="uq_usage_logs_user_date_model",
                 set_={
-                    "total_tokens": UsageLog.total_tokens + stmt.excluded.total_tokens,
-                    "message_count": UsageLog.message_count + stmt.excluded.message_count,
+                    "total_tokens": UsageLog.total_tokens + base_stmt.excluded.total_tokens,
+                    "message_count": UsageLog.message_count + base_stmt.excluded.message_count,
                     "updated_at": func.now(),
                 }
             )
