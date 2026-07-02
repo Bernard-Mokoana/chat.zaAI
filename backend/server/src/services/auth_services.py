@@ -173,7 +173,7 @@ class AuthService:
         
         user.is_verified = True
         db_token.is_verified = True
-        db.token.revoked_at = datetime.now(timezone.utc)
+        db_token.revoked_at = datetime.now(timezone.utc)
         db.commit()
 
         return {"message": "Email verified successfully"}

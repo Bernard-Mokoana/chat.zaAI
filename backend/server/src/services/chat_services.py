@@ -11,6 +11,15 @@ from backend.server.src.services.conversation_services import ChatOrchestrator, 
 logger = logging.getLogger(__name__)
 
 
+def _extract_access_token(websocket: WebSocket) -> str | None:
+    protocol_header = websocket.headers.get("sec-websocket-protocol")
+    if not protocol_header:
+        return None
+
+    protocols = [value.strip() for value in protocol_header.split(",") if value.strip()]
+    return protocols[0] if protocols else None
+
+
 async def create_token_service(redis: Redis, conversation_service: ConversationService, user_id: str, name: str) -> dict:
     redis_client = await redis.create_connection()
     try:
@@ -37,19 +46,19 @@ async def refresh_token_service(redis: Redis, conversation_service: Conversation
 
 async def handle_websocket_connection(websocket: WebSocket, redis: Redis, manager: ConnectionManager, conversation_service: ConversationService ) -> None:
     query_params = dict(websocket.query_params)
-    token = query_params.get("token")
     chat_token = query_params.get("chat_token")
+    access_token = _extract_access_token(websocket)
 
-    if not token or not chat_token:
+    if not access_token or not chat_token:
         await websocket.accept()
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
     redis_client_validation = await redis.create_connection()
     try:
-        await conversation_service.validate_websocket_session(
+        validated_session = await conversation_service.validate_websocket_session(
             redis_client=redis_client_validation,
-            access_token=token,
+            access_token=access_token,
             chat_token=chat_token,
         )
     except (ValueError, PermissionError):
@@ -75,7 +84,12 @@ async def handle_websocket_connection(websocket: WebSocket, redis: Redis, manage
     )
 
     try:
-        await orchestrator.run(websocket, chat_token)
+        await orchestrator.run(
+            websocket,
+            chat_token,
+            validated_session["user_id"],
+            subprotocol=access_token,
+        )
     except WebSocketDisconnect:
         pass  
     finally:

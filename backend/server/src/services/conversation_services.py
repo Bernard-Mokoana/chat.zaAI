@@ -145,13 +145,19 @@ class ChatOrchestrator:
         self.producer = producer
         self.consumer = consumer
 
-    async def run(self, websocket: WebSocket, chat_token: str) -> None:
+    async def run(
+        self,
+        websocket: WebSocket,
+        chat_token: str,
+        user_id: str,
+        subprotocol: str | None = None,
+    ) -> None:
         listener_task = asyncio.create_task(
             self._response_listener(websocket, chat_token)
         )
 
         try:
-            await self.manager.connect(websocket)
+            await self.manager.connect(websocket, subprotocol=subprotocol)
 
             while True:
                 try:
@@ -161,7 +167,7 @@ class ChatOrchestrator:
                     break
 
                 result = ws_message_limiter.check(
-                    key=chat_token,
+                    key=user_id,
                     rule=WS_MESSAGE_RULE,
                 )
 

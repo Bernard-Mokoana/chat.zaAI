@@ -143,6 +143,37 @@ class TestAuthService:
                 
             assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
             assert "Verification token expired" in exc_info.value.detail
+
+    def test_verify_email_token_success(self):
+        fixed_now = datetime(2026, 6, 19, 12, 0, 0, tzinfo=timezone.utc)
+        future_time = fixed_now + timedelta(hours=1)
+
+        self.mock_token_util.decode_email_verification_token.return_value = {
+            "email": "test@example.com",
+            "jti": "jti-123",
+        }
+
+        mock_user = User(id=1, email="test@example.com", is_verified=False)
+        mock_db_token = EmailVerificationToken(
+            id=1,
+            user_id=1,
+            jwt_id="jti-123",
+            is_revoked=False,
+            is_verified=False,
+            expires_at=future_time,
+        )
+        self.db.query.return_value.filter.return_value.first.side_effect = [mock_user, mock_db_token]
+
+        with patch("backend.server.src.services.auth_services.datetime") as mock_datetime:
+            mock_datetime.now.return_value = fixed_now
+
+            result = self.auth_service.verify_email_token(self.db, "valid-token-string")
+
+        assert result == {"message": "Email verified successfully"}
+        assert mock_user.is_verified is True
+        assert mock_db_token.is_verified is True
+        assert mock_db_token.revoked_at == fixed_now
+        self.db.commit.assert_called_once()
                     
     def test_request_password_reset_user_not_found(self):
         self.db.query.return_value.filter.return_value.first.return_value = None

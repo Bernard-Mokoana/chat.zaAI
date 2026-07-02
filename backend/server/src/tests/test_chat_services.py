@@ -81,7 +81,8 @@ class TestChatServices:
 
     async def test_handle_websocket_missing_parameters(self):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {} 
+        mock_ws.query_params = {}
+        mock_ws.headers = {}
         mock_manager = MagicMock(spec=ConnectionManager)
 
         await handle_websocket_connection(
@@ -97,7 +98,8 @@ class TestChatServices:
 
     async def test_handle_websocket_invalid_session_credentials(self):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {"token": self.token, "chat_token": self.chat_token}
+        mock_ws.query_params = {"chat_token": self.chat_token}
+        mock_ws.headers = {"sec-websocket-protocol": self.token}
         mock_manager = MagicMock(spec=ConnectionManager)
         
         self.mock_conversation_service.validate_websocket_session.side_effect = PermissionError("Forbidden")
@@ -114,7 +116,8 @@ class TestChatServices:
 
     async def test_handle_websocket_unexpected_validation_crash(self):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {"token": self.token, "chat_token": self.chat_token}
+        mock_ws.query_params = {"chat_token": self.chat_token}
+        mock_ws.headers = {"sec-websocket-protocol": self.token}
         mock_manager = MagicMock(spec=ConnectionManager)
         
         self.mock_conversation_service.validate_websocket_session.side_effect = Exception("DB Network down")
@@ -134,7 +137,8 @@ class TestChatServices:
     @patch("backend.server.src.services.chat_services.ChatOrchestrator")
     async def test_handle_websocket_happy_path_orchestration(self, MockOrchestrator, MockConsumer, MockProducer):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {"token": self.token, "chat_token": self.chat_token}
+        mock_ws.query_params = {"chat_token": self.chat_token}
+        mock_ws.headers = {"sec-websocket-protocol": self.token}
         mock_manager = MagicMock(spec=ConnectionManager)
         
         self.mock_conversation_service.validate_websocket_session.return_value = {"user_id": "123"}
@@ -154,7 +158,12 @@ class TestChatServices:
             producer=MockProducer.return_value,
             consumer=MockConsumer.return_value,
         )
-        mock_orchestrator_instance.run.assert_called_once_with(mock_ws, self.chat_token)
+        mock_orchestrator_instance.run.assert_called_once_with(
+            mock_ws,
+            self.chat_token,
+            "123",
+            subprotocol=self.token,
+        )
         assert self.mock_redis_client.close.call_count == 2
 
     @patch("backend.server.src.services.chat_services.Producer")
@@ -162,7 +171,8 @@ class TestChatServices:
     @patch("backend.server.src.services.chat_services.ChatOrchestrator")
     async def test_handle_websocket_disconnect_exception_handling(self, MockOrchestrator, MockConsumer, MockProducer):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {"token": self.token, "chat_token": self.chat_token}
+        mock_ws.query_params = {"chat_token": self.chat_token}
+        mock_ws.headers = {"sec-websocket-protocol": self.token}
         mock_manager = MagicMock(spec=ConnectionManager)
         
         self.mock_conversation_service.validate_websocket_session.return_value = {"user_id": "123"}

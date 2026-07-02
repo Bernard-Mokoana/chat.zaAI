@@ -21,10 +21,9 @@ export class ChatSocket {
     if (this.socket) this.disconnect();
 
     const url = new URL(this.baseWsUrl);
-    url.searchParams.set("token", accessToken);
     url.searchParams.set("chat_token", chatToken);
 
-    this.socket = new WebSocket(url.toString());
+    this.socket = new WebSocket(url.toString(), [accessToken]);
 
     this.socket.onopen = (event: Event) => {
       if (onOpen) onOpen(event);

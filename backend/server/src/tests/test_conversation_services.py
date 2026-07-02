@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import redis.exceptions
 
-from backend.server.src.services.conversation_services import ConversationService, ChatOrchestrator
+from backend.server.src.services.conversation_services import ConversationService, ChatOrchestrator, WS_MESSAGE_RULE
 from backend.database.models.conversations import Conversation
 from backend.server.src.socket.connection import ConnectionManager
 from backend.database.models.messages import Message
@@ -25,7 +25,7 @@ class TestConversationService:
 
         self.mock_manager = MagicMock(spec=ConnectionManager)
         self.mock_manager.connect = AsyncMock()
-        self.mock_manager.disconnect - AsyncMock()
+        self.mock_manager.disconnect = AsyncMock()
         self.mock_manager.send_personal_message = AsyncMock()
 
         self.mock_producer = MagicMock()
@@ -163,11 +163,17 @@ class TestConversationService:
         self.mock_ws.receive_text.side_effect = ["User prompt message", asyncio.CancelledError()]
 
         try:
-            await self.orchestrator.run(self.mock_ws, self.chat_token)
+            await self.orchestrator.run(
+                self.mock_ws,
+                self.chat_token,
+                self.mock_user_id,
+                subprotocol=self.mock_user_id,
+            )
         except asyncio.CancelledError:
             pass
 
-        self.mock_manager.connect.assert_called_once_with(self.mock_ws)
+        self.mock_manager.connect.assert_called_once_with(self.mock_ws, subprotocol=self.mock_user_id)
+        mock_limiter.check.assert_called_once_with(key=self.mock_user_id, rule=WS_MESSAGE_RULE)
         self.mock_producer.add_to_stream.assert_called_once_with(
             {self.chat_token: "User prompt message"}, "message_channel"
         )
@@ -183,10 +189,16 @@ class TestConversationService:
         self.mock_ws.receive_text.side_effect = ["Spam message", asyncio.CancelledError()]
 
         try:
-            await self.orchestrator.run(self.mock_ws, self.chat_token)
+            await self.orchestrator.run(
+                self.mock_ws,
+                self.chat_token,
+                self.mock_user_id,
+                subprotocol=self.mock_user_id,
+            )
         except asyncio.CancelledError:
             pass
 
+        mock_limiter.check.assert_called_once_with(key=self.mock_user_id, rule=mock_limiter.check.call_args.kwargs["rule"])
         self.mock_producer.add_to_stream.assert_not_called()
         self.mock_manager.send_personal_message.assert_called_once_with(
             "Too many messages. Please wait a moment before sending another one", self.mock_ws
