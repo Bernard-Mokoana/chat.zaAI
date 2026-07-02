@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import json
 import redis.exceptions
 import uuid
 
@@ -128,6 +129,38 @@ class ConversationService:
             "chat_token": chat_token,
             "session": session,
         }
+
+    async def create_websocket_ticket(self, redis_client, user_id: str, chat_token: str) -> str:
+        ticket = uuid.uuid4().hex
+        payload = {"user_id": str(user_id), "chat_token": str(chat_token)}
+        try:
+            await redis_client.setex(f"ws_ticket:{ticket}", 120, json.dumps(payload))
+        except redis.exceptions.RedisError as exc:
+            logger.error("Failed to create websocket ticket: %s", exc)
+            raise
+
+        return ticket
+
+    async def validate_websocket_ticket(self, redis_client, ws_ticket: str, chat_token: str) -> dict:
+        raw = await redis_client.get(f"ws_ticket:{ws_ticket}")
+        if not raw:
+            raise PermissionError("Invalid or expired websocket ticket")
+
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise PermissionError("Invalid websocket ticket") from exc
+
+        if str(payload.get("chat_token")) != str(chat_token):
+            raise PermissionError("Websocket ticket does not match chat session")
+
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise PermissionError("Invalid websocket ticket")
+
+        await redis_client.delete(f"ws_ticket:{ws_ticket}")
+
+        return {"user_id": str(user_id), "chat_token": str(chat_token)}
     
     def _unwrap_redis_json(self, data):
         if isinstance(data, list) and len(data) > 0:
@@ -145,19 +178,13 @@ class ChatOrchestrator:
         self.producer = producer
         self.consumer = consumer
 
-    async def run(
-        self,
-        websocket: WebSocket,
-        chat_token: str,
-        user_id: str,
-        subprotocol: str | None = None,
-    ) -> None:
+    async def run(self, websocket: WebSocket, chat_token: str, user_id: str) -> None:
         listener_task = asyncio.create_task(
             self._response_listener(websocket, chat_token)
         )
 
         try:
-            await self.manager.connect(websocket, subprotocol=subprotocol)
+            await self.manager.connect(websocket)
 
             while True:
                 try:

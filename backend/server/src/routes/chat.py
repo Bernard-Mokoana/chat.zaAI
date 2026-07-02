@@ -8,7 +8,12 @@ from backend.server.src.redis.config import Redis
 from backend.server.src.services.conversation_services import ConversationService
 from backend.server.src.middlewares.jwt_validation import get_current_user
 from backend.server.src.utils.dbUtils import get_conversation_history_from_db
-from backend.server.src.services.chat_services import create_token_service, refresh_token_service, handle_websocket_connection
+from backend.server.src.services.chat_services import (
+    create_token_service,
+    create_websocket_ticket_service,
+    refresh_token_service,
+    handle_websocket_connection,
+)
 
 from backend.database.models.users import User
 from backend.database.config.databaseConfig import get_read_db
@@ -41,6 +46,25 @@ async def refresh_token(request: Request, x_chat_token: str = Header(..., alias=
             conversation_service=conversation_service,
             token=x_chat_token,
             user_id=str(current_user.id),
+        )
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+
+
+@chat.post("/ws-token")
+async def websocket_ticket(
+    x_chat_token: str = Header(..., alias="X-Chat-Token"),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        result = await create_websocket_ticket_service(
+            redis=redis,
+            conversation_service=conversation_service,
+            user_id=str(current_user.id),
+            chat_token=x_chat_token,
         )
         return result
     except ValueError as exc:

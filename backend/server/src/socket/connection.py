@@ -10,8 +10,8 @@ class ConnectionManager:
         self.active_connections: List[WebSocket] = []
         self._lock = asyncio.Lock()
 
-    async def connect(self, websocket: WebSocket, subprotocol: str | None = None):
-        await websocket.accept(subprotocol=subprotocol)
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
         async with self._lock:
             self.active_connections.append(websocket)
 

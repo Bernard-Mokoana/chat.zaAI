@@ -18,7 +18,7 @@ The project is currently built around a token-based chat session flow:
 1. The client collects a user's name.
 2. The client calls `POST /token?name=...` on the FastAPI server.
 3. The server creates a UUID token, stores a chat session in Redis JSON, and sets a 1-hour expiry.
-4. The client opens `ws://.../chat?token=...`.
+4. The client asks the server for a short-lived WebSocket ticket, then opens `ws://.../chat?chat_token=...&ws_ticket=...`.
 5. User messages are written by the server into the Redis stream `message_channel`.
 6. The worker reads from `message_channel`, updates Redis chat history, calls the Hugging Face model, and writes the answer into `response_channel`.
 7. The server listens for matching replies on `response_channel` and forwards them to the correct WebSocket client.
@@ -37,6 +37,12 @@ Core data movement:
 2. Server writes user messages to Redis stream `message_channel`.
 3. Worker consumes `message_channel`, updates Redis JSON history, generates a model reply, then writes to `response_channel`.
 4. Server listens for the token-matched reply and pushes it back over the same client WebSocket.
+
+Security note:
+
+- The access token is no longer placed in the WebSocket URL or WebSocket subprotocol.
+- The browser requests a short-lived opaque `ws_ticket` over authenticated HTTP before opening the socket.
+- WebSocket message rate limiting is keyed by authenticated `user_id` instead of chat token.
 
 Data persistence is currently hybrid:
 
@@ -146,8 +152,12 @@ Important implementation details:
 
 ### WebSocket
 
-- `GET /chat?token=...`
-  Accepts raw text user messages and returns bot responses for that token.
+- `GET /chat?chat_token=...`
+  Accepts raw text user messages and returns bot responses for that chat session.
+  The client supplies a short-lived `ws_ticket` query parameter that the server mints over authenticated HTTP.
+
+- `POST /ws-token`
+  Mints a short-lived WebSocket ticket for the authenticated user and the current chat token.
 
 ## Redis Usage
 
@@ -236,6 +246,22 @@ Notes:
 
 - The WebSocket helper removes a trailing `/chat` if you include it, so either `ws://localhost:3500` or `ws://localhost:3500/chat` will work.
 
+## Testing
+
+Run the backend test suite from the repository root:
+
+```powershell
+pytest
+```
+
+The root-level `pytest.ini` and `conftest.py` files provide safe test defaults so the backend tests can collect without connecting to live infrastructure.
+
+Run the client test suite from `client/`:
+
+```bash
+npm test
+```
+
 ## Running Locally
 
 You need four processes:
@@ -282,6 +308,11 @@ npm run dev -- --port 3001
 
 Then open `http://localhost:3001`.
 
+Note:
+
+- The client dev script now uses webpack instead of Turbopack by default. That avoids the OS watch-limit panic some environments hit when Turbopack tries to watch the full app tree.
+- If you want to try Turbopack again later, use `npm run dev -- --turbopack` after increasing your OS file watch limits.
+
 ## End-to-End Flow
 
 Once everything is running:
@@ -290,7 +321,7 @@ Once everything is running:
 2. Enter a name.
 3. The client creates a session token.
 4. The chat page opens a WebSocket connection using that token.
-5. Messages are sent over the socket as plain text.
+5. Messages are sent over the socket as plain text, and the socket is authorized with a short-lived `ws_ticket`.
 6. The worker generates a response through Hugging Face.
 7. The response is pushed back to the browser and rendered in the chat UI.
 
@@ -317,6 +348,7 @@ Some of those notes describe future Auth0-based work that is not yet implemented
 - The FastAPI CORS allowlist is hard-coded to `http://localhost:3001`.
 - Redis JSON support is required, not just a plain Redis server.
 - The worker currently sends back whole model responses rather than token-by-token streaming.
+- The client dev server defaults to webpack so it can run cleanly on systems with tight file-watch limits.
 
 ## Next Good Improvements
 

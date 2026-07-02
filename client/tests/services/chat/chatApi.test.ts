@@ -1,4 +1,8 @@
-import { createChatSession, getChatHistory } from "@/services/chat/chatApi";
+import {
+  createChatSession,
+  createWebsocketTicket,
+  getChatHistory,
+} from "@/services/chat/chatApi";
 import { httpClient } from "@/services/httpClient";
 
 jest.mock("@/services/httpClient");
@@ -35,7 +39,22 @@ describe("Chat API Service", () => {
       const result = await getChatHistory("existing-chat-token-uuid");
 
       expect(mockedHttpClient.get).toHaveBeenCalledWith(
-        "/api/v1/chat/history",
+        "/api/v1/chat/history/existing-chat-token-uuid",
+      );
+      expect(result).toBe(mockResponse.data);
+    });
+  });
+
+  describe("createWebsocketTicket", () => {
+    it("successfully creates a websocket ticket for a chat token", async () => {
+      const mockResponse = { data: { ws_ticket: "ticket-123" } };
+      mockedHttpClient.post.mockResolvedValueOnce(mockResponse);
+
+      const result = await createWebsocketTicket("existing-chat-token-uuid");
+
+      expect(mockedHttpClient.post).toHaveBeenCalledWith(
+        "/api/v1/chat/ws-token",
+        null,
         { headers: { "X-Chat-Token": "existing-chat-token-uuid" } },
       );
       expect(result).toBe(mockResponse.data);

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { createChatSession, getChatHistory, refreshChatSession } from "@/services/chat/chatApi";
+import { createChatSession, createWebsocketTicket, getChatHistory, refreshChatSession } from "@/services/chat/chatApi";
 import { ChatSocket, createChatSocket } from "@/services/ws/chatSocket";
 import {
   getChatToken,
@@ -35,6 +35,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
   const [activeChatToken, setActiveChatToken] = useState<string | null>(() => getChatToken());
   const suppressNextCloseRef = useRef(false);
+  const activeSocketTokenRef = useRef<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const stored = getChatMessages<ChatMessage[]>();
     return stored ?? [];
@@ -87,62 +88,90 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
     });
   }, []);
 
+  const openSocketRequestIdRef = useRef(0);
   const openSocket = useCallback((chatToken: string) => {
-    const accessToken = getAccessToken();
+    const requestId = ++openSocketRequestIdRef.current;
+    void (async () => {
+      const accessToken = getAccessToken();
 
-    if (!accessToken) {
-      throw new Error("Access token is required to connect to chat");
-    }
+      if (!accessToken) {
+        throw new Error("Access token is required to connect to chat");
+      }
 
-    if (socketRef.current) {
-      suppressNextCloseRef.current = true;
-      socketRef.current.disconnect();
-    }
+      if (
+        socketRef.current &&
+        socketRef.current.isConnected() &&
+        activeSocketTokenRef.current === chatToken
+      ) {
+        return;
+      }
 
-    socketRef.current = createChatSocket({
-      accessToken,
-      chatToken,
-      onOpen: () => setConnectionState("connected"),
-      onClose: () => {
-        if (suppressNextCloseRef.current) {
-          suppressNextCloseRef.current = false;
-          return;
-        }
+      if (socketRef.current) {
+        suppressNextCloseRef.current = true;
+        socketRef.current.disconnect();
+      }
 
-        setConnectionState("disconnected");
-        setIsAssistantTyping(false);
-        showToast({
-          title: "Chat disconnected",
-          description: "Messages pause until the connection is restored.",
-          tone: "warning",
-        });
-      },
-      onError: () => {
-        setConnectionState("error");
-        setIsAssistantTyping(false);
-        showToast({
-          title: "Chat connection problem",
-          description: "The live chat connection could not stay open.",
-          tone: "error",
-        });
-      },
-      onMessage: (message: string) => {
-        setIsAssistantTyping(false);
+      const ticket = await createWebsocketTicket(chatToken);
 
-        if (message.startsWith(WS_RATE_LIMIT_MESSAGE)) {
+      if (openSocketRequestIdRef.current != requestId) {
+        return;
+      }
+
+      socketRef.current = createChatSocket({
+        wsTicket: ticket.ws_ticket,
+        chatToken,
+        onOpen: () => setConnectionState("connected"),
+        onClose: () => {
+          if (suppressNextCloseRef.current) {
+            suppressNextCloseRef.current = false;
+            return;
+          }
+
+          setConnectionState("disconnected");
+          setIsAssistantTyping(false);
           showToast({
-            title: "Message limit reached",
-            description: "Please wait a moment before sending another message.",
+            title: "Chat disconnected",
+            description: "Messages pause until the connection is restored.",
             tone: "warning",
           });
-          return;
-        }
+        },
+        onError: () => {
+          setConnectionState("error");
+          setIsAssistantTyping(false);
+          showToast({
+            title: "Chat connection problem",
+            description: "The live chat connection could not stay open.",
+            tone: "error",
+          });
+        },
+        onMessage: (message: string) => {
+          setIsAssistantTyping(false);
 
-        setMessages((prev) => [
-          ...prev,
-          { id: generateId(), role: "assistant", content: message },
-        ]);
-      },
+          if (message.startsWith(WS_RATE_LIMIT_MESSAGE)) {
+            showToast({
+              title: "Message limit reached",
+              description: "Please wait a moment before sending another message.",
+              tone: "warning",
+            });
+            return;
+          }
+
+          setMessages((prev) => [
+            ...prev,
+            { id: generateId(), role: "assistant", content: message },
+          ]);
+        },
+      });
+      activeSocketTokenRef.current = chatToken;
+    })().catch((error) => {
+      console.error("Failed to open chat socket", error);
+      setConnectionState("error");
+      setIsAssistantTyping(false);
+      showToast({
+        title: "Chat connection problem",
+        description: "The live chat connection could not be prepared.",
+        tone: "error",
+      });
     });
   }, []);
 
@@ -342,6 +371,9 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
       alive = false;
       suppressNextCloseRef.current = true;
       socketRef.current?.disconnect();
+      socketRef.current = null;
+      activeSocketTokenRef.current = null;
+      openSocketRequestIdRef.current += 1;
     };
   }, [displayName, mapHistoryMessages, openSocket, router]);
 
@@ -354,7 +386,7 @@ export default function ChatPanel({ displayName }: ChatPanelProps) {
 
     if (socketRef.current && socketRef.current.isConnected()) {
     try {
-      socketRef.current.send(trimmed);
+      socketRef.current.sendMessage(trimmed);
     } catch(error) {
       console.error("Failed to send message", error);
       showToast({

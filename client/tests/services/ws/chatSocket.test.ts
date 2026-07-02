@@ -2,7 +2,6 @@ import { createChatSocket } from "@/services/ws/chatSocket";
 
 class MockWebSocket {
   url: string;
-  protocols: string[] | string | undefined;
   onopen: (() => void) | null = null;
   onclose: (() => void) | null = null;
   onerror: ((error: any) => void) | null = null;
@@ -11,9 +10,8 @@ class MockWebSocket {
   send = jest.fn();
   close = jest.fn();
 
-  constructor(url: string, protocols?: string[] | string) {
+  constructor(url: string) {
     this.url = url;
-    this.protocols = protocols;
   }
 }
 
@@ -26,7 +24,7 @@ describe("Chat Socket Service", () => {
     global.WebSocket = MockWebSocket as any;
 
     mockParams = {
-      accessToken: "test-access-token",
+      wsTicket: "test-ws-ticket",
       chatToken: "test-chat-token",
       onOpen: jest.fn(),
       onClose: jest.fn(),
@@ -46,7 +44,7 @@ describe("Chat Socket Service", () => {
     const wsInstance = (socketWrapper as any).socket as MockWebSocket;
 
     expect(wsInstance.url).toContain("chat_token=test-chat-token");
-    expect(wsInstance.protocols).toEqual(["test-access-token"]);
+    expect(wsInstance.url).toContain("ws_ticket=test-ws-ticket");
 
     expect(wsInstance.url).toContain("ws://localhost:3501/api/v1/chat/chat");
   });

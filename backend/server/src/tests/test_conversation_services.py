@@ -22,6 +22,9 @@ class TestConversationService:
         self.redis_client.json().set = AsyncMock()
         self.redis_client.json().get = AsyncMock()
         self.redis_client.expire = AsyncMock()
+        self.redis_client.setex = AsyncMock()
+        self.redis_client.get = AsyncMock()
+        self.redis_client.delete = AsyncMock()
 
         self.mock_manager = MagicMock(spec=ConnectionManager)
         self.mock_manager.connect = AsyncMock()
@@ -153,6 +156,34 @@ class TestConversationService:
             await self.service.get_chat_session(self.redis_client, self.mock_chat_token, self.mock_user_id)
         assert "Forbidden" in str(exc_info.value)
 
+    @pytest.mark.asyncio
+    async def test_create_websocket_ticket_happy_path(self):
+        ticket = await self.service.create_websocket_ticket(
+            redis_client=self.redis_client,
+            user_id=self.mock_user_id,
+            chat_token=self.mock_chat_token,
+        )
+
+        assert isinstance(ticket, str)
+        self.redis_client.setex.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_validate_websocket_ticket_happy_path(self):
+        self.redis_client.get.return_value = '{"user_id": "%s", "chat_token": "%s"}' % (
+            self.mock_user_id,
+            self.mock_chat_token,
+        )
+
+        result = await self.service.validate_websocket_ticket(
+            redis_client=self.redis_client,
+            ws_ticket="ticket-123",
+            chat_token=self.mock_chat_token,
+        )
+
+        assert result["user_id"] == self.mock_user_id
+        assert result["chat_token"] == self.mock_chat_token
+        self.redis_client.delete.assert_called_once_with("ws_ticket:ticket-123")
+
     @pytest.mark.asyncio   
     @patch("backend.server.src.services.conversation_services.ws_message_limiter")
     async def test_run_happy_path_produces_to_stream(self, mock_limiter):
@@ -167,12 +198,11 @@ class TestConversationService:
                 self.mock_ws,
                 self.chat_token,
                 self.mock_user_id,
-                subprotocol=self.mock_user_id,
             )
         except asyncio.CancelledError:
             pass
 
-        self.mock_manager.connect.assert_called_once_with(self.mock_ws, subprotocol=self.mock_user_id)
+        self.mock_manager.connect.assert_called_once_with(self.mock_ws)
         mock_limiter.check.assert_called_once_with(key=self.mock_user_id, rule=WS_MESSAGE_RULE)
         self.mock_producer.add_to_stream.assert_called_once_with(
             {self.chat_token: "User prompt message"}, "message_channel"
@@ -193,7 +223,6 @@ class TestConversationService:
                 self.mock_ws,
                 self.chat_token,
                 self.mock_user_id,
-                subprotocol=self.mock_user_id,
             )
         except asyncio.CancelledError:
             pass

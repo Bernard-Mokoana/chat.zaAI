@@ -28,14 +28,25 @@ export async function refreshChatSession(
   return response.data;
 }
 
+export async function createWebsocketTicket(
+  token: string,
+): Promise<{ ws_ticket: string }> {
+  const response = await httpClient.post<{ ws_ticket: string }>(
+    "/api/v1/chat/ws-token",
+    null,
+    {
+      headers: { "X-Chat-Token": token },
+    },
+  );
+
+  return response.data;
+}
+
 export async function getChatHistory(
   token: string,
 ): Promise<ChatHistoryResponse> {
   const response = await httpClient.get<ChatHistoryResponse>(
-    `/api/v1/chat/history`,
-    {
-      headers: { "X-Chat-Token": token },
-    },
+    `/api/v1/chat/history/${encodeURIComponent(token)}`,
   );
 
   return response.data;

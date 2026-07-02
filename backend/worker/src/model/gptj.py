@@ -16,7 +16,6 @@ class GPT:
         if not token:
             raise RuntimeError("Missing HUGGINGFACE_INFERENCE_TOKEN in environment.")
         self.client = InferenceClient(
-            provider="hf-inference",
             api_key=token
         )
         self.model_id = self._resolve_model_id()

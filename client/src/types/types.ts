@@ -320,7 +320,7 @@ export interface UseWebSocketChatReturn {
 }
 
 export interface ChatSocketParams {
-  accessToken: string;
+  wsTicket: string;
   chatToken: string;
   onMessage: OnMessage;
   onOpen?: OnOpen;

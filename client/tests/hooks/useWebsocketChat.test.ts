@@ -1,12 +1,14 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useWebSocketChat } from "@/hooks/useWebSocketChat";
 import { createChatSocket } from "@/services/ws/chatSocket";
 import { getAccessToken } from "@/services/storage/chatStorage";
 import { showToast } from "@/services/toast/toastEvents";
+import { createWebsocketTicket } from "@/services/chat/chatApi";
 
 jest.mock("@/services/ws/chatSocket");
 jest.mock("@/services/storage/chatStorage");
 jest.mock("@/services/toast/toastEvents");
+jest.mock("@/services/chat/chatApi");
 
 describe("useWebSocketChat Hook", () => {
   let mockSocketInstance: any;
@@ -16,6 +18,7 @@ describe("useWebSocketChat Hook", () => {
 
     mockSocketInstance = { disconnect: jest.fn() };
     (createChatSocket as jest.Mock).mockReturnValue(mockSocketInstance);
+    (createWebsocketTicket as jest.Mock).mockResolvedValue({ ws_ticket: "ticket-123" });
   });
 
   it("Error Condition: fails to connect if access token is missing", () => {
@@ -35,7 +38,7 @@ describe("useWebSocketChat Hook", () => {
     expect(createChatSocket).not.toHaveBeenCalled();
   });
 
-  it("Happy Path: successfully initializes socket connection parameters", () => {
+  it("Happy Path: successfully initializes socket connection parameters", async () => {
     (getAccessToken as jest.Mock).mockReturnValue("valid-access-token");
     const mockOnMessage = jest.fn();
 
@@ -45,10 +48,11 @@ describe("useWebSocketChat Hook", () => {
       result.current.connect("chat-token-123", mockOnMessage);
     });
 
-    expect(createChatSocket).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(createChatSocket).toHaveBeenCalledTimes(1));
 
     const socketParams = (createChatSocket as jest.Mock).mock.calls[0][0];
-    expect(socketParams.accessToken).toBe("valid-access-token");
+    expect(createWebsocketTicket).toHaveBeenCalledWith("chat-token-123");
+    expect(socketParams.wsTicket).toBe("ticket-123");
     expect(socketParams.chatToken).toBe("chat-token-123");
 
     act(() => socketParams.onOpen());
@@ -70,13 +74,15 @@ describe("useWebSocketChat Hook", () => {
     expect(result.current.connectionState).toBe("error");
   });
 
-  it("Happy Path: explicitly disconnecting updates state and drops the socket", () => {
+  it("Happy Path: explicitly disconnecting updates state and drops the socket", async () => {
     (getAccessToken as jest.Mock).mockReturnValue("valid-access-token");
     const { result } = renderHook(() => useWebSocketChat());
 
     act(() => {
       result.current.connect("chat-token-123", jest.fn());
     });
+
+    await waitFor(() => expect(createChatSocket).toHaveBeenCalledTimes(1));
 
     act(() => {
       result.current.disconnect();

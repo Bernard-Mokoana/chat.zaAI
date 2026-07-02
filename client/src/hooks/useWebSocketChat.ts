@@ -5,6 +5,7 @@ import { createChatSocket } from "@/services/ws/chatSocket";
 import { getAccessToken } from "@/services/storage/chatStorage";
 import { showToast } from "@/services/toast/toastEvents";
 import type { ConnectionState, UseWebSocketChatReturn } from "@/types/types";
+import { createWebsocketTicket } from "@/services/chat/chatApi";
 
 const WS_RATE_LIMIT_MESSAGE = "Too many messages.";
 
@@ -35,50 +36,60 @@ export function useWebSocketChat(): UseWebSocketChatReturn {
         previousSocket.disconnect();
       }
 
-      let socket: ChatSocket | undefined;
+      void (async () => {
+        const ticket = await createWebsocketTicket(chatToken);
 
-      const params: ChatSocketParams = {
-        accessToken,
-        chatToken,
-        onOpen: () => setConnectionState("connected"),
-        onClose: () => {
-          if (socket && suppressedSocketsRef.current.has(socket)) {
-            suppressedSocketsRef.current.delete(socket);
-            return;
-          }
+        let socket: ChatSocket | undefined;
+        const params: ChatSocketParams = {
+          wsTicket: ticket.ws_ticket,
+          chatToken,
+          onOpen: () => setConnectionState("connected"),
+          onClose: () => {
+            if (socket && suppressedSocketsRef.current.has(socket)) {
+              suppressedSocketsRef.current.delete(socket);
+              return;
+            }
 
-          setConnectionState("disconnected");
-          showToast({
-            title: "Chat disconnected",
-            description: "Messages pause until the connection is restored.",
-            tone: "warning",
-          });
-        },
-        onError: () => {
-          setConnectionState("error");
-          showToast({
-            title: "Chat connection problem",
-            description: "The live chat connection could not stay open.",
-            tone: "error",
-          });
-        },
-        onMessage: (message: string) => {
-          if (message.startsWith(WS_RATE_LIMIT_MESSAGE)) {
+            setConnectionState("disconnected");
             showToast({
-              title: "Message limit reached",
-              description:
-                "Please wait a moment before sending another message.",
+              title: "Chat disconnected",
+              description: "Messages pause until the connection is restored.",
               tone: "warning",
             });
-            return;
-          }
+          },
+          onError: () => {
+            setConnectionState("error");
+            showToast({
+              title: "Chat connection problem",
+              description: "The live chat connection could not stay open.",
+              tone: "error",
+            });
+          },
+          onMessage: (message: string) => {
+            if (message.startsWith(WS_RATE_LIMIT_MESSAGE)) {
+              showToast({
+                title: "Message limit reached",
+                description:
+                  "Please wait a moment before sending another message.",
+                tone: "warning",
+              });
+              return;
+            }
 
-          onMessage(message);
-        },
-      };
+            onMessage(message);
+          },
+        };
 
-      socket = createChatSocket(params);
-      socketRef.current = socket;
+        socket = createChatSocket(params);
+        socketRef.current = socket;
+      })().catch(() => {
+        setConnectionState("error");
+        showToast({
+          title: "Authentication error",
+          description: "A websocket ticket could not be created.",
+          tone: "error",
+        });
+      });
     },
     [],
   );

@@ -12,18 +12,19 @@ export class ChatSocket {
   }
 
   connect(params: ChatSocketParams): void {
-    const { accessToken, chatToken, onMessage, onOpen, onError, onClose } =
+    const { wsTicket, chatToken, onMessage, onOpen, onError, onClose } =
       params;
 
-    if (!accessToken) throw new Error("Missing access token");
+    if (!wsTicket) throw new Error("Missing websocket ticket");
     if (!chatToken) throw new Error("Missing chat token");
 
     if (this.socket) this.disconnect();
 
     const url = new URL(this.baseWsUrl);
     url.searchParams.set("chat_token", chatToken);
+    url.searchParams.set("ws_ticket", wsTicket);
 
-    this.socket = new WebSocket(url.toString(), [accessToken]);
+    this.socket = new WebSocket(url.toString());
 
     this.socket.onopen = (event: Event) => {
       if (onOpen) onOpen(event);
