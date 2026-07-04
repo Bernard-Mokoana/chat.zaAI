@@ -9,6 +9,7 @@ jobs:
   backend:
     name: Python backend and worker tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     services:
       redis:
@@ -44,12 +45,35 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install redis-cli
+        run: sudo apt-get update && sudo apt-get install -y redis-tools
+
+      - name: Wait for Redis
+        run: |
+          for i in {1..30}; do
+            if redis-cli -h localhost -p 6379 ping 2>/dev/null | grep -q PONG; then
+              echo "Redis is ready"
+              break
+            fi
+            echo "Waiting for Redis..."
+            sleep 1
+          done
+
       - name: Run pytest
-        run: pytest -q
+        run: |
+          pytest -q --maxfail=1 --durations=10 --junitxml=pytest-results.xml --timeout=300
+
+      - name: Upload pytest results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: pytest-results.xml
 
   client:
     name: Frontend lint, test, build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     defaults:
       run:
@@ -62,7 +86,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
           cache-dependency-path: client/package-lock.json
 
