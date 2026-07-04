@@ -1,5 +1,5 @@
 import { useCallback, useState, useRef, useEffect } from "react";
-import type { ChatMessage, ChatSession } from "@/types/types";
+import type { ChatMessage } from "@/types/types";
 import {
   getChatToken,
   setChatToken,
@@ -8,12 +8,7 @@ import {
   setChatMessages,
   clearChatMessages,
 } from "@/services/storage/chatStorage";
-import {
-  createChatSession,
-  getChatHistory,
-  refreshChatSession,
-} from "@/services/chat/chatApi";
-import { showToast } from "@/services/toast/toastEvents";
+import { createChatSession, getChatHistory } from "@/services/chat/chatApi";
 import axios from "axios";
 import type { UseChatSessionReturn } from "@/types/types";
 import { normalizeHistoryMessage } from "@/utils/messageUtils";

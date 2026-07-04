@@ -38,7 +38,9 @@ const toneStyles = {
 
 export default function ToastProvider() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const timeoutsRef = useRef(new Map<string, ReturnType<typeof window.setTimeout>>());
+  // Explicitly `number` — window.setTimeout / window.clearTimeout are the
+  // DOM versions, which return/expect a number, not NodeJS.Timeout.
+  const timeoutsRef = useRef(new Map<string, number>());
 
   const clearTimeoutFor = useCallback((id: string) => {
     const timeoutId = timeoutsRef.current.get(id);
@@ -57,6 +59,8 @@ export default function ToastProvider() {
   );
 
   useEffect(() => {
+    const timeouts = timeoutsRef.current;
+
     const unsubscribe = onToast((payload) => {
       const id = crypto.randomUUID();
       const toast: ToastItem = {
@@ -67,18 +71,25 @@ export default function ToastProvider() {
 
       setToasts((current) => {
         const next = [...current, toast].slice(-MAX_VISIBLE_TOASTS);
-        current.filter((item) => !next.includes(item)).forEach((evicted) => clearTimeoutFor(evicted.id));
+        const evicted = current.filter((item) => !next.includes(item));
+
+        if (evicted.length > 0) {
+          queueMicrotask(() => {
+            evicted.forEach((item) => clearTimeoutFor(item.id));
+          });
+        }
+
         return next;
       });
 
-      const timeoutId = window.setTimeout(() => dismissToast(id), TOAST_DURATION_MS);
-      timeoutsRef.current.set(id, timeoutId);
+      const timeoutId: number = window.setTimeout(() => dismissToast(id), TOAST_DURATION_MS);
+      timeouts.set(id, timeoutId);
     });
 
     return () => {
       unsubscribe();
-      timeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
-      timeoutsRef.current.clear();
+      timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      timeouts.clear();
     };
   }, [clearTimeoutFor, dismissToast]);
 

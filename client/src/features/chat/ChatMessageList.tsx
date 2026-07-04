@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
-import type { ChatMessage, ConnectionState } from "@/types/types";
 import type { ChatMessageListProps } from "@/types/types";
 
 

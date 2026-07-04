@@ -42,7 +42,7 @@ function VerifyEmailForm() {
         timeoutId = setTimeout(() => {
           if (mounted) router.push("/login");
         }, 3500);
-      } catch (error) {
+      } catch {
         if (mounted) {
           setState({
           status: "error",
@@ -121,4 +121,3 @@ export default function VerifyEmailPage() {
     </Suspense>
   );
 }
-

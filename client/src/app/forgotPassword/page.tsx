@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
         setIsPending(false);
       }
     },
-    [email]
+    [email, isPending]
   );
 
   return (

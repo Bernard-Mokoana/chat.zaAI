@@ -27,7 +27,11 @@ describe("Message Utils", () => {
     });
 
     it("Edge Case: safely handles missing or malformed fields in the backend response", () => {
-      const malformedHistory: any = [{ role: "user" }, { msg: "Hello" }];
+      const malformedHistory: Array<{
+        id?: string;
+        role?: string;
+        msg?: string;
+      }> = [{ role: "user" }, { msg: "Hello" }];
 
       const result = normalizeHistoryMessage(malformedHistory);
 

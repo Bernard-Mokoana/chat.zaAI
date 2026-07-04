@@ -4,37 +4,63 @@ import * as chatStorage from "@/services/storage/chatStorage";
 import * as toastEvents from "@/services/toast/toastEvents";
 
 jest.mock("axios", () => {
-  const originalAxios = jest.requireActual("axios");
-  const mockAxiosInstance = jest.fn() as any;
+  const originalAxios = jest.requireActual("axios") as typeof import("axios");
+
+  type MockAxiosInstance = jest.Mock & {
+    interceptors: {
+      request: {
+        use: jest.Mock;
+      };
+      response: {
+        use: jest.Mock;
+      };
+    };
+    request: jest.Mock;
+  };
+
+  const mockAxiosInstance = jest.fn() as unknown as MockAxiosInstance;
   mockAxiosInstance.interceptors = {
     request: { use: jest.fn() },
     response: { use: jest.fn() },
   };
   mockAxiosInstance.request = jest.fn();
-  const mockAxios = jest.fn(() => mockAxiosInstance) as any;
-  mockAxios.create = jest.fn(() => mockAxiosInstance);
-  mockAxios.post = jest.fn();
-  mockAxios.AxiosHeaders = originalAxios.AxiosHeaders;
-  return mockAxios;
+
+  const mockAxios = Object.assign(jest.fn(() => mockAxiosInstance), {
+    create: jest.fn(() => mockAxiosInstance),
+    post: jest.fn(),
+    AxiosHeaders: originalAxios.AxiosHeaders,
+  });
+
+  return {
+    __esModule: true,
+    default: mockAxios,
+    ...mockAxios,
+  };
 });
 
 jest.mock("@/services/storage/chatStorage");
 jest.mock("@/services/toast/toastEvents");
 
 describe("HTTP Client Interceptors", () => {
-  let requestInterceptor: Function;
-  let responseSuccessInterceptor: Function;
-  let responseErrorInterceptor: Function;
+  type RequestConfig = {
+    headers: {
+      Authorization?: string;
+    };
+  };
+
+  let requestInterceptor: (config: RequestConfig) => RequestConfig;
+  let responseSuccessInterceptor: <T>(response: T) => T;
+  let responseErrorInterceptor: (error: unknown) => Promise<unknown>;
 
   beforeAll(() => {
     requestInterceptor = (httpClient.interceptors.request.use as jest.Mock).mock
-      .calls[0][0];
+      .calls[0][0] as (config: RequestConfig) => RequestConfig;
     responseSuccessInterceptor = (
       httpClient.interceptors.response.use as jest.Mock
-    ).mock.calls[0][0];
+    ).mock.calls[0][0] as <T>(response: T) => T;
     responseErrorInterceptor = (
       httpClient.interceptors.response.use as jest.Mock
-    ).mock.calls[0][1];
+    ).mock.calls[0][1] as (error: unknown) => Promise<unknown>;
   });
 
   beforeEach(() => {
@@ -47,7 +73,7 @@ describe("HTTP Client Interceptors", () => {
         "valid-jwt-token",
       );
 
-      const config = { headers: {} };
+      const config: RequestConfig = { headers: {} };
       const result = requestInterceptor(config);
 
       expect(result.headers.Authorization).toBe("Bearer valid-jwt-token");
@@ -56,7 +82,7 @@ describe("HTTP Client Interceptors", () => {
     it("does not attach the Authorization header if no token exists", () => {
       (chatStorage.getAccessToken as jest.Mock).mockReturnValue(null);
 
-      const config = { headers: {} };
+      const config: RequestConfig = { headers: {} };
       const result = requestInterceptor(config);
 
       expect(result.headers.Authorization).toBeUndefined();

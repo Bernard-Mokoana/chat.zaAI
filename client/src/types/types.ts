@@ -32,7 +32,7 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-export interface StoredAuthUser extends AuthUser {}
+export type StoredAuthUser = AuthUser;
 
 export interface LoginPayload {
   email: string;
@@ -259,10 +259,10 @@ export interface ModalProps {
   isOpen: boolean;
   title: string;
   description?: string;
-  children?: ReactNode;
+  children?: React.ReactNode;
   onClose: () => void;
-  onConfirm?: () => void;
-  onCancel?: () => void;
+  onConfirm?: () => boolean | void | Promise<boolean | void>;
+  onCancel?: () => boolean | void | Promise<boolean | void>;
   confirmText?: string;
   cancelText?: string;
   isDangerous?: boolean;

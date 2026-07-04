@@ -39,13 +39,12 @@ export function useWebSocketChat(): UseWebSocketChatReturn {
       void (async () => {
         const ticket = await createWebsocketTicket(chatToken);
 
-        let socket: ChatSocket | undefined;
         const params: ChatSocketParams = {
           wsTicket: ticket.ws_ticket,
           chatToken,
           onOpen: () => setConnectionState("connected"),
           onClose: () => {
-            if (socket && suppressedSocketsRef.current.has(socket)) {
+            if (suppressedSocketsRef.current.has(socket)) {
               suppressedSocketsRef.current.delete(socket);
               return;
             }
@@ -80,7 +79,7 @@ export function useWebSocketChat(): UseWebSocketChatReturn {
           },
         };
 
-        socket = createChatSocket(params);
+        const socket = createChatSocket(params);
         socketRef.current = socket;
       })().catch(() => {
         setConnectionState("error");

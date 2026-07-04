@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { ChatSession, ChatMessage } from "@/types/types";
 import {
   loadSessions,
@@ -27,15 +27,10 @@ interface UseSessionManagementReturn {
  * Handles session persistence and state management
  */
 export function useSessionManagement(): UseSessionManagementReturn {
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sessions, setSessions] = useState<ChatSession[]>(() => loadSessions());
   const [activeSessionId, setActiveSessionIdState] = useState<string | null>(
     () => getActiveSessionId(),
   );
-
-  // Load sessions on mount
-  useEffect(() => {
-    setSessions(loadSessions());
-  }, []);
 
   const setActiveSessionId = useCallback((id: string | null) => {
     setActiveSessionIdState(id);

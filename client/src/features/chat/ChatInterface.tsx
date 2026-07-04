@@ -25,7 +25,6 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const router = useRouter();
   const {
-    sessions,
     activeSessionId,
     setActiveSessionId,
     saveCurrentSession,

@@ -25,15 +25,15 @@ function ResetPasswordForm() {
     validationErrors: [],
   });
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect (() => {
+  useEffect(() => {
     return () => {
       if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+        clearTimeout(timeoutRef.current);
       }
     };
-  }, [])
+  }, []);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -90,7 +90,7 @@ function ResetPasswordForm() {
           description: "Your password has been changed. Redirecting to sign in...",
           tone: "success",
         });
-        timeoutRef.current = setTimeout(() => router.push("/login"), 2000)
+        timeoutRef.current = setTimeout(() => router.push("/login"), 2000);
 
       } catch (err: unknown) {
         const detail =
@@ -106,7 +106,7 @@ function ResetPasswordForm() {
         setState((prev) => ({ ...prev, isPending: false }));
       }
     },
-    [state.newPassword, state.confirmPassword, token, router]
+    [state.newPassword, state.confirmPassword, state.isPending, token, router]
   );
 
   const clearErrors = useCallback(() => {

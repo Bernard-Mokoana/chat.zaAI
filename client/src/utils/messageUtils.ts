@@ -4,12 +4,10 @@ export const normalizeHistoryMessage = (
   (history ?? []).map((m) => {
     const normalizedRole = m.role?.toLowerCase();
 
-    let role: "user" | "assistant" | undefined;
-    if (normalizedRole === "human" || normalizedRole === "user") {
-      role = "user";
-    } else if (normalizedRole !== undefined) {
-      role = "assistant";
-    }
+    const role: "user" | "assistant" =
+      normalizedRole === "human" || normalizedRole === "user"
+        ? "user"
+        : "assistant";
 
     return {
       id: m.id ?? crypto.randomUUID(),

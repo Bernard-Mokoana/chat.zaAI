@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, ReactNode } from "react";
+import { Component } from "react";
 import { AlertTriangle } from "lucide-react";
 import type { ErrorBoundaryProps, ErrorBoundaryState } from "@/types/types";
 

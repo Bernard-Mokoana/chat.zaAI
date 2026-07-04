@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import axios, { isAxiosError } from "axios";
+import axios from "axios";
 import { useChatSession } from "@/hooks/useChatSession";
 import * as chatStorage from "@/services/storage/chatStorage";
 import * as chatApi from "@/services/chat/chatApi";

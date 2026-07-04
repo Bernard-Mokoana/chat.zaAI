@@ -1,5 +1,6 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useWebSocketChat } from "@/hooks/useWebSocketChat";
+import type { ChatSocket } from "@/services/ws/chatSocket";
 import { createChatSocket } from "@/services/ws/chatSocket";
 import { getAccessToken } from "@/services/storage/chatStorage";
 import { showToast } from "@/services/toast/toastEvents";
@@ -11,14 +12,20 @@ jest.mock("@/services/toast/toastEvents");
 jest.mock("@/services/chat/chatApi");
 
 describe("useWebSocketChat Hook", () => {
-  let mockSocketInstance: any;
+  type MockSocket = Pick<ChatSocket, "disconnect">;
+
+  let mockSocketInstance: MockSocket;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     mockSocketInstance = { disconnect: jest.fn() };
-    (createChatSocket as jest.Mock).mockReturnValue(mockSocketInstance);
-    (createWebsocketTicket as jest.Mock).mockResolvedValue({ ws_ticket: "ticket-123" });
+    (createChatSocket as jest.MockedFunction<typeof createChatSocket>).mockReturnValue(
+      mockSocketInstance as ChatSocket,
+    );
+    (createWebsocketTicket as jest.MockedFunction<typeof createWebsocketTicket>).mockResolvedValue(
+      { ws_ticket: "ticket-123" },
+    );
   });
 
   it("Error Condition: fails to connect if access token is missing", () => {
@@ -50,12 +57,14 @@ describe("useWebSocketChat Hook", () => {
 
     await waitFor(() => expect(createChatSocket).toHaveBeenCalledTimes(1));
 
-    const socketParams = (createChatSocket as jest.Mock).mock.calls[0][0];
+    const socketParams = (
+      createChatSocket as jest.MockedFunction<typeof createChatSocket>
+    ).mock.calls[0][0];
     expect(createWebsocketTicket).toHaveBeenCalledWith("chat-token-123");
     expect(socketParams.wsTicket).toBe("ticket-123");
     expect(socketParams.chatToken).toBe("chat-token-123");
 
-    act(() => socketParams.onOpen());
+    act(() => socketParams.onOpen?.(new Event("open")));
     expect(result.current.connectionState).toBe("connected");
     expect(result.current.isConnected).toBe(true);
 
@@ -70,7 +79,7 @@ describe("useWebSocketChat Hook", () => {
       }),
     );
 
-    act(() => socketParams.onError());
+    act(() => socketParams.onError?.(new Event("error")));
     expect(result.current.connectionState).toBe("error");
   });
 

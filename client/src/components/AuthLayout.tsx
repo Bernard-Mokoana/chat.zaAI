@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
 import type { AuthLayoutProps } from "@/types/types";
 
 export default function AuthLayout({
