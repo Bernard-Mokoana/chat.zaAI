@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Python backend and worker tests
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis/redis-stack-server:7.2.0-v11
+        ports:
+          - 6379:6379
+
+    env:
+      APP_ENV: test
+      DATABASE_PRIMARY_URL: sqlite+pysqlite:///:memory
+      DATABASE_REPLICA_URL: ""
+      DATABASE_READ_FROM_REPLICA: "false"
+      DATABASE_ALLOW_REPLICA_FALLBACK: "true"
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET: test-jwt-secret
+      REFRESH_JWT_SECRET: test-refresh-jwt-secret
+      VERIFY_JWT_SECRET: test-verify-jwt-secret
+      EXPIRES_IN: "60"
+      HASH_SALT: test-hash-salt
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: pytest -q
+
+  client:
+    name: Frontend lint, test, build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test -- --runInBand
+
+      - name: Build
+        run: npm run build
