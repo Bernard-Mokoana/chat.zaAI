@@ -1,21 +1,20 @@
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
-from backend.server.src.services.conversation_services import ConversationService
 from backend.database.models.conversations import Conversation
 from backend.database.models.messages import Message
+from backend.server.src.services.conversation_services import ConversationService
+from sqlalchemy.orm import Session
 
 conversation_service = ConversationService()
 
-def save_chat_message(db: Session, user_id: str, chat_token: str, role: str, content: str):
+
+def save_chat_message(
+    db: Session, user_id: str, chat_token: str, role: str, content: str
+):
     return conversation_service.save_chat_message(
-        db=db,
-        user_id=user_id,
-        chat_token=chat_token,
-        role=role,
-        content=content
+        db=db, user_id=user_id, chat_token=chat_token, role=role, content=content
     )
+
 
 def get_conversation_history_from_db(
     db: Session,
@@ -30,9 +29,7 @@ def get_conversation_history_from_db(
         raise ValueError("Invalid conversation or user id") from exc
 
     conversation = (
-        db.query(Conversation)
-        .filter(Conversation.id == conversation_id)
-        .first()
+        db.query(Conversation).filter(Conversation.id == conversation_id).first()
     )
 
     if not conversation:
@@ -49,7 +46,4 @@ def get_conversation_history_from_db(
         .all()
     )
 
-    return [
-        {"role": msg.role, "msg": msg.content}
-        for msg in reversed(messages)
-    ]
+    return [{"role": msg.role, "msg": msg.content} for msg in reversed(messages)]

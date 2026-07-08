@@ -1,13 +1,16 @@
 import os
+
 from dotenv import load_dotenv
-import redis.asyncio as redis_async
+
 import redis
+import redis.asyncio as redis_async
 
 load_dotenv()
 
-class Redis():
+
+class Redis:
     def __init__(self):
-        self.url = os.environ.get('REDIS_URL')
+        self.url = os.environ.get("REDIS_URL")
         if not self.url:
             raise ValueError("REDIS_URL is required")
 
@@ -21,6 +24,6 @@ class Redis():
             socket_connect_timeout=10,
             socket_timeout=20,
         )
-    
+
     def create_json_connection(self):
         return redis.Redis.from_url(self.url, decode_responses=True)

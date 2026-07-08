@@ -1,18 +1,17 @@
-import os
 import hashlib
+import os
 import secrets
-import jwt
-from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any
-from fastapi import Response, Request, HTTPException, status
-from dotenv import load_dotenv
+from typing import Any, Dict, Optional
 
-from sqlalchemy.orm import Session
-
+import jwt
+from backend.database.models.email_verification_token import EmailVerificationToken
 from backend.database.models.refresh_token import RefreshToken
 from backend.database.models.reset_password_token import ResetPasswordToken
-from backend.database.models.email_verification_token import EmailVerificationToken
+from dotenv import load_dotenv
+from fastapi import HTTPException, Request, Response, status
+from jwt import ExpiredSignatureError, InvalidTokenError
+from sqlalchemy.orm import Session
 
 load_dotenv()
 
@@ -71,56 +70,74 @@ class Token:
             "exp": expire,
         }
         return jwt.encode(payload, self.refresh_jwt_secret, algorithm=self.algorithm)
-    
+
     def sign_email_verification_token(self, user: dict, jti: str) -> str:
         expire = datetime.now(timezone.utc) + timedelta(seconds=EMAIL_VERIFY_TTL_SEC)
-        payload = {
-            "email": user.get("email"),
-            "jti": jti,
-            "exp": expire
-        }
-        return jwt.encode(payload, self.verify_jwt_secret, algorithm=self.algorithm) 
+        payload = {"email": user.get("email"), "jti": jti, "exp": expire}
+        return jwt.encode(payload, self.verify_jwt_secret, algorithm=self.algorithm)
 
     def sign_forgot_password_token(self, user: dict, jti: str) -> str:
         expire = datetime.now(timezone.utc) + timedelta(seconds=PASSWORD_RESET_TTL_SEC)
-        payload = {
-            "email": user.get("email"),
-            "jti": jti,
-            "exp": expire
-        }
+        payload = {"email": user.get("email"), "jti": jti, "exp": expire}
         return jwt.encode(payload, self.verify_jwt_secret, algorithm=self.algorithm)
 
     def decode_access_token(self, token: str) -> Dict[str, Any]:
         try:
             return jwt.decode(token, self.jwt_secret, algorithms=[self.algorithm])
         except ExpiredSignatureError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Access token expired")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Access token expired"
+            )
         except InvalidTokenError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token"
+            )
 
     def decode_refresh_token(self, token: str) -> Dict[str, Any]:
         try:
-            return jwt.decode(token, self.refresh_jwt_secret, algorithms=[self.algorithm])
+            return jwt.decode(
+                token, self.refresh_jwt_secret, algorithms=[self.algorithm]
+            )
         except ExpiredSignatureError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired"
+            )
         except InvalidTokenError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-        
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+            )
+
     def decode_email_verification_token(self, token: str) -> Dict[str, Any]:
         try:
-            return jwt.decode(token, self.verify_jwt_secret, algorithms=[self.algorithm])
+            return jwt.decode(
+                token, self.verify_jwt_secret, algorithms=[self.algorithm]
+            )
         except ExpiredSignatureError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verification token expired")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Verification token expired",
+            )
         except InvalidTokenError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid verification token")
-        
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid verification token",
+            )
+
     def decode_forgot_password_verification_token(self, token: str) -> Dict[str, Any]:
         try:
-            return jwt.decode(token, self.verify_jwt_secret, algorithms=[self.algorithm])
+            return jwt.decode(
+                token, self.verify_jwt_secret, algorithms=[self.algorithm]
+            )
         except ExpiredSignatureError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Verification token expired")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Verification token expired",
+            )
         except InvalidTokenError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid verification token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid verification token",
+            )
 
     def set_refresh_cookie(self, response: Response, refresh_token: str):
         is_prod = os.environ.get("APP_ENV") == "production"
@@ -135,7 +152,7 @@ class Token:
         )
 
     def clear_refresh_cookie(self, response: Response):
-        is_prod = os.environ.get('APP_ENV') == "production"
+        is_prod = os.environ.get("APP_ENV") == "production"
         response.delete_cookie(
             key="refreshToken",
             httponly=True,
@@ -144,15 +161,28 @@ class Token:
             path="/api/v1/auth",
         )
 
-    def _client_meta(self, request: Optional[Request]) -> tuple[Optional[str], Optional[str]]:
+    def _client_meta(
+        self, request: Optional[Request]
+    ) -> tuple[Optional[str], Optional[str]]:
         if not request:
             return None, None
         forwarded = request.headers.get("x-forwarded-for")
-        ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else None)
+        ip = (
+            forwarded.split(",")[0].strip()
+            if forwarded
+            else (request.client.host if request.client else None)
+        )
         user_agent = request.headers.get("user-agent")
         return ip, user_agent
 
-    def persist_refresh_token(self, db: Session, user: dict, refresh_token: str, jti: str, request: Optional[Request] = None):
+    def persist_refresh_token(
+        self,
+        db: Session,
+        user: dict,
+        refresh_token: str,
+        jti: str,
+        request: Optional[Request] = None,
+    ):
         token_hash = self.hash_token(refresh_token)
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=REFRESH_TTL_SEC)
         ip, user_agent = self._client_meta(request)
@@ -174,34 +204,45 @@ class Token:
         db.flush()
         return new_token
 
-    def rotate_refresh_token(self, db: Session, user: dict, request: Optional[Request], response: Optional[Response]) -> str:
+    def rotate_refresh_token(
+        self,
+        db: Session,
+        user: dict,
+        request: Optional[Request],
+        response: Optional[Response],
+    ) -> str:
 
         new_jti = self.create_jti()
         new_access = self.sign_access_token(user)
         new_refresh = self.sign_refresh_token(user, new_jti)
 
         self.persist_refresh_token(
-            db=db,
-            user=user,
-            refresh_token=new_refresh,
-            jti=new_jti,
-            request=request
+            db=db, user=user, refresh_token=new_refresh, jti=new_jti, request=request
         )
 
         if response:
             self.set_refresh_cookie(response, new_refresh)
 
-        return new_access   
-    
-    def persist_reset_password_token(self, db: Session, user: dict, reset_token: str, jti: str, request: Optional[Request] = None):
+        return new_access
+
+    def persist_reset_password_token(
+        self,
+        db: Session,
+        user: dict,
+        reset_token: str,
+        jti: str,
+        request: Optional[Request] = None,
+    ):
         token_hash = self.hash_token(reset_token)
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=PASSWORD_RESET_TTL_SEC)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            seconds=PASSWORD_RESET_TTL_SEC
+        )
         ip, user_agent = self._client_meta(request)
 
         user_id = user.get("id")
         if not user_id:
             raise ValueError("User id is required to persist password reset token")
-        
+
         new_token = ResetPasswordToken(
             user_id=user_id,
             token_hash=token_hash,
@@ -214,7 +255,7 @@ class Token:
         db.add(new_token)
         db.flush()
         return new_token
-    
+
     def invalidate_reset_password_tokens(self, db: Session, user_id: str) -> None:
         db.query(ResetPasswordToken).filter(
             ResetPasswordToken.user_id == user_id,
@@ -224,15 +265,24 @@ class Token:
             synchronize_session=False,
         )
 
-    def persist_email_verification_token(self, db: Session, user: dict, verification_token: str, jti: str, request: Optional[Request] = None): 
+    def persist_email_verification_token(
+        self,
+        db: Session,
+        user: dict,
+        verification_token: str,
+        jti: str,
+        request: Optional[Request] = None,
+    ):
         token_hash = self.hash_token(verification_token)
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=EMAIL_VERIFY_TTL_SEC)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            seconds=EMAIL_VERIFY_TTL_SEC
+        )
         ip, user_agent = self._client_meta(request)
 
         user_id = user.get("id")
         if not user_id:
             raise ValueError("User_id is required to persist email verification token")
-        
+
         new_token = EmailVerificationToken(
             user_id=user_id,
             token_hash=token_hash,
@@ -241,7 +291,7 @@ class Token:
             user_agent=user_agent,
             expires_at=expires_at,
         )
-        
+
         db.add(new_token)
         db.flush()
         return new_token
@@ -255,4 +305,3 @@ class Token:
             {"is_revoked": True, "revoked_at": datetime.now(timezone.utc)},
             synchronize_session=False,
         )
-

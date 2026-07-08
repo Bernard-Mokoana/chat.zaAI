@@ -1,9 +1,10 @@
-from redis.commands.json.path import Path
-
-import redis.exceptions
 import logging
 
+import redis.exceptions
+from redis.commands.json.path import Path
+
 logger = logging.getLogger(__name__)
+
 
 class Cache:
     def __init__(self, json_client):
@@ -19,5 +20,3 @@ class Cache:
         except Exception as e:
             logger.error(f"Failed to get chat history: {e}")
             raise
-
-

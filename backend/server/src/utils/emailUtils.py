@@ -1,11 +1,11 @@
-import smtplib
-import os
 import logging
-
-from html import escape
-from urllib.parse import urlencode
+import os
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from html import escape
+from urllib.parse import urlencode
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,7 +15,9 @@ def create_email_transporter():
     try:
         port = int(os.getenv("EMAIL_PORT", 587))
     except ValueError:
-        raise ValueError(f"EMAIL_PORT must be a valid integer, got: {os.getenv('EMAIL_PORT')}")
+        raise ValueError(
+            f"EMAIL_PORT must be a valid integer, got: {os.getenv('EMAIL_PORT')}"
+        )
 
     host = os.getenv("EMAIL_HOST")
     if not host:
@@ -27,13 +29,17 @@ def create_email_transporter():
         "secure": os.getenv("EMAIL_SECURE", "false").lower() == "true",
         "user": os.getenv("EMAIL_USER"),
         "password": os.getenv("EMAIL_PASSWORD"),
-        "from": os.getenv("EMAIL_FROM", f"no-reply@{os.getenv('APP_DOMAIN', 'localhost')}"),
+        "from": os.getenv(
+            "EMAIL_FROM", f"no-reply@{os.getenv('APP_DOMAIN', 'localhost')}"
+        ),
     }
 
     required_vars = ["EMAIL_HOST", "EMAIL_USER", "EMAIL_PASSWORD"]
     missing = [var for var in required_vars if not os.getenv(var)]
     if missing:
-        raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+        raise ValueError(
+            f"Missing required environment variables: {', '.join(missing)}"
+        )
 
     return config
 
@@ -54,8 +60,13 @@ def send_email(config, to, subject, html):
                     server.starttls()
                     server.ehlo()
                 except Exception as exc:
-                    logging.warning("STARTTLS upgrade failed; aborting to protect credentials: %s", exc)
-                    raise RuntimeError("STARTTLS is required for non-SSL SMTP connections")
+                    logging.warning(
+                        "STARTTLS upgrade failed; aborting to protect credentials: %s",
+                        exc,
+                    )
+                    raise RuntimeError(
+                        "STARTTLS is required for non-SSL SMTP connections"
+                    )
 
             server.login(config["user"], config["password"])
             server.sendmail(config["from"], to, msg.as_string())
@@ -64,29 +75,32 @@ def send_email(config, to, subject, html):
     except Exception as e:
         raise RuntimeError(f"Error occurred while sending email: {e}")
 
+
 def send_email_verification(email, token):
     config = create_email_transporter()
     cors_origin = os.getenv("CORS_ORIGIN")
     if not cors_origin:
         raise ValueError("CORS_ORIGIN environment variable is not set")
-    
+
     query_params = urlencode({"token": token})
     verification_url = f"{cors_origin}/verifyEmail?{query_params}"
 
     html = build_email_verification_html(verification_url)
     send_email(config, email, "Bbot email verification", html)
 
+
 def send_password_reset_email(email, token):
     config = create_email_transporter()
     cors_origin = os.getenv("CORS_ORIGIN")
     if not cors_origin:
         raise ValueError("CORS_ORIGIN environment variable is not set")
-    
+
     query_params = urlencode({"token": token})
     reset_url = f"{cors_origin}/resetPassword?{query_params}"
 
     html = build_reset_password_html(reset_url)
     send_email(config, email, "Bbot password reset", html)
+
 
 def build_email_verification_html(verification_url):
     encoded_link = escape(verification_url, quote=True)
@@ -125,6 +139,7 @@ def build_email_verification_html(verification_url):
     </body>
     </html>
     """
+
 
 def build_reset_password_html(reset_url):
     safe_url = escape(reset_url, quote=True)

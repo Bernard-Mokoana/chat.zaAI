@@ -5,7 +5,6 @@ import threading
 import time
 from dataclasses import dataclass
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -15,6 +14,8 @@ class RateLimitRule:
     max_tokens: int
     refill_tokens: int
     refill_interval_seconds: float
+
+
 @dataclass(frozen=True)
 class RateLimitResult:
     allowed: bool
@@ -23,8 +24,11 @@ class RateLimitResult:
     reset_at: int
     retry_after: int
 
+
 class TokenBucket:
-    def __init__(self, max_tokens: int, refill_tokens: int, refill_interval_seconds: float):
+    def __init__(
+        self, max_tokens: int, refill_tokens: int, refill_interval_seconds: float
+    ):
         if max_tokens <= 0:
             raise ValueError("max_tokens must be positive")
         if refill_tokens <= 0:
@@ -79,6 +83,7 @@ class TokenBucket:
                 retry_after=max(1, int(reset_after)),
             )
 
+
 class RateLimiterStore:
     def __init__(self):
         self._buckets: dict[str, TokenBucket] = {}
@@ -120,7 +125,8 @@ class RateLimiterStore:
     def size(self) -> int:
         with self._lock:
             return len(self._buckets)
-        
+
+
 async def cleanup_loop(
     store: RateLimiterStore,
     interval_seconds: float = 600.0,
@@ -140,6 +146,7 @@ async def cleanup_loop(
             )
         await asyncio.sleep(interval_seconds)
 
+
 def _parse_int_env(name: str, default: str) -> int:
     val = os.environ.get(name, default)
     try:
@@ -147,12 +154,14 @@ def _parse_int_env(name: str, default: str) -> int:
     except ValueError:
         raise ValueError(f"{name} must be a valid integer, got: {val!r}")
 
+
 def _parse_float_env(name: str, default: str) -> float:
-    val = os.environ.get(name,  default)
+    val = os.environ.get(name, default)
     try:
         return float(val)
     except ValueError:
         raise ValueError(f"{name} must be a valid float, got: {val!r}")
+
 
 AUTH_RULE = RateLimitRule(
     name="auth",

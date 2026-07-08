@@ -1,14 +1,18 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi import WebSocket, status, WebSocketDisconnect
+
+import pytest
+from backend.server.src.redis.config import Redis
 from backend.server.src.services.chat_services import (
     create_token_service,
-    refresh_token_service,
     handle_websocket_connection,
+    refresh_token_service,
 )
-from backend.server.src.redis.config import Redis
-from backend.server.src.services.conversation_services import ConversationService, ChatOrchestrator
+from backend.server.src.services.conversation_services import (
+    ChatOrchestrator,
+    ConversationService,
+)
 from backend.server.src.socket.connection import ConnectionManager
+from fastapi import WebSocket, WebSocketDisconnect, status
 
 
 @pytest.mark.asyncio
@@ -33,8 +37,14 @@ class TestChatServices:
         self.chat_token = "chat-session-uuid"
 
     async def test_create_token_service_happy_path(self):
-        expected_payload = {"token": self.chat_token, "user_id": self.user_id, "name": self.name}
-        self.mock_conversation_service.create_chat_session.return_value = expected_payload
+        expected_payload = {
+            "token": self.chat_token,
+            "user_id": self.user_id,
+            "name": self.name,
+        }
+        self.mock_conversation_service.create_chat_session.return_value = (
+            expected_payload
+        )
 
         result = await create_token_service(
             redis=self.mock_redis,
@@ -42,7 +52,6 @@ class TestChatServices:
             user_id=self.user_id,
             name=self.name,
         )
-
 
         assert result == expected_payload
         self.mock_redis.create_connection.assert_called_once()
@@ -52,7 +61,9 @@ class TestChatServices:
         self.mock_redis_client.close.assert_called_once()
 
     async def test_create_token_service_error_ensures_redis_closes(self):
-        self.mock_conversation_service.create_chat_session.side_effect = Exception("Redis write crash")
+        self.mock_conversation_service.create_chat_session.side_effect = Exception(
+            "Redis write crash"
+        )
 
         with pytest.raises(Exception, match="Redis write crash"):
             await create_token_service(
@@ -85,9 +96,13 @@ class TestChatServices:
             "token": self.chat_token,
             "user_id": self.user_id,
         }
-        self.mock_conversation_service.create_websocket_ticket.return_value = "ticket-123"
+        self.mock_conversation_service.create_websocket_ticket.return_value = (
+            "ticket-123"
+        )
 
-        from backend.server.src.services.chat_services import create_websocket_ticket_service
+        from backend.server.src.services.chat_services import (
+            create_websocket_ticket_service,
+        )
 
         result = await create_websocket_ticket_service(
             redis=self.mock_redis,
@@ -108,7 +123,6 @@ class TestChatServices:
             chat_token=self.chat_token,
         )
 
-
     async def test_handle_websocket_missing_parameters(self):
         mock_ws = AsyncMock(spec=WebSocket)
         mock_ws.query_params = {}
@@ -128,11 +142,16 @@ class TestChatServices:
 
     async def test_handle_websocket_invalid_session_credentials(self):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {"chat_token": self.chat_token, "ws_ticket": "ticket-123"}
+        mock_ws.query_params = {
+            "chat_token": self.chat_token,
+            "ws_ticket": "ticket-123",
+        }
         mock_ws.headers = {}
         mock_manager = MagicMock(spec=ConnectionManager)
-        
-        self.mock_conversation_service.validate_websocket_ticket.side_effect = PermissionError("Forbidden")
+
+        self.mock_conversation_service.validate_websocket_ticket.side_effect = (
+            PermissionError("Forbidden")
+        )
 
         await handle_websocket_connection(
             websocket=mock_ws,
@@ -146,11 +165,16 @@ class TestChatServices:
 
     async def test_handle_websocket_unexpected_validation_crash(self):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {"chat_token": self.chat_token, "ws_ticket": "ticket-123"}
+        mock_ws.query_params = {
+            "chat_token": self.chat_token,
+            "ws_ticket": "ticket-123",
+        }
         mock_ws.headers = {}
         mock_manager = MagicMock(spec=ConnectionManager)
-        
-        self.mock_conversation_service.validate_websocket_ticket.side_effect = Exception("DB Network down")
+
+        self.mock_conversation_service.validate_websocket_ticket.side_effect = (
+            Exception("DB Network down")
+        )
 
         await handle_websocket_connection(
             websocket=mock_ws,
@@ -165,14 +189,21 @@ class TestChatServices:
     @patch("backend.server.src.services.chat_services.Producer")
     @patch("backend.server.src.services.chat_services.StreamConsumer")
     @patch("backend.server.src.services.chat_services.ChatOrchestrator")
-    async def test_handle_websocket_happy_path_orchestration(self, MockOrchestrator, MockConsumer, MockProducer):
+    async def test_handle_websocket_happy_path_orchestration(
+        self, MockOrchestrator, MockConsumer, MockProducer
+    ):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {"chat_token": self.chat_token, "ws_ticket": "ticket-123"}
+        mock_ws.query_params = {
+            "chat_token": self.chat_token,
+            "ws_ticket": "ticket-123",
+        }
         mock_ws.headers = {}
         mock_manager = MagicMock(spec=ConnectionManager)
-        
-        self.mock_conversation_service.validate_websocket_ticket.return_value = {"user_id": "123"}
-        
+
+        self.mock_conversation_service.validate_websocket_ticket.return_value = {
+            "user_id": "123"
+        }
+
         mock_orchestrator_instance = AsyncMock(spec=ChatOrchestrator)
         MockOrchestrator.return_value = mock_orchestrator_instance
 
@@ -188,20 +219,29 @@ class TestChatServices:
             producer=MockProducer.return_value,
             consumer=MockConsumer.return_value,
         )
-        mock_orchestrator_instance.run.assert_called_once_with(mock_ws, self.chat_token, "123")
+        mock_orchestrator_instance.run.assert_called_once_with(
+            mock_ws, self.chat_token, "123"
+        )
         assert self.mock_redis_client.close.call_count == 2
 
     @patch("backend.server.src.services.chat_services.Producer")
     @patch("backend.server.src.services.chat_services.StreamConsumer")
     @patch("backend.server.src.services.chat_services.ChatOrchestrator")
-    async def test_handle_websocket_disconnect_exception_handling(self, MockOrchestrator, MockConsumer, MockProducer):
+    async def test_handle_websocket_disconnect_exception_handling(
+        self, MockOrchestrator, MockConsumer, MockProducer
+    ):
         mock_ws = AsyncMock(spec=WebSocket)
-        mock_ws.query_params = {"chat_token": self.chat_token, "ws_ticket": "ticket-123"}
+        mock_ws.query_params = {
+            "chat_token": self.chat_token,
+            "ws_ticket": "ticket-123",
+        }
         mock_ws.headers = {}
         mock_manager = MagicMock(spec=ConnectionManager)
-        
-        self.mock_conversation_service.validate_websocket_ticket.return_value = {"user_id": "123"}
-        
+
+        self.mock_conversation_service.validate_websocket_ticket.return_value = {
+            "user_id": "123"
+        }
+
         mock_orchestrator_instance = AsyncMock(spec=ChatOrchestrator)
         mock_orchestrator_instance.run.side_effect = WebSocketDisconnect()
         MockOrchestrator.return_value = mock_orchestrator_instance
@@ -212,5 +252,5 @@ class TestChatServices:
             manager=mock_manager,
             conversation_service=self.mock_conversation_service,
         )
-        
+
         assert self.mock_redis_client.close.call_count == 2

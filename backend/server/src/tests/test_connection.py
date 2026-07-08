@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
+from backend.server.src.socket.connection import ConnectionManager
 from fastapi import WebSocket
 
-from backend.server.src.socket.connection import ConnectionManager
 
 @pytest.mark.asyncio
 class TestConnectionManager:

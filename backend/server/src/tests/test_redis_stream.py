@@ -1,8 +1,11 @@
-import pytest
 from unittest.mock import AsyncMock
-from redis.exceptions import ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
 
+import pytest
 from backend.server.src.redis.stream import StreamConsumer
+
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import TimeoutError as RedisTimeoutError
+
 
 @pytest.mark.asyncio
 class TestStreamConsumer:
@@ -17,15 +20,23 @@ class TestStreamConsumer:
         mock_response = [[b"response_channel", [(b"msg-id-1", {b"data": b"value"})]]]
         self.mock_redis_client.xread.return_value = mock_response
 
-        result = await self.consumer.consume_stream(count=1, block=1000, stream_channel=self.channel)
+        result = await self.consumer.consume_stream(
+            count=1, block=1000, stream_channel=self.channel
+        )
 
         assert result == mock_response
-        self.mock_redis_client.xread.assert_called_once_with(streams={self.channel: "$"}, count=1, block=1000)
+        self.mock_redis_client.xread.assert_called_once_with(
+            streams={self.channel: "$"}, count=1, block=1000
+        )
 
     async def test_consume_stream_transient_error(self):
-        self.mock_redis_client.xread.side_effect = RedisTimeoutError("Stream blocking timeout")
+        self.mock_redis_client.xread.side_effect = RedisTimeoutError(
+            "Stream blocking timeout"
+        )
 
-        result = await self.consumer.consume_stream(count=1, block=1000, stream_channel=self.channel)
+        result = await self.consumer.consume_stream(
+            count=1, block=1000, stream_channel=self.channel
+        )
 
         assert result == []
 

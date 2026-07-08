@@ -1,7 +1,9 @@
 from typing import Optional
+
 from backend.server.src.utils.token import Token
 
 token_util = Token()
+
 
 async def validate_token(token: Optional[str]) -> dict:
     if token is None or token == "":

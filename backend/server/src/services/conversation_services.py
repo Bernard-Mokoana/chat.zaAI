@@ -1,23 +1,20 @@
 import asyncio
 import contextlib
-import logging
 import json
-import redis.exceptions
+import logging
 import uuid
-
 from uuid import UUID
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-
-from fastapi import WebSocket
 
 from backend.database.models.conversations import Conversation
 from backend.database.models.messages import Message
-
+from backend.server.src.middlewares.rateLimiter import WS_MESSAGE_RULE, RateLimiterStore
 from backend.server.src.schema.chat import Chat
 from backend.server.src.socket.utils import validate_token
-from backend.server.src.middlewares.rateLimiter import RateLimiterStore, WS_MESSAGE_RULE
+from fastapi import WebSocket
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
+import redis.exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -26,49 +23,52 @@ RESPONSE_CHANNEL = "response_channel"
 
 ws_message_limiter = RateLimiterStore()
 
+
 class ConversationService:
-    def save_chat_message(self, db: Session, user_id: str, chat_token: str, role: str, content: str) -> Message:
+    def save_chat_message(
+        self, db: Session, user_id: str, chat_token: str, role: str, content: str
+    ) -> Message:
         normalized_role = self._normalize_message_role(role)
 
         try:
             conversation_uuid = UUID(chat_token)
         except ValueError:
             raise ValueError(f"Invalid chat_token format: {chat_token}")
-        
+
         try:
-             conversation = (
-                 db.query(Conversation)
-                 .filter(Conversation.id == conversation_uuid)
-                 .first()
-                 )   
-             
-             if not conversation:
-                 conversation = Conversation(
-                     id=conversation_uuid,
-                     user_id=UUID(user_id),
-                     title=self._build_title(content, normalized_role),
-                     )
-                 db.add(conversation)
-                 db.flush()
-                 
-             elif str(conversation.user_id) != str(user_id):
-                 raise PermissionError("Conversation does not belong to user")
-             
-             message = Message(
-                 conversation_id=conversation.id,
-                 user_id=UUID(user_id),
-                 role=normalized_role,
-                 content=content,
-                 )
-             
-             db.add(message)
-             db.commit()
-             db.refresh(message)
+            conversation = (
+                db.query(Conversation)
+                .filter(Conversation.id == conversation_uuid)
+                .first()
+            )
+
+            if not conversation:
+                conversation = Conversation(
+                    id=conversation_uuid,
+                    user_id=UUID(user_id),
+                    title=self._build_title(content, normalized_role),
+                )
+                db.add(conversation)
+                db.flush()
+
+            elif str(conversation.user_id) != str(user_id):
+                raise PermissionError("Conversation does not belong to user")
+
+            message = Message(
+                conversation_id=conversation.id,
+                user_id=UUID(user_id),
+                role=normalized_role,
+                content=content,
+            )
+
+            db.add(message)
+            db.commit()
+            db.refresh(message)
 
         except SQLAlchemyError as e:
-             db.rollback()
-             logger.error(f"Database error saving chat message: {e}")
-             raise
+            db.rollback()
+            logger.error(f"Database error saving chat message: {e}")
+            raise
 
         return message
 
@@ -98,30 +98,30 @@ class ConversationService:
             raise
 
         return payload
-    
+
     async def get_chat_session(self, redis_client, token: str, user_id: str) -> dict:
         data = await redis_client.json().get(token, "$")
         session = self._unwrap_redis_json(data)
 
         if not session:
             raise ValueError("Session expired or does not exist")
-        
+
         if str(session.get("user_id")) != str(user_id):
             raise PermissionError("Forbidden")
-        
+
         return session
-    
-    async def validate_websocket_session(self, redis_client, access_token: str, chat_token: str) -> dict:
+
+    async def validate_websocket_session(
+        self, redis_client, access_token: str, chat_token: str
+    ) -> dict:
         token_payload = await validate_token(access_token)
 
         user_id = token_payload.get("id")
         if not user_id:
             raise PermissionError("Invalid token payload")
-        
+
         session = await self.get_chat_session(
-            redis_client=redis_client,
-            token=chat_token,
-            user_id=str(user_id)
+            redis_client=redis_client, token=chat_token, user_id=str(user_id)
         )
 
         return {
@@ -130,7 +130,9 @@ class ConversationService:
             "session": session,
         }
 
-    async def create_websocket_ticket(self, redis_client, user_id: str, chat_token: str) -> str:
+    async def create_websocket_ticket(
+        self, redis_client, user_id: str, chat_token: str
+    ) -> str:
         ticket = uuid.uuid4().hex
         payload = {"user_id": str(user_id), "chat_token": str(chat_token)}
         try:
@@ -141,7 +143,9 @@ class ConversationService:
 
         return ticket
 
-    async def validate_websocket_ticket(self, redis_client, ws_ticket: str, chat_token: str) -> dict:
+    async def validate_websocket_ticket(
+        self, redis_client, ws_ticket: str, chat_token: str
+    ) -> dict:
         raw = await redis_client.get(f"ws_ticket:{ws_ticket}")
         if not raw:
             raise PermissionError("Invalid or expired websocket ticket")
@@ -161,17 +165,18 @@ class ConversationService:
         await redis_client.delete(f"ws_ticket:{ws_ticket}")
 
         return {"user_id": str(user_id), "chat_token": str(chat_token)}
-    
+
     def _unwrap_redis_json(self, data):
         if isinstance(data, list) and len(data) > 0:
             return data[0]
         return data
-    
+
     def _build_title(self, content: str, role: str) -> str:
         if role == "user" and content:
             return content[:50]
         return "New Chat"
-    
+
+
 class ChatOrchestrator:
     def __init__(self, manager, producer, consumer):
         self.manager = manager
@@ -188,9 +193,13 @@ class ChatOrchestrator:
 
             while True:
                 try:
-                    data = await asyncio.wait_for(websocket.receive_text(), timeout=300.0)
+                    data = await asyncio.wait_for(
+                        websocket.receive_text(), timeout=300.0
+                    )
                 except asyncio.TimeoutError:
-                    logger.info(f"Websocket receive timeout for chat_token={chat_token}")
+                    logger.info(
+                        f"Websocket receive timeout for chat_token={chat_token}"
+                    )
                     break
 
                 result = ws_message_limiter.check(
@@ -215,7 +224,6 @@ class ChatOrchestrator:
             except Exception as e:
                 logger.debug(f"Disconnect failed (may already be disconnected): {e}")
 
-
             listener_task.cancel()
 
             with contextlib.suppress(asyncio.CancelledError):
@@ -235,7 +243,7 @@ class ChatOrchestrator:
 
                 if not response:
                     continue
-                
+
                 for _, messages in response:
                     for message in messages:
                         message_id, field = message
@@ -251,15 +259,17 @@ class ChatOrchestrator:
                             await self.manager.send_personal_message(
                                 response_message,
                                 websocket,
-                                )
+                            )
                         except Exception as e:
                             logger.warning(f"Failed to send response message: {e}")
-                            logger.warning(f"Leaving message {message_id} in stream due to send failure")
+                            logger.warning(
+                                f"Leaving message {message_id} in stream due to send failure"
+                            )
                         else:
                             await self.consumer.delete_message(
                                 stream_channel=RESPONSE_CHANNEL,
                                 message_id=message_id,
-                                )
+                            )
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
@@ -270,9 +280,8 @@ class ChatOrchestrator:
         message_value = next(iter(fields.values()), None)
 
         return self._decode(token_key), self._decode(message_value)
-    
+
     def _decode(self, value):
         if isinstance(value, (bytes, bytearray)):
             return value.decode("utf-8")
         return value
-    

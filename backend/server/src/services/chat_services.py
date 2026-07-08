@@ -1,13 +1,17 @@
+from backend.server.src.redis.config import Redis
+from backend.server.src.redis.producer import Producer
+from backend.server.src.redis.stream import StreamConsumer
+from backend.server.src.services.conversation_services import (
+    ChatOrchestrator,
+    ConversationService,
+)
+from backend.server.src.socket.connection import ConnectionManager
 from fastapi import WebSocket, WebSocketDisconnect, status
 
-from backend.server.src.socket.connection import ConnectionManager
-from backend.server.src.redis.producer import Producer
-from backend.server.src.redis.config import Redis
-from backend.server.src.redis.stream import StreamConsumer
-from backend.server.src.services.conversation_services import ChatOrchestrator, ConversationService
 
-
-async def create_token_service(redis: Redis, conversation_service: ConversationService, user_id: str, name: str) -> dict:
+async def create_token_service(
+    redis: Redis, conversation_service: ConversationService, user_id: str, name: str
+) -> dict:
     redis_client = await redis.create_connection()
     try:
         return await conversation_service.create_chat_session(
@@ -19,7 +23,9 @@ async def create_token_service(redis: Redis, conversation_service: ConversationS
         await redis_client.close()
 
 
-async def refresh_token_service(redis: Redis, conversation_service: ConversationService, token: str, user_id: str) -> dict:
+async def refresh_token_service(
+    redis: Redis, conversation_service: ConversationService, token: str, user_id: str
+) -> dict:
     redis_client = await redis.create_connection()
     try:
         return await conversation_service.get_chat_session(
@@ -54,7 +60,12 @@ async def create_websocket_ticket_service(
         await redis_client.close()
 
 
-async def handle_websocket_connection(websocket: WebSocket, redis: Redis, manager: ConnectionManager, conversation_service: ConversationService ) -> None:
+async def handle_websocket_connection(
+    websocket: WebSocket,
+    redis: Redis,
+    manager: ConnectionManager,
+    conversation_service: ConversationService,
+) -> None:
     query_params = dict(websocket.query_params)
     chat_token = query_params.get("chat_token")
     ws_ticket = query_params.get("ws_ticket")
@@ -95,6 +106,6 @@ async def handle_websocket_connection(websocket: WebSocket, redis: Redis, manage
     try:
         await orchestrator.run(websocket, chat_token, validated_session["user_id"])
     except WebSocketDisconnect:
-        pass  
+        pass
     finally:
         await redis_client.close()

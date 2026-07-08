@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
+from backend.server.src.redis.producer import Producer
+
 import redis.exceptions
 
-from backend.server.src.redis.producer import Producer
 
 @pytest.mark.asyncio
 class TestProducer:
@@ -19,10 +21,14 @@ class TestProducer:
         result = await self.producer.add_to_stream(self.data, self.channel)
 
         assert result == b"12345-0"
-        self.mock_redis_client.xadd.assert_called_once_with(name=self.channel, id="*", fields=self.data)
+        self.mock_redis_client.xadd.assert_called_once_with(
+            name=self.channel, id="*", fields=self.data
+        )
 
     async def test_add_to_stream_transient_error(self):
-        self.mock_redis_client.xadd.side_effect = redis.exceptions.TimeoutError("Network latency")
+        self.mock_redis_client.xadd.side_effect = redis.exceptions.TimeoutError(
+            "Network latency"
+        )
 
         result = await self.producer.add_to_stream(self.data, self.channel)
 

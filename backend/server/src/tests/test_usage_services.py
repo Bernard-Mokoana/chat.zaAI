@@ -1,11 +1,11 @@
-import pytest
 from unittest.mock import MagicMock
 from uuid import uuid4
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
 
-from backend.server.src.services.usage_services import create_usage_log
+import pytest
 from backend.database.models.usage_logs import UsageLog
+from backend.server.src.services.usage_services import create_usage_log
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 
 class TestUsageLogService:
@@ -26,7 +26,7 @@ class TestUsageLogService:
             event_type=event_type,
             model_name=model_name,
             total_tokens=total_tokens,
-            message_count=message_count
+            message_count=message_count,
         )
 
         assert isinstance(result, UsageLog)
@@ -35,7 +35,7 @@ class TestUsageLogService:
         assert result.model_name == model_name
         assert result.total_tokens == total_tokens
         assert result.message_count == message_count
-        
+
         self.db.add.assert_called_once_with(result)
         self.db.commit.assert_called_once()
         self.db.refresh.assert_called_once_with(result)
@@ -49,7 +49,7 @@ class TestUsageLogService:
             event_type=event_type,
             model_name=None,
             total_tokens=None,
-            message_count=None
+            message_count=None,
         )
 
         assert result.event_type == "user_login"
@@ -59,13 +59,13 @@ class TestUsageLogService:
         self.db.commit.assert_called_once()
 
     def test_create_usage_log_error_condition_database_exception_propagates(self):
-        self.db.commit.side_effect = SQLAlchemyError("Database disk sector is full or un-writeable")
+        self.db.commit.side_effect = SQLAlchemyError(
+            "Database disk sector is full or un-writeable"
+        )
 
         with pytest.raises(SQLAlchemyError) as exc_info:
             create_usage_log(
-                db=self.db,
-                user_id=self.mock_user_id,
-                event_type="token_burn"
+                db=self.db, user_id=self.mock_user_id, event_type="token_burn"
             )
-        
+
         assert "Database disk sector is full" in str(exc_info.value)

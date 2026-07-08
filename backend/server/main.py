@@ -5,16 +5,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 import asyncio
 import contextlib
+
 import uvicorn
-from dotenv import load_dotenv
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-
-from backend.server.src.routes.chat import chat
-from backend.server.src.routes.auth import auth
-from backend.server.src.services.conversation_services import ws_message_limiter
-
 from backend.server.src.middlewares.rateLimiter import (
     RateLimiterStore,
     cleanup_loop,
@@ -22,6 +14,13 @@ from backend.server.src.middlewares.rateLimiter import (
     select_http_rule,
     should_skip_rate_limit,
 )
+from backend.server.src.routes.auth import auth
+from backend.server.src.routes.chat import chat
+from backend.server.src.services.conversation_services import ws_message_limiter
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 load_dotenv()
 
@@ -34,7 +33,9 @@ async def lifespan(app: FastAPI):
         cleanup_interval = float(os.environ.get("RATE_LIMIT_CLEANUP_INTERVAL", "600"))
         max_idle_seconds = float(os.environ.get("RATE_LIMIT_MAX_IDLE_SECONDS", "3600"))
     except ValueError as e:
-        raise ValueError("RATE_LIMIT_CLEANUP_INTERVAL and RATE_LIMIT_MAX_IDLE_SECONDS must be numeric") from e
+        raise ValueError(
+            "RATE_LIMIT_CLEANUP_INTERVAL and RATE_LIMIT_MAX_IDLE_SECONDS must be numeric"
+        ) from e
 
     cleanup_tasks = [
         asyncio.create_task(
@@ -71,14 +72,16 @@ api.include_router(auth)
 allowed_origins = [
     origin.strip()
     for origin in os.environ.get(
-    'ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002,http://127.0.0.1:3002'
-).split(',')
+        "ALLOWED_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3002,http://127.0.0.1:3002",
+    ).split(",")
 ]
 
 raw_origins = os.getenv("CORS_ALLOWED_ORIGINS")
 if raw_origins:
-    production_origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    production_origins = [
+        origin.strip() for origin in raw_origins.split(",") if origin.strip()
+    ]
     allowed_origins.extend(production_origins)
 
 api.add_middleware(
@@ -86,9 +89,8 @@ api.add_middleware(
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
-
 
 
 @api.middleware("http")
@@ -98,7 +100,7 @@ async def rate_limit_middleware(request: Request, call_next):
 
     if should_skip_rate_limit(path, method):
         return await call_next(request)
-    
+
     client_ip = get_client_ip(request)
     rule = select_http_rule(path)
 
@@ -124,9 +126,9 @@ async def rate_limit_middleware(request: Request, call_next):
                 "X-RateLimit-Limit": str(result.limit),
                 "X-RateLimit-Remaining": str(result.remaining),
                 "X-RateLimit-Reset": str(result.reset_at),
-            }
+            },
         )
-    
+
     # Request is allowed. Process it and add rate limit headers to the response
     response = await call_next(request)
 
@@ -136,14 +138,15 @@ async def rate_limit_middleware(request: Request, call_next):
     response.headers["X-RateLimit-Reset"] = str(result.reset_at)
     return response
 
+
 @api.get("/test")
 async def root():
     return {"message": "API is Online"}
 
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "3500"))
-    if os.environ.get('APP_ENV') == "development":
+    if os.environ.get("APP_ENV") == "development":
         uvicorn.run("main:api", host="0.0.0.0", port=port, reload=True)
     else:
         uvicorn.run("main:api", host="0.0.0.0", port=port, reload=False)
-        

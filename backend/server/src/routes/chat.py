@@ -1,22 +1,20 @@
 import logging
 
-from sqlalchemy.orm import Session
-from fastapi import APIRouter, Header, Request, HTTPException, Depends, WebSocket
-
-from backend.server.src.socket.connection import ConnectionManager
-from backend.server.src.redis.config import Redis
-from backend.server.src.services.conversation_services import ConversationService
+from backend.database.config.databaseConfig import get_read_db
+from backend.database.models.users import User
 from backend.server.src.middlewares.jwt_validation import get_current_user
-from backend.server.src.utils.dbUtils import get_conversation_history_from_db
+from backend.server.src.redis.config import Redis
 from backend.server.src.services.chat_services import (
     create_token_service,
     create_websocket_ticket_service,
-    refresh_token_service,
     handle_websocket_connection,
+    refresh_token_service,
 )
-
-from backend.database.models.users import User
-from backend.database.config.databaseConfig import get_read_db
+from backend.server.src.services.conversation_services import ConversationService
+from backend.server.src.socket.connection import ConnectionManager
+from backend.server.src.utils.dbUtils import get_conversation_history_from_db
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, WebSocket
+from sqlalchemy.orm import Session
 
 chat = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -28,7 +26,9 @@ logger = logging.getLogger(__name__)
 
 
 @chat.post("/token")
-async def token_generator(name: str, request: Request, current_user: User = Depends(get_current_user)):
+async def token_generator(
+    name: str, request: Request, current_user: User = Depends(get_current_user)
+):
     token_service = await create_token_service(
         redis=redis,
         conversation_service=conversation_service,
@@ -39,7 +39,11 @@ async def token_generator(name: str, request: Request, current_user: User = Depe
 
 
 @chat.get("/refresh_token")
-async def refresh_token(request: Request, x_chat_token: str = Header(..., alias="X-Chat-Token"), current_user: User = Depends(get_current_user)):
+async def refresh_token(
+    request: Request,
+    x_chat_token: str = Header(..., alias="X-Chat-Token"),
+    current_user: User = Depends(get_current_user),
+):
     try:
         result = await refresh_token_service(
             redis=redis,

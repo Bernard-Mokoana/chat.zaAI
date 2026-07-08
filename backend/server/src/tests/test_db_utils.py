@@ -1,10 +1,14 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
-from backend.server.src.utils.dbUtils import save_chat_message, get_conversation_history_from_db
+import pytest
 from backend.database.models.conversations import Conversation
 from backend.database.models.messages import Message
+from backend.server.src.utils.dbUtils import (
+    get_conversation_history_from_db,
+    save_chat_message,
+)
+
 
 class TestDbUtils:
     @pytest.fixture(autouse=True)
@@ -19,7 +23,9 @@ class TestDbUtils:
     def test_save_chat_message_delegates_correctly(self, mock_conversation_service):
         mock_conversation_service.save_chat_message.return_value = "saved_message"
 
-        result = save_chat_message(self.mock_db, self.user_id_str, self.chat_token_str, "user", "Hello")
+        result = save_chat_message(
+            self.mock_db, self.user_id_str, self.chat_token_str, "user", "Hello"
+        )
 
         assert result == "saved_message"
         mock_conversation_service.save_chat_message.assert_called_once_with(
@@ -27,7 +33,7 @@ class TestDbUtils:
             user_id=self.user_id_str,
             chat_token=self.chat_token_str,
             role="user",
-            content="Hello"
+            content="Hello",
         )
 
     def test_get_history_happy_path(self):
@@ -38,10 +44,16 @@ class TestDbUtils:
             Message(role="user", content="Hello"),
         ]
 
-        self.mock_db.query.return_value.filter.return_value.first.return_value = mock_conversation
-        self.mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = mock_messages
+        self.mock_db.query.return_value.filter.return_value.first.return_value = (
+            mock_conversation
+        )
+        self.mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = (
+            mock_messages
+        )
 
-        history = get_conversation_history_from_db(self.mock_db, self.user_id_str, self.chat_token_str)
+        history = get_conversation_history_from_db(
+            self.mock_db, self.user_id_str, self.chat_token_str
+        )
 
         assert len(history) == 2
         assert history[0] == {"role": "user", "msg": "Hello"}
@@ -49,23 +61,29 @@ class TestDbUtils:
 
     def test_get_history_error_invalid_uuid(self):
         with pytest.raises(ValueError, match="Invalid conversation or user id"):
-            get_conversation_history_from_db(self.mock_db, "invalid-user", self.chat_token_str)
+            get_conversation_history_from_db(
+                self.mock_db, "invalid-user", self.chat_token_str
+            )
 
     def test_get_history_edge_case_not_found(self):
         self.mock_db.query.return_value.filter.return_value.first.return_value = None
 
-        history = get_conversation_history_from_db(self.mock_db, self.user_id_str, self.chat_token_str)
+        history = get_conversation_history_from_db(
+            self.mock_db, self.user_id_str, self.chat_token_str
+        )
 
         assert history == []
 
     def test_get_history_error_permission_denied(self):
         stranger_uuid = UUID(int=0)
         mock_conversation = Conversation(id=self.chat_uuid, user_id=stranger_uuid)
-        self.mock_db.query.return_value.filter.return_value.first.return_value = mock_conversation
+        self.mock_db.query.return_value.filter.return_value.first.return_value = (
+            mock_conversation
+        )
 
-        with pytest.raises(PermissionError, match="Conversation does not belong to user"):
-            get_conversation_history_from_db(self.mock_db, self.user_id_str, self.chat_token_str)
-
-        
-
-
+        with pytest.raises(
+            PermissionError, match="Conversation does not belong to user"
+        ):
+            get_conversation_history_from_db(
+                self.mock_db, self.user_id_str, self.chat_token_str
+            )
