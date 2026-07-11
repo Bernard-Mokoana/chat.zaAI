@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import type { FormEvent } from "react";
 import { forgotPassword } from "@/services/auth/authApi";
@@ -12,7 +11,6 @@ import FormField from "@/components/FormField";
 import AlertBanner from "@/components/AlertBanner";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
@@ -109,8 +107,8 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={isPending}
-          className="neu-btn w-full py-3 text-sm font-semibold"
-          style={{ color: "#3d2f4d" }}
+          className="btn w-full py-3 text-sm font-semibold"
+          style={{ color: "var(--accent-text)" }}
         >
           {isPending ? "Sending..." : "Send Reset Link"}
         </button>

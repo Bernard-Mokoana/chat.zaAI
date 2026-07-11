@@ -177,8 +177,8 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={state.isPending}
-          className="neu-btn w-full py-3 text-sm font-semibold"
-          style={{ color: "#3d2f4d" }}
+          className="btn w-full py-3 text-sm font-semibold"
+          style={{ color: "var(--accent-text)" }}
         >
           {state.isPending ? "Updating..." : "Update Password"}
         </button>

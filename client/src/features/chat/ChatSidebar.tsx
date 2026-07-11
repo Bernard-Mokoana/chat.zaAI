@@ -49,10 +49,10 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
       onClick={() => onSelect(session)}
       className={`group relative flex cursor-pointer flex-col gap-1 rounded-xl px-3 py-2.5 transition-all duration-150 ${
         isActive
-          ? "neu-pressed"
-          : "neu-flat-sm"
+          ? "card-active"
+          : "card-sm"
       }`}
-      style={isActive ? { color: "#c7bcdc" } : { color: "#3d2f4d" }}
+      style={{ color: isActive ? "var(--text)" : "var(--text-secondary)" }}
     >
       <div className="flex items-start justify-between gap-2">
         <span
@@ -69,14 +69,10 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
               exit={{ opacity: 0, scale: 0.7 }}
               transition={{ duration: 0.12 }}
               onClick={handleDelete}
-              className={`shrink-0 rounded-md p-1 transition-colors neu-flat-sm ${
-                confirmDelete
-                  ? ""
-                  : ""
-              }`}
+              className="shrink-0 rounded-md p-1 transition-colors card-sm"
               style={{
-                color: confirmDelete ? "#c44b6e" : isActive ? "#c7bcdc" : "#615676",
-                backgroundColor: "#9489a9"
+                color: confirmDelete ? "var(--danger)" : isActive ? "var(--text)" : "var(--text-secondary)",
+                backgroundColor: "var(--border)"
               }}
               title={confirmDelete ? "Click again to confirm" : "Delete"}
             >
@@ -87,13 +83,13 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
       </div>
       <p
         className="line-clamp-1 text-xs"
-        style={{ color: isActive ? "#c7bcdc" : "#5a4a6b" }}
+        style={{ color: isActive ? "var(--text)" : "var(--text-muted)" }}
       >
         {session.preview || "No messages yet"}
       </p>
       <div
         className="flex items-center gap-1 text-[10px]"
-        style={{ color: isActive ? "#c7bcdc" : "#5a4a6b" }}
+        style={{ color: isActive ? "var(--text)" : "var(--text-muted)" }}
       >
         <Clock className="h-2.5 w-2.5" />
         {relativeTime(session.updatedAt)}
@@ -104,7 +100,7 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p className="mb-1 mt-3 px-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#5a4a6b" }}>
+    <p className="mb-1 mt-3 px-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
       {label}
     </p>
   );
@@ -144,20 +140,20 @@ export default function ChatSidebar({
         initial={{ width: 56 }}
         animate={{ width: 56 }}
         className="relative flex h-screen flex-col items-center border-r py-4 gap-3"
-        style={{ minWidth: 56, backgroundColor: "#9489a9", borderColor: "#7a6b8f" }}
+        style={{ minWidth: 56, backgroundColor: "var(--surface-2)", borderColor: "var(--border)" }}
       >
         <button
           onClick={() => setIsOpen(true)}
-          className="rounded-lg p-2 transition-colors neu-flat-sm"
-          style={{ color: "#3d2f4d" }}
+          className="rounded-lg p-2 transition-colors card-sm"
+          style={{ color: "var(--text)" }}
           title="Open sidebar"
         >
           <PanelLeftOpen className="h-5 w-5" />
         </button>
         <button
           onClick={onNewChat}
-          className="rounded-lg p-2 transition-colors neu-flat-sm"
-          style={{ color: "#3d2f4d" }}
+          className="rounded-lg p-2 transition-colors card-sm"
+          style={{ color: "var(--text)" }}
           title="New chat"
         >
           <Plus className="h-5 w-5" />
@@ -168,8 +164,8 @@ export default function ChatSidebar({
               key={s.id}
               onClick={() => onSelectSession(s)}
               title={s.title}
-              className={`rounded-lg p-2 transition-colors neu-flat-sm`}
-              style={{ color: s.id === activeSessionId ? "#c7bcdc" : "#3d2f4d", backgroundColor: s.id === activeSessionId ? "#615676" : "#9489a9" }}
+              className="rounded-lg p-2 transition-colors card-sm"
+              style={{ color: s.id === activeSessionId ? "var(--text)" : "var(--text-secondary)", backgroundColor: s.id === activeSessionId ? "var(--surface-3)" : "var(--surface-3)" }}
             >
               <MessageSquare className="h-4 w-4" />
             </button>
@@ -186,19 +182,19 @@ export default function ChatSidebar({
       exit={{ width: 0, opacity: 0 }}
       transition={{ duration: 0.22, ease: "easeInOut" }}
       className="flex h-screen flex-col overflow-hidden"
-      style={{ minWidth: 272, maxWidth: 272, backgroundColor: "#9489a9", borderRight: "1px solid #7a6b8f" }}
+      style={{ minWidth: 272, maxWidth: 272, backgroundColor: "var(--surface-2)", borderRight: "1px solid var(--border)" }}
     >
-      <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: "1px solid #7a6b8f" }}>
+      <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4" style={{ color: "#615676" }} />
-          <span className="text-sm font-bold tracking-tight" style={{ color: "#3d2f4d" }}>
+          <MessageSquare className="h-4 w-4" style={{ color: "var(--accent)" }} />
+          <span className="text-sm font-bold tracking-tight" style={{ color: "var(--text)" }}>
             Chat History
           </span>
         </div>
         <button
           onClick={() => setIsOpen(false)}
-          className="rounded-lg p-1.5 transition-colors neu-flat-sm"
-          style={{ color: "#3d2f4d" }}
+          className="rounded-lg p-1.5 transition-colors card-sm"
+          style={{ color: "var(--text)" }}
           title="Collapse sidebar"
         >
           <PanelLeftClose className="h-4 w-4" />
@@ -208,8 +204,8 @@ export default function ChatSidebar({
       <div className="px-3 pt-3">
         <button
           onClick={onNewChat}
-          className="neu-btn flex w-full items-center justify-center gap-2 py-2.5 text-sm font-semibold"
-          style={{ color: "#3d2f4d" }}
+          className="btn flex w-full items-center justify-center gap-2 py-2.5 text-sm font-semibold"
+          style={{ color: "var(--accent-text)" }}
         >
           <Plus className="h-4 w-4" />
           New conversation
@@ -219,9 +215,9 @@ export default function ChatSidebar({
       <div className="flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin scrollbar-thumb-slate-200">
         {sessions.length === 0 ? (
           <div className="mt-10 flex flex-col items-center gap-2 text-center">
-            <MessageSquare className="h-8 w-8" style={{ color: "#7a6b8f" }} />
-            <p className="text-xs" style={{ color: "#5a4a6b" }}>No conversations yet.</p>
-            <p className="text-xs" style={{ color: "#5a4a6b" }}>Start chatting to see history here.</p>
+            <MessageSquare className="h-8 w-8" style={{ color: "var(--border-strong)" }} />
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>No conversations yet.</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Start chatting to see history here.</p>
           </div>
         ) : (
           <>
@@ -276,8 +272,8 @@ export default function ChatSidebar({
           </>
         )}
       </div>
-      <div className="px-4 py-3" style={{ borderTop: "1px solid #7a6b8f" }}>
-        <p className="text-[10px]" style={{ color: "#5a4a6b" }}>
+      <div className="px-4 py-3" style={{ borderTop: "1px solid var(--border)" }}>
+        <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>
           {sessions.length} conversation{sessions.length !== 1 ? "s" : ""} saved locally
         </p>
       </div>

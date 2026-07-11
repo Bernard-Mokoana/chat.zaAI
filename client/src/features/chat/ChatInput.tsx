@@ -22,7 +22,7 @@ export default function ChatInput({
   );
 
   return (
-    <form onSubmit={handleSubmit} className="neu-flat-sm w-full" style={{ borderRadius: "40px 40px 0 0", borderBottomLeftRadius: "0", borderBottomRightRadius: "0" }}>
+    <form onSubmit={handleSubmit} className="card-sm w-full" style={{ borderRadius: "40px 40px 0 0", borderBottomLeftRadius: "0", borderBottomRightRadius: "0" }}>
       <div className="mx-auto w-full px-4 py-4 sm:px-6">
         <div className="flex flex-col gap-3 sm:gap-2 sm:flex-row sm:items-center">
           <input
@@ -31,14 +31,13 @@ export default function ChatInput({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
-            className="neu-inset flex-1 px-4 py-3 text-sm outline-none transition-all placeholder-opacity-60 disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ color: "#3d2f4d" }}
+            className="field flex-1 px-4 py-3 text-sm outline-none transition-all placeholder-opacity-60 disabled:opacity-60 disabled:cursor-not-allowed"
           />
           <button
             type="submit"
             disabled={!value.trim() || disabled}
-            className="neu-btn w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium"
-            style={{ color: "#3d2f4d" }}
+            className="btn w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium"
+            style={{ color: "var(--accent-text)" }}
           >
             <Send className="h-4 w-4" />
             <span className="hidden sm:inline">Send</span>

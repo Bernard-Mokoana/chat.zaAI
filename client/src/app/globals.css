@@ -1,11 +1,30 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
-  --neu-bg: #9489a9;
-  --neu-shadow-dark: #615676;
-  --neu-shadow-light: #c7bcdc;
-  --neu-text: #3d2f4d;
-  --neu-text-secondary: #5a4a6b;
+  --bg: #1f1813;
+  --surface: #2a211a;
+  --surface-2: #322820;
+  --surface-3: #3b2e23;
+  --border: #463729;
+  --border-strong: #57432f;
+  --text: #f2e7d6;
+  --text-secondary: #cdbba6;
+  --text-muted: #9d8a76;
+  --accent: #d99a5b;
+  --accent-hover: #e3a86c;
+  --accent-active: #c98a4c;
+  --accent-text: #271a0f;
+  --danger: #e0889a;
+  --danger-text: #f4aebc;
+  --status-success: #6bcf7f;
+  --status-success-dot: #2ea04f;
+  --status-warning: #f0c060;
+  --status-warning-dot: #c49a30;
+  --status-error: #e88ba0;
+  --status-error-dot: #c44b6e;
+  --status-text: #3d2f4d;
+  --radius: 14px;
 }
 
 *,
@@ -22,57 +41,62 @@ body {
 body {
   margin: 0;
   min-height: 100%;
-  background-color: var(--neu-bg);
-  color: var(--neu-text);
-  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-.neu-flat {
-  background: var(--neu-bg);
-  border-radius: 40px;
-  box-shadow: 20px 20px 40px var(--neu-shadow-dark), -20px -20px 40px var(--neu-shadow-light);
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
-.neu-flat-sm {
-  background: var(--neu-bg);
-  border-radius: 20px;
-  box-shadow: 8px 8px 16px var(--neu-shadow-dark), -8px -8px 16px var(--neu-shadow-light);
+.card-sm {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
-.neu-inset {
-  background: var(--neu-bg);
-  border-radius: 20px;
-  box-shadow: inset 6px 6px 12px var(--neu-shadow-dark), inset -6px -6px 12px var(--neu-shadow-light);
+.field {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
 }
 
-.neu-pressed {
-  background: var(--neu-bg);
-  border-radius: 20px;
-  box-shadow: inset 4px 4px 8px var(--neu-shadow-dark), inset -4px -4px 8px var(--neu-shadow-light);
+.field:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
-.neu-btn {
-  background: var(--neu-bg);
-  border-radius: 20px;
-  box-shadow: 6px 6px 12px var(--neu-shadow-dark), -6px -6px 12px var(--neu-shadow-light);
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
+.card-active {
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
 }
 
-.neu-btn:hover:not(:disabled) {
-  box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
-  transform: translateY(-1px);
+.btn {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 1px solid var(--accent-hover);
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.12s ease;
 }
 
-.neu-btn:active:not(:disabled) {
-  box-shadow: inset 4px 4px 8px var(--neu-shadow-dark), inset -4px -4px 8px var(--neu-shadow-light);
-  transform: translateY(0);
+.btn:hover:not(:disabled) {
+  background: var(--accent-hover);
 }
 
-.neu-btn:disabled {
-  opacity: 0.6;
+.btn:active:not(:disabled) {
+  background: var(--accent-active);
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
-}
-
-#__next {
-  min-height: 100vh;
 }

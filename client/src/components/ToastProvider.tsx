@@ -12,27 +12,27 @@ const MAX_VISIBLE_TOASTS = 3;
 const toneStyles = {
   info: {
     icon: Info,
-    className: "border-sky-200 bg-sky-50 text-sky-950",
+    className: "border-sky-700/40 bg-sky-900/30 text-sky-100",
     accentClassName: "bg-sky-500",
-    iconClassName: "text-sky-600",
+    iconClassName: "text-sky-400",
   },
   success: {
     icon: CheckCircle2,
-    className: "border-emerald-200 bg-emerald-50 text-emerald-950",
+    className: "border-emerald-700/40 bg-emerald-900/30 text-emerald-100",
     accentClassName: "bg-emerald-500",
-    iconClassName: "text-emerald-600",
+    iconClassName: "text-emerald-400",
   },
   warning: {
     icon: AlertTriangle,
-    className: "border-amber-200 bg-amber-50 text-amber-950",
+    className: "border-amber-700/40 bg-amber-900/30 text-amber-100",
     accentClassName: "bg-amber-500",
-    iconClassName: "text-amber-600",
+    iconClassName: "text-amber-400",
   },
   error: {
     icon: XCircle,
-    className: "border-rose-200 bg-rose-50 text-rose-950",
+    className: "border-rose-700/40 bg-rose-900/30 text-rose-100",
     accentClassName: "bg-rose-500",
-    iconClassName: "text-rose-600",
+    iconClassName: "text-rose-400",
   },
 } as const;
 
@@ -123,22 +123,21 @@ function Toast({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
-      className={`neu-flat-sm relative flex items-start gap-3 overflow-hidden p-4 pl-5 ${tone.className}`}
+      className={`card-sm relative flex items-start gap-3 overflow-hidden p-4 pl-5 ${tone.className}`}
     >
       <span className={`absolute inset-y-0 left-0 w-1 ${tone.accentClassName}`} aria-hidden="true" />
       <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${tone.iconClassName}`} aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-5" style={{ color: "#3d2f4d" }}>{toast.title}</p>
+        <p className="text-sm font-semibold leading-5">{toast.title}</p>
         {toast.description ? (
-          <p className="mt-1 text-sm leading-5 opacity-80" style={{ color: "#3d2f4d" }}>{toast.description}</p>
+          <p className="mt-1 text-sm leading-5 opacity-80">{toast.description}</p>
         ) : null}
       </div>
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="rounded-md p-1 opacity-70 transition hover:bg-black/5 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/30 neu-flat-sm"
+        className="rounded-md p-1 opacity-70 transition hover:bg-white/10 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 card-sm"
         aria-label="Dismiss notification"
-        style={{ color: "#3d2f4d" }}
       >
         <X className="h-4 w-4" />
       </button>

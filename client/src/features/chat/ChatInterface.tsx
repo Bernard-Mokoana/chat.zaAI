@@ -134,7 +134,7 @@ export default function ChatInterface({
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden" style={{ backgroundColor: "#9489a9" }}>
+    <div className="flex h-screen w-full overflow-hidden" style={{ backgroundColor: "var(--bg)" }}>
       <ChatSidebar
         activeSessionId={activeSessionId}
         onSelectSession={handleSelectSession}

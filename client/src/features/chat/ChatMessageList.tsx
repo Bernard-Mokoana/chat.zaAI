@@ -33,10 +33,10 @@ export default function ChatMessageList({
                 }`}
               >
                 <div
-                  className={`neu-flat-sm w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-3`}
+                  className={`card-sm w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-3`}
                   style={{
-                    color: message.role === "user" ? "#c7bcdc" : "#3d2f4d",
-                    backgroundColor: message.role === "user" ? "#615676" : "#9489a9",
+                    color: message.role === "user" ? "var(--accent-text)" : "var(--text)",
+                    backgroundColor: message.role === "user" ? "var(--accent)" : "var(--surface-2)",
                   }}
                 >
                   <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
@@ -53,7 +53,7 @@ export default function ChatMessageList({
               animate={{ opacity: 1, y: 0 }}
               className="flex justify-start"
             >
-              <div className="neu-flat-sm w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-3" style={{ backgroundColor: "#9489a9" }}>
+              <div className="card-sm w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] px-4 py-3" style={{ backgroundColor: "var(--surface-2)" }}>
                 <div className="flex gap-1">
                   {[0, 0.2, 0.4].map((delay) => (
                     <motion.span
@@ -61,7 +61,7 @@ export default function ChatMessageList({
                       animate={{ opacity: [0.4, 1, 0.4] }}
                       transition={{ duration: 1.2, repeat: Infinity, delay }}
                       className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: "#615676" }}
+                      style={{ backgroundColor: "var(--text-muted)" }}
                     />
                   ))}
                 </div>
@@ -71,10 +71,10 @@ export default function ChatMessageList({
 
           {isAssistantTyping && connectionState === "connected" && (
             <div className="flex justify-start">
-              <div className="neu-flat-sm w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] space-y-2 px-4 py-3" style={{ backgroundColor: "#9489a9" }}>
-                <div className="h-3 w-32 animate-pulse rounded-full" style={{ backgroundColor: "#7a6b8f" }} />
-                <div className="h-3 w-40 animate-pulse rounded-full" style={{ backgroundColor: "#7a6b8f" }} />
-                <div className="h-3 w-24 animate-pulse rounded-full" style={{ backgroundColor: "#7a6b8f" }} />
+              <div className="card-sm w-fit max-w-[92%] sm:max-w-[80%] lg:max-w-[70%] space-y-2 px-4 py-3" style={{ backgroundColor: "var(--surface-2)" }}>
+                <div className="h-3 w-32 animate-pulse rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
+                <div className="h-3 w-40 animate-pulse rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
+                <div className="h-3 w-24 animate-pulse rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
               </div>
             </div>
           )}

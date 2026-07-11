@@ -8,27 +8,27 @@ import type { ChatHeaderProps } from "@/types/types";
 const connectionTone = {
   connected: {
     label: "Connected",
-    badge: "#6bcf7f",
-    text: "#3d2f4d",
-    dot: "#2ea04f",
+    badge: "var(--status-success)",
+    text: "var(--status-text)",
+    dot: "var(--status-success-dot)",
   },
   connecting: {
     label: "Connecting",
-    badge: "#f0c060",
-    text: "#3d2f4d",
-    dot: "#c49a30",
+    badge: "var(--status-warning)",
+    text: "var(--status-text)",
+    dot: "var(--status-warning-dot)",
   },
   disconnected: {
     label: "Offline",
-    badge: "#7a6b8f",
-    text: "#f5f0fa",
-    dot: "#615676",
+    badge: "var(--surface-3)",
+    text: "var(--text)",
+    dot: "var(--border-strong)",
   },
   error: {
     label: "Error",
-    badge: "#e88ba0",
-    text: "#3d2f4d",
-    dot: "#c44b6e",
+    badge: "var(--status-error)",
+    text: "var(--status-text)",
+    dot: "var(--status-error-dot)",
   },
 } as const;
 
@@ -51,24 +51,24 @@ export default function ChatHeader({
 
   return (
     <>
-      <header className="neu-flat-sm w-full" style={{ borderRadius: "0 0 40px 40px", borderBottomLeftRadius: "40px", borderBottomRightRadius: "40px" }}>
+      <header className="card-sm w-full" style={{ borderRadius: "0 0 40px 40px", borderBottomLeftRadius: "40px", borderBottomRightRadius: "40px" }}>
         <div className="mx-auto flex flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               type="button"
               onClick={handleLogoutClick}
-              className="neu-btn rounded-lg p-2"
+              className="btn rounded-lg p-2"
               aria-label="Logout"
               title="Logout"
             >
-              <LogOut className="h-5 w-5" style={{ color: "#3d2f4d" }} />
+              <LogOut className="h-5 w-5" style={{ color: "var(--accent-text)" }} />
             </button>
 
             <div>
-              <h2 className="text-lg font-semibold" style={{ color: "#3d2f4d" }}>
+              <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>
                 3DoT
               </h2>
-              <p className="text-sm" style={{ color: "#5a4a6b" }}>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 Welcome {displayName}
               </p>
             </div>

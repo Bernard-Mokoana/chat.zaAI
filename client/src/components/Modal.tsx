@@ -31,7 +31,7 @@ export default function Modal({
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ backgroundColor: "rgba(61, 47, 77, 0.5)" }}
+          style={{ backgroundColor: "rgba(15, 11, 8, 0.6)" }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
@@ -41,27 +41,27 @@ export default function Modal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="neu-flat w-full max-w-sm overflow-hidden p-6"
+            className="card w-full max-w-sm overflow-hidden p-6"
           >
-            <div className="flex items-start justify-between" style={{ borderBottom: "1px solid #7a6b8f" }}>
+            <div className="flex items-start justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
               <div>
                 <h2
                   id="modal-title"
                   className="text-lg font-semibold"
-                  style={{ color: "#3d2f4d" }}
+                  style={{ color: "var(--text)" }}
                 >
                   {title}
                 </h2>
                 {description && (
-                  <p className="mt-1 text-sm" style={{ color: "#5a4a6b" }}>
+                  <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
                     {description}
                   </p>
                 )}
               </div>
               <button
                 onClick={onClose}
-                className="rounded-lg p-1.5 transition-colors neu-flat-sm"
-                style={{ color: "#3d2f4d" }}
+                className="rounded-lg p-1.5 transition-colors card-sm"
+                style={{ color: "var(--text)" }}
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -71,19 +71,19 @@ export default function Modal({
             {children && <div className="py-4">{children}</div>}
 
             {(onConfirm || onCancel) && (
-              <div className="flex gap-3 py-4" style={{ borderTop: "1px solid #7a6b8f" }}>
+              <div className="flex gap-3 py-4" style={{ borderTop: "1px solid var(--border)" }}>
                 <button
                   onClick={handleCancel}
-                  className="neu-btn flex-1 px-4 py-2 text-sm font-medium"
-                  style={{ color: "#3d2f4d" }}
+                  className="btn flex-1 px-4 py-2 text-sm font-medium"
+                  style={{ color: "var(--accent-text)" }}
                 >
                   {cancelText}
                 </button>
                 <button
                   onClick={handleConfirm}
-                  className="neu-btn flex-1 px-4 py-2 text-sm font-medium"
+                  className="btn flex-1 px-4 py-2 text-sm font-medium"
                   style={{
-                    color: isDangerous ? "#c44b6e" : "#3d2f4d",
+                    color: isDangerous ? "var(--danger-text)" : "var(--accent-text)",
                   }}
                 >
                   {confirmText}

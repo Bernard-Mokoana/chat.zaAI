@@ -108,8 +108,8 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="neu-btn w-full py-3 text-sm font-semibold"
-          style={{ color: "#3d2f4d" }}
+          className="btn w-full py-3 text-sm font-semibold"
+          style={{ color: "var(--accent-text)" }}
         >
           {isSubmitting ? "Signing in..." : "Sign In"}
         </button>
@@ -119,7 +119,7 @@ export default function LoginPage() {
         <Link
           href="/forgotPassword"
           className="text-sm font-medium transition-colors hover:opacity-80"
-          style={{ color: "#615676" }}
+          style={{ color: "var(--accent)" }}
         >
           Forgot your password?
         </Link>

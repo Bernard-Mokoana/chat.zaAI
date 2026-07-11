@@ -49,7 +49,7 @@ export default function ChatPage() {
   if (!displayName) return null;
 
   return (
-    <main style={{ minHeight: "100vh", backgroundColor: "#9489a9" }}>
+    <main style={{ minHeight: "100vh", backgroundColor: "var(--bg)" }}>
       <Suspense fallback={<div>Loading...</div>}>
         <ChatPanel displayName={displayName} />
       </Suspense>

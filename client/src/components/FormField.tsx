@@ -16,18 +16,17 @@ export default function FormField({
       <label
         htmlFor={fieldId}
         className="block text-sm font-semibold"
-        style={{ color: "#3d2f4d" }}
+        style={{ color: "var(--text-secondary)" }}
       >
         {label}
       </label>
       <input
         id={fieldId}
         {...inputProps}
-        className={`neu-inset w-full px-4 py-3 text-sm outline-none transition-all placeholder:opacity-60 disabled:opacity-60 disabled:cursor-not-allowed ${className || ""}`}
-        style={{ color: "#3d2f4d" }}
+        className={`field w-full px-4 py-3 text-sm outline-none transition-all placeholder:opacity-60 disabled:opacity-60 disabled:cursor-not-allowed ${className || ""}`}
       />
       {error && (
-        <p className="text-xs font-medium" style={{ color: "#c44b6e" }}>
+        <p className="text-xs font-medium" style={{ color: "var(--danger)" }}>
           {error}
         </p>
       )}

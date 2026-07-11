@@ -66,8 +66,8 @@ function VerifyEmailForm() {
     <AuthLayout title="Email Verification">
       {state.status === "verifying" && (
         <div className="space-y-4 text-center">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin" style={{ color: "#615676" }} />
-          <p className="text-sm" style={{ color: "#5a4a6b" }}>
+          <Loader2 className="mx-auto h-10 w-10 animate-spin" style={{ color: "var(--accent)" }} />
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
             Verifying your email address...
           </p>
         </div>

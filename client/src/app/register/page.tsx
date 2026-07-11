@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { register } from "@/services/auth/authApi";
 import { getAuthErrorToast } from "@/services/auth/authMessages";
@@ -12,7 +11,6 @@ import AuthLayout from "@/components/AuthLayout";
 import FormField from "@/components/FormField";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -147,8 +145,8 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="neu-btn w-full py-3 text-sm font-semibold"
-          style={{ color: "#3d2f4d" }}
+          className="btn w-full py-3 text-sm font-semibold"
+          style={{ color: "var(--accent-text)" }}
         >
           {isSubmitting ? "Creating account..." : "Register"}
         </button>
