@@ -88,7 +88,7 @@ export default function RegisterPage() {
             setName(e.target.value);
             clearErrors();
           }}
-          placeholder="John Doe"
+          placeholder="Enter your full name"
           error={getFieldError(validationErrors, "name")}
           autoComplete="name"
           autoFocus
@@ -105,7 +105,7 @@ export default function RegisterPage() {
             setEmail(e.target.value);
             clearErrors();
           }}
-          placeholder="you@example.com"
+          placeholder="Enter your email"
           error={getFieldError(validationErrors, "email")}
           autoComplete="email"
         />
@@ -121,7 +121,7 @@ export default function RegisterPage() {
             setPassword(e.target.value);
             clearErrors();
           }}
-          placeholder="Min 8 characters, uppercase, lowercase, number, special char"
+          placeholder="Enter your password"
           error={getFieldError(validationErrors, "password")}
           autoComplete="new-password"
         />

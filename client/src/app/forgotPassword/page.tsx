@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
               setValidationErrors([]);
             }
           }}
-          placeholder="you@example.com"
+          placeholder="Enter your email"
           error={getFieldError(validationErrors, "email")}
           autoComplete="email"
           autoFocus

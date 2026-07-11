@@ -11,7 +11,7 @@ export default function Home() {
             AI Chatbot
           </p>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: "var(--text)" }}>
-            Welcome to 3DoT
+            Welcome to chat.zaAI
           </h1>
           <p className="mt-4 text-base sm:text-lg" style={{ color: "var(--text-secondary)" }}>
             Sign in to continue chatting, or create a new account.

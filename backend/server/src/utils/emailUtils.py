@@ -86,7 +86,7 @@ def send_email_verification(email, token):
     verification_url = f"{cors_origin}/verifyEmail?{query_params}"
 
     html = build_email_verification_html(verification_url)
-    send_email(config, email, "Bbot email verification", html)
+    send_email(config, email, "chat.zaAI email verification", html)
 
 
 def send_password_reset_email(email, token):
@@ -99,7 +99,7 @@ def send_password_reset_email(email, token):
     reset_url = f"{cors_origin}/resetPassword?{query_params}"
 
     html = build_reset_password_html(reset_url)
-    send_email(config, email, "Bbot password reset", html)
+    send_email(config, email, "chat.zaAI password reset", html)
 
 
 def build_email_verification_html(verification_url):
@@ -121,14 +121,14 @@ def build_email_verification_html(verification_url):
                 <td align="center" style="padding: 40px 20px;">
                   <h1 style="color: #333333;">Verify Your Email Address</h1>
                   <p style="color: #666666; font-size: 16px;">
-                    Thank you for registering with Bbot. To complete your registration, please click the button below to verify your email address.
+                    Thank you for registering with chat.zaAI. To complete your registration, please click the button below to verify your email address.
                   </p>
                   <a href="{encoded_link}" style="display: inline-block; padding: 15px 25px; margin: 20px 0; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px;">Verify Email</a>
                   <p style="color: #666666; font-size: 14px;">
                     If you did not create an account, no further action is required.
                   </p>
                   <p style="color: #aaaaaa; font-size: 12px;">
-                    &copy; 2026 Bbot. All rights reserved.
+                    &copy; 2026 chat.zaAI. All rights reserved.
                   </p>
                 </td>
               </tr>
@@ -160,14 +160,14 @@ def build_reset_password_html(reset_url):
                 <td align="center" style="padding: 40px 20px;">
                   <h1 style="color: #333333;">Reset Your Password</h1>
                   <p style="color: #666666; font-size: 16px;">
-                    You are receiving this email because you requested a password reset for your Bbot account. Please click the button below to reset your password.
+                    You are receiving this email because you requested a password reset for your chat.zaAI account. Please click the button below to reset your password.
                   </p>
                  <a href="{safe_url}" style="display: inline-block; padding: 15px 25px; margin: 20px 0; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 16px;">Reset Password</a>
                   <p style="color: #666666; font-size: 14px;">
                     If you did not request a password reset, please ignore this email.
                   </p>
                   <p style="color: #aaaaaa; font-size: 12px;">
-                    &copy; 2026 Bbot. All rights reserved.
+                    &copy; 2026 chat.zaAI. All rights reserved.
                   </p>
                 </td>
               </tr>

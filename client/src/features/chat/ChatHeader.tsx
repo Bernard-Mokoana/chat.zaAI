@@ -66,7 +66,7 @@ export default function ChatHeader({
 
             <div>
               <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>
-                3DoT
+                chat.zaAI
               </h2>
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 Welcome {displayName}

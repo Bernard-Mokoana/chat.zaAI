@@ -7,7 +7,7 @@ def create_usage_log(
     db: Session,
     user_id: str,
     event_type: str,
-    model_name: str | None = None,
+    model: str | None = None,
     total_tokens: int | None = None,
     message_count: int | None = None,
 ) -> UsageLog:
@@ -15,7 +15,7 @@ def create_usage_log(
     log_entry = UsageLog(
         user_id=user_id,
         event_type=event_type,
-        model_name=model_name,
+        model=model,
         total_tokens=total_tokens if total_tokens is not None else 0,
         message_count=message_count if message_count is not None else 0,
     )

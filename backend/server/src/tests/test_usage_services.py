@@ -16,7 +16,7 @@ class TestUsageLogService:
 
     def test_create_usage_log_happy_path_all_fields(self):
         event_type = "chat_message_sent"
-        model_name = "gpt-4o"
+        model = "gpt-4o"
         total_tokens = 142
         message_count = 1
 
@@ -24,7 +24,7 @@ class TestUsageLogService:
             db=self.db,
             user_id=self.mock_user_id,
             event_type=event_type,
-            model_name=model_name,
+            model=model,
             total_tokens=total_tokens,
             message_count=message_count,
         )
@@ -32,7 +32,7 @@ class TestUsageLogService:
         assert isinstance(result, UsageLog)
         assert result.user_id == self.mock_user_id
         assert result.event_type == event_type
-        assert result.model_name == model_name
+        assert result.model == model
         assert result.total_tokens == total_tokens
         assert result.message_count == message_count
 
@@ -47,13 +47,13 @@ class TestUsageLogService:
             db=self.db,
             user_id=self.mock_user_id,
             event_type=event_type,
-            model_name=None,
+            model=None,
             total_tokens=None,
             message_count=None,
         )
 
         assert result.event_type == "user_login"
-        assert result.model_name is None
+        assert result.model is None
         assert result.total_tokens == 0
         assert result.message_count == 0
         self.db.commit.assert_called_once()

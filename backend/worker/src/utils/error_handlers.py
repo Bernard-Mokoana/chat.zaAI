@@ -6,7 +6,6 @@ from src.redis.stream import StreamConsumer
 from src.schema.chat import Message
    
 from src.config.settings import RESPONSE_CHANNEL, STREAM_CHANNEL, MODEL_ERROR_MESSAGE
-from src.services.dead_letter import route_to_dead_letter_queue
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +40,8 @@ def _extract_scalar_id(message) -> bytes | str | None:
 
 
 async def handle_invalid_envelope(message, producer: Producer, consumer: StreamConsumer) -> None:
+    from src.services.dead_letter import route_to_dead_letter_queue
+
     fallback_id = _extract_scalar_id(message)
 
     await route_to_dead_letter_queue(
@@ -56,7 +57,9 @@ async def handle_invalid_envelope(message, producer: Producer, consumer: StreamC
 
 
 async def handle_cache_failure(message_id, token: str, raw_message, producer: Producer, cache: Cache, consumer: StreamConsumer) -> None:
-    logger.error("Cache miss: no history for token %s after write", token)
+    from src.services.dead_letter import route_to_dead_letter_queue
+
+    logger.error(f"Cache miss: no history for token {token} after write")
     await route_to_dead_letter_queue(
         producer, raw_message, f"Cache history missing for token: {token}"
     )
@@ -65,6 +68,8 @@ async def handle_cache_failure(message_id, token: str, raw_message, producer: Pr
 
 async def handle_model_timeout(message_id, token: str, raw_message, timeout: float, producer: Producer, cache: Cache, 
                                consumer: StreamConsumer, timeout_message: str) -> None:
+    from src.services.dead_letter import route_to_dead_letter_queue
+
     logger.error("Model timed out after %.0f seconds for token %s", timeout, token)
     await route_to_dead_letter_queue(
         producer, raw_message, "LLM Processing Timeout Exceeded"
@@ -74,6 +79,8 @@ async def handle_model_timeout(message_id, token: str, raw_message, timeout: flo
 
 async def handle_model_error(message_id, token: str, raw_message, exc: Exception, producer: Producer, cache: Cache, 
                              consumer: StreamConsumer, error_message: str,) -> None:
+    from src.services.dead_letter import route_to_dead_letter_queue
+
     logger.error("Model query failed for token %s: %s", token, exc)
     await route_to_dead_letter_queue(
         producer, raw_message, f"Inference Exception: {exc}"

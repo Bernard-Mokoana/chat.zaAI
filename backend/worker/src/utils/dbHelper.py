@@ -87,7 +87,7 @@ def log_worker_usage(session_factory: sessionmaker, user_id: str, model: str | N
             base_stmt = insert(UsageLog).values(
                 user_id=user_id,
                 log_date=date.today(),
-                model_name=model or "unknown",
+                model=model or "unknown",
                 total_tokens=total_tokens or 0,
                 message_count=message_count or 0,
             )

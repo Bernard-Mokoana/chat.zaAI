@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from .decoding import decode_fields, decode_bytes
+from .decoding import decode_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +21,17 @@ def parse_stream_message(message) -> Optional[tuple[str, str, str, int]]:
         logger.error("Malformed message payload for id=%s: %r", message_id, fields)
         return None
 
-    token_bytes, msg_bytes = next(iter(fields.items()))
-
-    decoded = decode_fields(fields)
-
-    token = decode_bytes(token_bytes)
-    text = decode_bytes(msg_bytes)
-    retry_raw = decoded.get("retry_count", "0")
+    # Semantic format used by retries: {"token": ..., "text": ..., "retry_count": ...}
+    if "token" in fields and "text" in fields:
+        token = decode_bytes(fields["token"])
+        text = decode_bytes(fields["text"])
+        retry_raw = decode_bytes(fields.get("retry_count", "0"))
+    else:
+        # Original format from server: token sits in the field name, text in the value
+        token_bytes, msg_bytes = next(iter(fields.items()))
+        token = decode_bytes(token_bytes)
+        text = decode_bytes(msg_bytes)
+        retry_raw = "0"
 
     if not token or not text:
         logger.warning(
