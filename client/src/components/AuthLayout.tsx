@@ -10,13 +10,13 @@ export default function AuthLayout({
   footerLink,
 }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-900">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 text-center">
+    <div className="flex min-h-screen items-center justify-center px-4 py-6" style={{ backgroundColor: "#9489a9" }}>
+      <div className="neu-flat w-full max-w-md p-8 sm:p-10">
+        <h1 className="text-2xl font-bold tracking-tight text-center" style={{ color: "#3d2f4d" }}>
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 text-center mb-6">
+          <p className="mt-3 text-sm text-center mb-6" style={{ color: "#5a4a6b" }}>
             {subtitle}
           </p>
         )}
@@ -27,7 +27,8 @@ export default function AuthLayout({
           <div className="mt-6 text-center">
             <Link
               href={footerLink.href}
-              className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+              className="text-sm font-medium transition-colors hover:opacity-80"
+              style={{ color: "#615676" }}
             >
               {footerLink.label}
             </Link>

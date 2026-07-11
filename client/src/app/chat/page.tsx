@@ -18,13 +18,11 @@ export default function ChatPage() {
       const accessToken = getAccessToken();
       const authUser = getAuthUser();
 
-      // Valid token, user not close to expiry (use it directly)
       if (accessToken && authUser && !isTokenExpired(accessToken)) {
         if (alive) setDisplayName(authUser.name);
         return;
       }
 
-      // No valid token, silent refresh before expiry
       try {
         const auth = await refreshAccessToken();
         if (alive) setDisplayName(auth.user.name);
@@ -48,10 +46,10 @@ export default function ChatPage() {
     };
   }, [router]);
 
-  if (!displayName) return null; // both server and client agree on this initial render
+  if (!displayName) return null;
 
   return (
-    <main style={{ minHeight: "100vh" }}>
+    <main style={{ minHeight: "100vh", backgroundColor: "#9489a9" }}>
       <Suspense fallback={<div>Loading...</div>}>
         <ChatPanel displayName={displayName} />
       </Suspense>

@@ -49,21 +49,18 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
       onClick={() => onSelect(session)}
       className={`group relative flex cursor-pointer flex-col gap-1 rounded-xl px-3 py-2.5 transition-all duration-150 ${
         isActive
-          ? "bg-blue-600 text-white shadow-md"
-          : "hover:bg-slate-100 text-slate-700"
+          ? "neu-pressed"
+          : "neu-flat-sm"
       }`}
+      style={isActive ? { color: "#c7bcdc" } : { color: "#3d2f4d" }}
     >
-      {/* Title row */}
       <div className="flex items-start justify-between gap-2">
         <span
-          className={`line-clamp-1 text-sm font-semibold leading-snug ${
-            isActive ? "text-white" : "text-slate-800"
-          }`}
+          className="line-clamp-1 text-sm font-semibold leading-snug"
         >
           {session.title}
         </span>
 
-        {/* Delete button */}
         <AnimatePresence>
           {hovered && (
             <motion.button
@@ -72,13 +69,15 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
               exit={{ opacity: 0, scale: 0.7 }}
               transition={{ duration: 0.12 }}
               onClick={handleDelete}
-              className={`shrink-0 rounded-md p-1 transition-colors ${
+              className={`shrink-0 rounded-md p-1 transition-colors neu-flat-sm ${
                 confirmDelete
-                  ? "bg-rose-500 text-white"
-                  : isActive
-                  ? "hover:bg-blue-500 text-blue-100"
-                  : "hover:bg-slate-200 text-slate-400"
+                  ? ""
+                  : ""
               }`}
+              style={{
+                color: confirmDelete ? "#c44b6e" : isActive ? "#c7bcdc" : "#615676",
+                backgroundColor: "#9489a9"
+              }}
               title={confirmDelete ? "Click again to confirm" : "Delete"}
             >
               <Trash2 className="h-3 w-3" />
@@ -87,16 +86,14 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
         </AnimatePresence>
       </div>
       <p
-        className={`line-clamp-1 text-xs ${
-          isActive ? "text-blue-100" : "text-slate-500"
-        }`}
+        className="line-clamp-1 text-xs"
+        style={{ color: isActive ? "#c7bcdc" : "#5a4a6b" }}
       >
         {session.preview || "No messages yet"}
       </p>
       <div
-        className={`flex items-center gap-1 text-[10px] ${
-          isActive ? "text-blue-200" : "text-slate-400"
-        }`}
+        className="flex items-center gap-1 text-[10px]"
+        style={{ color: isActive ? "#c7bcdc" : "#5a4a6b" }}
       >
         <Clock className="h-2.5 w-2.5" />
         {relativeTime(session.updatedAt)}
@@ -107,7 +104,7 @@ function SessionItem({session, isActive, onSelect, onDelete}: {
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p className="mb-1 mt-3 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+    <p className="mb-1 mt-3 px-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: "#5a4a6b" }}>
       {label}
     </p>
   );
@@ -132,8 +129,6 @@ export default function ChatSidebar({
     return () => window.clearTimeout(timeoutId);
   }, [activeSessionId, refreshTrigger, liveMessages.length]);
 
-
-
   const handleDelete = (id: string) => {
     deleteSession(id);
     setSessions(loadSessions());
@@ -148,19 +143,21 @@ export default function ChatSidebar({
         key="collapsed"
         initial={{ width: 56 }}
         animate={{ width: 56 }}
-        className="relative flex h-screen flex-col items-center border-r border-slate-200 bg-white py-4 gap-3"
-        style={{ minWidth: 56 }}
+        className="relative flex h-screen flex-col items-center border-r py-4 gap-3"
+        style={{ minWidth: 56, backgroundColor: "#9489a9", borderColor: "#7a6b8f" }}
       >
         <button
           onClick={() => setIsOpen(true)}
-          className="rounded-lg p-2 hover:bg-slate-100 transition-colors text-slate-500"
+          className="rounded-lg p-2 transition-colors neu-flat-sm"
+          style={{ color: "#3d2f4d" }}
           title="Open sidebar"
         >
           <PanelLeftOpen className="h-5 w-5" />
         </button>
         <button
           onClick={onNewChat}
-          className="rounded-lg p-2 hover:bg-slate-100 transition-colors text-slate-500"
+          className="rounded-lg p-2 transition-colors neu-flat-sm"
+          style={{ color: "#3d2f4d" }}
           title="New chat"
         >
           <Plus className="h-5 w-5" />
@@ -171,11 +168,8 @@ export default function ChatSidebar({
               key={s.id}
               onClick={() => onSelectSession(s)}
               title={s.title}
-              className={`rounded-lg p-2 transition-colors ${
-                s.id === activeSessionId
-                  ? "bg-blue-600 text-white"
-                  : "hover:bg-slate-100 text-slate-500"
-              }`}
+              className={`rounded-lg p-2 transition-colors neu-flat-sm`}
+              style={{ color: s.id === activeSessionId ? "#c7bcdc" : "#3d2f4d", backgroundColor: s.id === activeSessionId ? "#615676" : "#9489a9" }}
             >
               <MessageSquare className="h-4 w-4" />
             </button>
@@ -191,43 +185,43 @@ export default function ChatSidebar({
       animate={{ width: 272, opacity: 1 }}
       exit={{ width: 0, opacity: 0 }}
       transition={{ duration: 0.22, ease: "easeInOut" }}
-      className="flex h-screen flex-col border-r border-slate-200 bg-white overflow-hidden"
-      style={{ minWidth: 272, maxWidth: 272 }}
+      className="flex h-screen flex-col overflow-hidden"
+      style={{ minWidth: 272, maxWidth: 272, backgroundColor: "#9489a9", borderRight: "1px solid #7a6b8f" }}
     >
-      <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
+      <div className="flex items-center justify-between px-4 py-4" style={{ borderBottom: "1px solid #7a6b8f" }}>
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-blue-600" />
-          <span className="text-sm font-bold text-slate-800 tracking-tight">
+          <MessageSquare className="h-4 w-4" style={{ color: "#615676" }} />
+          <span className="text-sm font-bold tracking-tight" style={{ color: "#3d2f4d" }}>
             Chat History
           </span>
         </div>
         <button
           onClick={() => setIsOpen(false)}
-          className="rounded-lg p-1.5 hover:bg-slate-100 transition-colors text-slate-400"
+          className="rounded-lg p-1.5 transition-colors neu-flat-sm"
+          style={{ color: "#3d2f4d" }}
           title="Collapse sidebar"
         >
           <PanelLeftClose className="h-4 w-4" />
         </button>
       </div>
 
-      {/* New chat */}
       <div className="px-3 pt-3">
         <button
           onClick={onNewChat}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600"
+          className="neu-btn flex w-full items-center justify-center gap-2 py-2.5 text-sm font-semibold"
+          style={{ color: "#3d2f4d" }}
         >
           <Plus className="h-4 w-4" />
           New conversation
         </button>
       </div>
 
-      {/* Session list */}
       <div className="flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin scrollbar-thumb-slate-200">
         {sessions.length === 0 ? (
           <div className="mt-10 flex flex-col items-center gap-2 text-center">
-            <MessageSquare className="h-8 w-8 text-slate-300" />
-            <p className="text-xs text-slate-400">No conversations yet.</p>
-            <p className="text-xs text-slate-400">Start chatting to see history here.</p>
+            <MessageSquare className="h-8 w-8" style={{ color: "#7a6b8f" }} />
+            <p className="text-xs" style={{ color: "#5a4a6b" }}>No conversations yet.</p>
+            <p className="text-xs" style={{ color: "#5a4a6b" }}>Start chatting to see history here.</p>
           </div>
         ) : (
           <>
@@ -282,8 +276,8 @@ export default function ChatSidebar({
           </>
         )}
       </div>
-      <div className="border-t border-slate-100 px-4 py-3">
-        <p className="text-[10px] text-slate-400">
+      <div className="px-4 py-3" style={{ borderTop: "1px solid #7a6b8f" }}>
+        <p className="text-[10px]" style={{ color: "#5a4a6b" }}>
           {sessions.length} conversation{sessions.length !== 1 ? "s" : ""} saved locally
         </p>
       </div>

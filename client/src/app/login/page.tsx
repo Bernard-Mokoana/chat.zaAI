@@ -36,7 +36,6 @@ export default function LoginPage() {
       }
 
       setValidationErrors([]);
-      
 
       try {
         const auth = await login({
@@ -77,7 +76,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);
-            
+
             if (validationErrors.length > 0) {
               setValidationErrors([]);
             }
@@ -109,7 +108,8 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+          className="neu-btn w-full py-3 text-sm font-semibold"
+          style={{ color: "#3d2f4d" }}
         >
           {isSubmitting ? "Signing in..." : "Sign In"}
         </button>
@@ -118,7 +118,8 @@ export default function LoginPage() {
       <div className="mt-6 text-center">
         <Link
           href="/forgotPassword"
-          className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          className="text-sm font-medium transition-colors hover:opacity-80"
+          style={{ color: "#615676" }}
         >
           Forgot your password?
         </Link>

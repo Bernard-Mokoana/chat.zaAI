@@ -58,7 +58,6 @@ export default function ChatInterface({
     return () => window.removeEventListener("chat:session-ready", handleSessionReady);
   }, [activeSessionId, setActiveSessionId, saveCurrentSession]);
 
-  // Track createdAt per session to preserve it across re-renders without depending on sessions
   const createdAtRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
@@ -135,7 +134,7 @@ export default function ChatInterface({
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50">
+    <div className="flex h-screen w-full overflow-hidden" style={{ backgroundColor: "#9489a9" }}>
       <ChatSidebar
         activeSessionId={activeSessionId}
         onSelectSession={handleSelectSession}

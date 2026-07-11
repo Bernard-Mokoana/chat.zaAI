@@ -32,15 +32,16 @@ export default function AlertBanner({ tone, message, onDismiss }: AlertBannerPro
   const Icon = style.icon;
 
   return (
-    <div className={`flex items-start gap-3 rounded-lg border p-4 text-sm ${style.className}`}>
+    <div className={`neu-flat-sm flex items-start gap-3 p-4 text-sm ${style.className}`}>
       <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${style.iconClassName}`} />
-      <p className="flex-1">{message}</p>
+      <p className="flex-1" style={{ color: "#3d2f4d" }}>{message}</p>
       {onDismiss && (
         <button
           type="button"
           onClick={onDismiss}
-          className="rounded-md p-1 opacity-70 transition hover:bg-black/5 hover:opacity-100"
+          className="rounded-md p-1 opacity-70 transition hover:bg-black/5 hover:opacity-100 neu-flat-sm"
           aria-label="Dismiss"
+          style={{ color: "#3d2f4d" }}
         >
           <X className="h-4 w-4" />
         </button>

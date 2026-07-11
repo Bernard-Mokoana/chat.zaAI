@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+:root {
+  --neu-bg: #9489a9;
+  --neu-shadow-dark: #615676;
+  --neu-shadow-light: #c7bcdc;
+  --neu-text: #3d2f4d;
+  --neu-text-secondary: #5a4a6b;
+}
+
 *,
 *::before,
 *::after {
@@ -14,4 +22,57 @@ body {
 body {
   margin: 0;
   min-height: 100%;
+  background-color: var(--neu-bg);
+  color: var(--neu-text);
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.neu-flat {
+  background: var(--neu-bg);
+  border-radius: 40px;
+  box-shadow: 20px 20px 40px var(--neu-shadow-dark), -20px -20px 40px var(--neu-shadow-light);
+}
+
+.neu-flat-sm {
+  background: var(--neu-bg);
+  border-radius: 20px;
+  box-shadow: 8px 8px 16px var(--neu-shadow-dark), -8px -8px 16px var(--neu-shadow-light);
+}
+
+.neu-inset {
+  background: var(--neu-bg);
+  border-radius: 20px;
+  box-shadow: inset 6px 6px 12px var(--neu-shadow-dark), inset -6px -6px 12px var(--neu-shadow-light);
+}
+
+.neu-pressed {
+  background: var(--neu-bg);
+  border-radius: 20px;
+  box-shadow: inset 4px 4px 8px var(--neu-shadow-dark), inset -4px -4px 8px var(--neu-shadow-light);
+}
+
+.neu-btn {
+  background: var(--neu-bg);
+  border-radius: 20px;
+  box-shadow: 6px 6px 12px var(--neu-shadow-dark), -6px -6px 12px var(--neu-shadow-light);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.neu-btn:hover:not(:disabled) {
+  box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+  transform: translateY(-1px);
+}
+
+.neu-btn:active:not(:disabled) {
+  box-shadow: inset 4px 4px 8px var(--neu-shadow-dark), inset -4px -4px 8px var(--neu-shadow-light);
+  transform: translateY(0);
+}
+
+.neu-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#__next {
+  min-height: 100vh;
 }

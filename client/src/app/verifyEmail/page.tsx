@@ -49,7 +49,7 @@ function VerifyEmailForm() {
           errorMessage:
             "Verification failed. The link may have expired. Please request a new one.",
         });
-       }
+        }
       }
     };
 
@@ -66,8 +66,8 @@ function VerifyEmailForm() {
     <AuthLayout title="Email Verification">
       {state.status === "verifying" && (
         <div className="space-y-4 text-center">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin text-blue-600" />
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin" style={{ color: "#615676" }} />
+          <p className="text-sm" style={{ color: "#5a4a6b" }}>
             Verifying your email address...
           </p>
         </div>
@@ -75,14 +75,14 @@ function VerifyEmailForm() {
 
       {state.status === "success" && (
         <div className="space-y-4 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50">
-            <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: "#7a6b8f" }}>
+            <CheckCircle2 className="h-6 w-6" style={{ color: "#c7bcdc" }} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+            <h2 className="text-lg font-semibold" style={{ color: "#3d2f4d" }}>
               Email Verified
             </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-sm" style={{ color: "#5a4a6b" }}>
               Your account is confirmed. Redirecting to sign in...
             </p>
           </div>
@@ -91,20 +91,21 @@ function VerifyEmailForm() {
 
       {state.status === "error" && (
         <div className="space-y-4 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/50">
-            <XCircle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: "#7a6b8f" }}>
+            <XCircle className="h-6 w-6" style={{ color: "#c7bcdc" }} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+            <h2 className="text-lg font-semibold" style={{ color: "#3d2f4d" }}>
               Verification Failed
             </h2>
-            <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">
+            <p className="mt-2 text-sm" style={{ color: "#c44b6e" }}>
               {state.errorMessage}
             </p>
           </div>
           <Link
             href="/register"
-            className="inline-block rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            className="neu-btn inline-block px-6 py-2.5 text-sm font-medium"
+            style={{ color: "#3d2f4d" }}
           >
             Back to Registration
           </Link>

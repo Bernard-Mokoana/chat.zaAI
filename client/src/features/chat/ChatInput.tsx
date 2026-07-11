@@ -22,7 +22,7 @@ export default function ChatInput({
   );
 
   return (
-    <form onSubmit={handleSubmit} className="w-full border-t border-slate-200 bg-white">
+    <form onSubmit={handleSubmit} className="neu-flat-sm w-full" style={{ borderRadius: "40px 40px 0 0", borderBottomLeftRadius: "0", borderBottomRightRadius: "0" }}>
       <div className="mx-auto w-full px-4 py-4 sm:px-6">
         <div className="flex flex-col gap-3 sm:gap-2 sm:flex-row sm:items-center">
           <input
@@ -31,12 +31,14 @@ export default function ChatInput({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
-            className="w-full flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm placeholder-slate-500 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="neu-inset flex-1 px-4 py-3 text-sm outline-none transition-all placeholder-opacity-60 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ color: "#3d2f4d" }}
           />
           <button
             type="submit"
             disabled={!value.trim() || disabled}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed"
+            className="neu-btn w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium"
+            style={{ color: "#3d2f4d" }}
           >
             <Send className="h-4 w-4" />
             <span className="hidden sm:inline">Send</span>

@@ -38,8 +38,6 @@ const toneStyles = {
 
 export default function ToastProvider() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  // Explicitly `number` — window.setTimeout / window.clearTimeout are the
-  // DOM versions, which return/expect a number, not NodeJS.Timeout.
   const timeoutsRef = useRef(new Map<string, number>());
 
   const clearTimeoutFor = useCallback((id: string) => {
@@ -125,21 +123,22 @@ function Toast({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
-      className={`relative flex items-start gap-3 overflow-hidden rounded-lg border p-4 pl-5 shadow-lg shadow-slate-900/10 ${tone.className}`}
+      className={`neu-flat-sm relative flex items-start gap-3 overflow-hidden p-4 pl-5 ${tone.className}`}
     >
       <span className={`absolute inset-y-0 left-0 w-1 ${tone.accentClassName}`} aria-hidden="true" />
       <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${tone.iconClassName}`} aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-5">{toast.title}</p>
+        <p className="text-sm font-semibold leading-5" style={{ color: "#3d2f4d" }}>{toast.title}</p>
         {toast.description ? (
-          <p className="mt-1 text-sm leading-5 opacity-80">{toast.description}</p>
+          <p className="mt-1 text-sm leading-5 opacity-80" style={{ color: "#3d2f4d" }}>{toast.description}</p>
         ) : null}
       </div>
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="rounded-md p-1 opacity-70 transition hover:bg-black/5 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/30"
+        className="rounded-md p-1 opacity-70 transition hover:bg-black/5 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/30 neu-flat-sm"
         aria-label="Dismiss notification"
+        style={{ color: "#3d2f4d" }}
       >
         <X className="h-4 w-4" />
       </button>
