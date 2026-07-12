@@ -25,12 +25,13 @@ class TestQueryModel:
     async def test_timeout_cancels_future_and_spawns_background_task(self):
         gpt = MagicMock()
         gpt.query = MagicMock(side_effect=lambda *a, **k: time.sleep(10))
-
+        
         loop = asyncio.get_event_loop()
         with patch.object(loop, "create_task") as mock_create_task:
             with pytest.raises(asyncio.TimeoutError):
                 await query_model(gpt, "prompt", timeout=0.01)
             mock_create_task.assert_called_once()
+            mock_create_task.call_args[0][0].close()
 
     @pytest.mark.asyncio
     async def test_exception_from_model_propagates(self):

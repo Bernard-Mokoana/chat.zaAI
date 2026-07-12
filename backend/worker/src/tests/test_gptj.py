@@ -14,6 +14,15 @@ from src.model.gptj import GPT
 logging.disable(logging.CRITICAL)
 
 
+@pytest.fixture(autouse=True)
+def isolated_env():
+    original = dict(os.environ)
+    os.environ.clear()
+    yield
+    os.environ.clear()
+    os.environ.update(original)
+
+
 class TestResolveModelId:
     @patch.dict(os.environ, {"MODEL_ID": "custom/model"}, clear=False)
     def test_uses_model_id_env(self):

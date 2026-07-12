@@ -36,7 +36,8 @@ describe('FormField Component', () => {
 
     const errorElement = screen.getByText(errorMessage);
     expect(errorElement).toBeInTheDocument();
-    expect(errorElement).toHaveClass('text-red-500'); 
+    expect(errorElement).toHaveClass('text-xs', 'font-medium'); 
+    expect(errorElement).toHaveStyle({ color: 'var(--danger)' });
   });
 
   it('calls the onChange handler when the user types', async () => {

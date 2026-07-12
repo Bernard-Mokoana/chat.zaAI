@@ -13,7 +13,7 @@ from src.config.settings import (RESPONSE_CHANNEL, STREAM_CHANNEL, MODEL_ERROR_M
 from src.services.model import query_model
 from src.utils.parsing import parse_stream_message
 from src.utils.error_handlers import (handle_invalid_envelope, handle_cache_failure, handle_model_timeout, handle_model_error)
-from src.utils.dbHelper import log_worker_usage, save_worker_message, get_conversation_history_from_db
+from backend.worker.src.utils.db_helper import log_worker_usage, save_worker_message, get_conversation_history_from_db
 
 
 
@@ -28,6 +28,8 @@ class MessageHandler:
         self.gpt_client = gpt_client
         self.model_timeout = model_timeout
         self.session_factory = session_factory
+        self.handle_model_timeout = handle_model_timeout
+        self.handle_model_error = handle_model_error
 
     async def handle(self, message) -> None:
         parsed = parse_stream_message(message)
@@ -200,7 +202,7 @@ class MessageHandler:
 
         except asyncio.TimeoutError:
             await self._log_usage(user_id, "model_timeout", model_name, 0, 1)
-            await handle_model_timeout(
+            await self.handle_model_timeout(
                 message_id,
                 token,
                 raw_message,
@@ -214,7 +216,7 @@ class MessageHandler:
 
         except Exception as exc:
             await self._log_usage(user_id, "model_error", model_name, 0, 1)
-            await handle_model_error(
+            await self.handle_model_error(
                 message_id,
                 token,
                 raw_message,

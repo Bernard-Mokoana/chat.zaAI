@@ -3,15 +3,19 @@ from pathlib import Path
 from datetime import date
 from importlib import util
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import pytest
 
-_dbhelper_path = Path(__file__).resolve().parent.parent / "utils" / "dbHelper.py"
+_dbhelper_path = Path(__file__).resolve().parent.parent / "utils" / "db_helper.py"
 spec = util.spec_from_file_location("worker_dbHelper", _dbhelper_path)
 _dbhelper = util.module_from_spec(spec)
 assert spec and spec.loader
 spec.loader.exec_module(_dbhelper)
 
+USER_ID = "11111111-1111-1111-1111-111111111111"
+OTHER_USER_ID = "22222222-2222-2222-2222-222222222222"
+CONV_ID = "33333333-3333-3333-3333-333333333333"
 
 class TestLogWorkerUsage:
     def test_builds_upsert_and_commits(self):
@@ -127,21 +131,24 @@ class TestSaveWorkerMessage:
         mock_session = MagicMock()
         mock_session.query.return_value.filter.return_value.first.return_value = None
         session_factory = MagicMock(return_value=mock_session)
-
-        _dbhelper.save_worker_message(session_factory, "user-uuid", "conv-uuid", "user", "Hello world")
-
-        mock_session.add.assert_called_once()
+        
+        _dbhelper.save_worker_message(session_factory, USER_ID, CONV_ID, "user", "Hello world")
+        
+        assert mock_session.add.call_count == 2
+        added_types = [type(call.args[0]).__name__ for call in mock_session.add.call_args_list]
+        assert added_types == ["Conversation", "Message"]
         mock_session.commit.assert_called_once()
         mock_session.close.assert_called_once()
 
     def test_existing_conversation_appends_message(self):
         mock_session = MagicMock()
         conversation = MagicMock()
-        conversation.id = "conv-uuid"
+        conversation.id = CONV_ID
+        conversation.user_id = UUID(USER_ID)  
         mock_session.query.return_value.filter.return_value.first.return_value = conversation
         session_factory = MagicMock(return_value=mock_session)
 
-        _dbhelper.save_worker_message(session_factory, "user-uuid", "conv-uuid", "assistant", "Reply")
+        _dbhelper.save_worker_message(session_factory, USER_ID, CONV_ID, "assistant", "Reply")
 
         assert mock_session.add.call_count == 1
         mock_session.commit.assert_called_once()
@@ -150,12 +157,12 @@ class TestSaveWorkerMessage:
     def test_wrong_user_raises_permission_error(self):
         mock_session = MagicMock()
         conversation = MagicMock()
-        conversation.user_id = "other-user"
+        conversation.user_id = UUID(OTHER_USER_ID)  
         mock_session.query.return_value.filter.return_value.first.return_value = conversation
         session_factory = MagicMock(return_value=mock_session)
 
         with pytest.raises(PermissionError, match="does not belong to user"):
-            _dbhelper.save_worker_message(session_factory, "user-uuid", "conv-uuid", "user", "Hello")
+            _dbhelper.save_worker_message(session_factory, USER_ID, CONV_ID, "user", "Hello")
 
     def test_invalid_uuid_raises_value_error(self):
         session_factory = MagicMock()
@@ -167,27 +174,30 @@ class TestGetConversationHistoryFromDb:
     def test_returns_formatted_messages(self):
         mock_session = MagicMock()
         conversation = MagicMock()
+        conversation.user_id = UUID(USER_ID)
         mock_session.query.return_value.filter.return_value.first.return_value = conversation
-
+        
         msg_new = MagicMock(role="assistant", content="Bot reply")
         msg_old = MagicMock(role="user", content="Human ask")
-        mock_session.query.return_value.order_by.return_value.limit.return_value.all.return_value = [msg_new, msg_old]
-
-        result = _dbhelper.get_conversation_history_from_db(mock_session, "user-uuid", "conv-uuid", limit=2)
+        mock_session.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [
+            msg_new, msg_old
+            ]
+        
+        result = _dbhelper.get_conversation_history_from_db(mock_session, USER_ID, CONV_ID, limit=2)
         assert result == [{"role": "user", "msg": "Human ask"}, {"role": "assistant", "msg": "Bot reply"}]
 
     def test_empty_conversation_returns_empty_list(self):
         mock_session = MagicMock()
         mock_session.query.return_value.filter.return_value.first.return_value = None
-        assert _dbhelper.get_conversation_history_from_db(mock_session, "user-uuid", "conv-uuid") == []
+        assert _dbhelper.get_conversation_history_from_db(mock_session, USER_ID, CONV_ID) == []
 
     def test_wrong_user_raises_permission_error(self):
         mock_session = MagicMock()
         conversation = MagicMock()
-        conversation.user_id = "other-user"
+        conversation.user_id = UUID(OTHER_USER_ID)
         mock_session.query.return_value.filter.return_value.first.return_value = conversation
         with pytest.raises(PermissionError):
-            _dbhelper.get_conversation_history_from_db(mock_session, "user-uuid", "conv-uuid")
+            _dbhelper.get_conversation_history_from_db(mock_session, USER_ID, CONV_ID)
 
     def test_invalid_uuid_returns_empty_list(self):
         mock_session = MagicMock()

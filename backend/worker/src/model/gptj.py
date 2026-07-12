@@ -38,7 +38,7 @@ class GPT:
                 return path.split("/models/")[-1]
             parts = path.split("/")
             if len(parts) >= 2:
-                return "/".join(parts[-2:])
+                return "/".join(parts[:2])
         logger.info(f"Using default model: {self.DEFAULT_MODEL_ID}")
         return self.DEFAULT_MODEL_ID
 
@@ -52,8 +52,12 @@ class GPT:
             )
             if not response.choices:
                 raise RuntimeError("Empty response from model")
-            
-            return (response.choices[0].message.content or "").strip()
+
+            content = (response.choices[0].message.content or "").strip()
+            if not content:
+                raise RuntimeError("Empty response from model")
+
+            return content
         except Exception as e:
             logger.error(f"Query failed: {e}")
             raise RuntimeError(f"Model query failed: {e}") from e

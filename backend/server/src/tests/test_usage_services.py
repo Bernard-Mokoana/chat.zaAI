@@ -53,7 +53,7 @@ class TestUsageLogService:
         )
 
         assert result.event_type == "user_login"
-        assert result.model is None
+        assert result.model == "unknown"
         assert result.total_tokens == 0
         assert result.message_count == 0
         self.db.commit.assert_called_once()

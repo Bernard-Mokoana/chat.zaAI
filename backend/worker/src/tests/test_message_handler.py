@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import logging
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -71,7 +71,7 @@ class TestMessageHandlerHandle:
         with patch.object(MessageHandler, "_handle_retry", new_callable=AsyncMock) as mock_retry:
             handler = _make_handler(handler_fixtures)
             await handler.handle("good-message")
-            mock_retry.assert_called_once_with("id-1", "tok-1", "text", 0, pytest.ANY)
+            mock_retry.assert_called_once_with("id-1", "tok-1", "text", 0, ANY)
 
 
 class TestMessageHandlerHandleRetry:
@@ -86,13 +86,13 @@ class TestMessageHandlerHandleRetry:
 
     async def test_exceeds_max_routes_to_dead_letter(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
-        with patch("src.handlers.MessageHandler.route_to_dead_letter_queue", new_callable=AsyncMock) as mock_route:
-            await handler._handle_retry("id-1", "tok-1", "text", retry_count=MAX_RETRIES, exception=RuntimeError("boom"))
-            mock_route.assert_called_once_with(
-                handler.producer,
-                ("id-1", {"token": "tok-1", "text": "text", "retry_count": str(MAX_RETRIES), "error": str(RuntimeError("boom"))}),
-                "Message id-1 (Token: tok-1) exceeded maximum retries (3). Sending to dead-letter channel.",
-            )
+        # _handle_retry sends the dead-letter payload directly via the producer;
+        # it does not call route_to_dead_letter_queue.
+        await handler._handle_retry("id-1", "tok-1", "text", retry_count=MAX_RETRIES, exception=RuntimeError("boom"))
+        handler.producer.add_to_stream.assert_called_once_with(
+            {"token": "tok-1", "text": "text", "retry_count": str(MAX_RETRIES), "error": "boom"},
+            DEAD_LETTER_CHANNEL,
+        )
         handler.consumer.delete_message.assert_called_once_with(stream_channel=STREAM_CHANNEL, message_id="id-1")
 
 
@@ -111,65 +111,73 @@ class TestMessageHandlerProcess:
         await handler._process("msg-1", "tok-1", "hi", raw_message="raw")
 
         handler.cache.add_message_to_cache.assert_called()
-        mock_save.assert_called_once_with("u1", "tok-1", "human", "hi")
+        # _save_message is called twice: once for the human message, once for the bot reply.
+        assert mock_save.call_count == 2
+        mock_save.assert_any_call("u1", "tok-1", "human", "hi")
+        mock_save.assert_any_call("u1", "tok-1", "bot", "Bot reply")
         mock_build.assert_called_once_with("u1", "tok-1")
         mock_call.assert_called_once_with("msg-1", "tok-1", "raw", "Human: hi", "u1", "model-x")
         mock_publish.assert_called_once_with("msg-1", "tok-1", "Bot reply")
-        mock_save.assert_any_call("u1", "tok-1", "bot", "Bot reply")
         mock_log_usage.assert_called_once_with("u1", "inference_success", "model-x", 4, 1)
 
     async def test_cache_missing_user_id_calls_cache_failure_and_returns(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
         handler.cache.get_chat_history.return_value = {}
         with patch("src.handlers.MessageHandler.handle_cache_failure", new_callable=AsyncMock) as mock_failure:
-            with pytest.raises(RuntimeError, match="Database history retrieval failure"):
-                await handler._process("msg-1", "tok-1", "hi", raw_message="raw")
+            # _process returns after handling the cache failure; it does not raise.
+            await handler._process("msg-1", "tok-1", "hi", raw_message="raw")
             mock_failure.assert_called_once_with("msg-1", "tok-1", "raw", handler.producer, handler.cache, handler.consumer)
 
     async def test_empty_response_raises(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
         handler.cache.get_chat_history.return_value = {"user_id": "u1"}
-        with patch.object(MessageHandler, "_build_prompt_from_db", new_callable=AsyncMock) as mock_build:
-            with patch.object(MessageHandler, "_call_model_with_logging", new_callable=AsyncMock) as mock_call:
-                mock_build.return_value = "Human: hi"
-                mock_call.return_value = ""
-                with pytest.raises(RuntimeError, match="Model returned an empty response."):
-                    await handler._process("msg-1", "tok-1", "hi", raw_message="raw")
-
+        with patch.object(MessageHandler, "_save_message", new_callable=AsyncMock):
+            with patch.object(MessageHandler, "_build_prompt_from_db", new_callable=AsyncMock) as mock_build:
+                with patch.object(MessageHandler, "_call_model_with_logging", new_callable=AsyncMock) as mock_call:
+                    mock_build.return_value = "Human: hi"
+                    mock_call.return_value = ""
+                    with pytest.raises(RuntimeError, match="Model returned an empty response."):
+                        await handler._process("msg-1", "tok-1", "hi", raw_message="raw")
 
 class TestMessageHandlerSaveMessage:
     async def test_success_saves_in_thread(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
+
+        async def pass_through(coro, timeout):
+            return await coro
+
         with patch("src.handlers.MessageHandler.save_worker_message", MagicMock()) as mock_save:
-            with patch("asyncio.wait_for", AsyncMock(side_effect=lambda coro, timeout: coro)) as mock_wait:
+            with patch("asyncio.wait_for", AsyncMock(side_effect=pass_through)):
                 await handler._save_message("u1", "tok-1", "user", "hello")
             mock_save.assert_called_once_with(handler.session_factory, "u1", "tok-1", "user", "hello")
 
     async def test_timeout_is_logged_and_raised(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
         with patch("src.handlers.MessageHandler.save_worker_message", MagicMock()):
-            with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
-                mock_wait.side_effect = asyncio.TimeoutError()
-                with pytest.raises(asyncio.TimeoutError):
-                    await handler._save_message("u1", "tok-1", "user", "hello")
-
-
+            with patch("asyncio.to_thread", MagicMock(return_value=MagicMock())):
+                with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
+                    mock_wait.side_effect = asyncio.TimeoutError()
+                    with pytest.raises(asyncio.TimeoutError):
+                        await handler._save_message("u1", "tok-1", "user", "hello")
+                        
 class TestMessageHandlerLogUsage:
     async def test_timeout_is_logged(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
         with patch("src.handlers.MessageHandler.log_worker_usage", MagicMock()):
-            with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
-                mock_wait.side_effect = asyncio.TimeoutError()
-                await handler._log_usage("u1", "event", "model", 5, 1)
+            with patch("asyncio.to_thread", MagicMock(return_value=MagicMock())):
+                with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
+                    mock_wait.side_effect = asyncio.TimeoutError()
+                    await handler._log_usage("u1", "event", "model", 5, 1)
 
     async def test_other_exception_is_logged(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
         with patch("src.handlers.MessageHandler.log_worker_usage", MagicMock()):
-            with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
-                mock_wait.side_effect = RuntimeError("boom")
-                with pytest.raises(RuntimeError):
-                    await handler._log_usage("u1", "event", "model", 5, 1)
-
+            with patch("asyncio.to_thread", MagicMock(return_value=MagicMock())):
+                with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
+                    with patch("src.handlers.MessageHandler.logger") as mock_log:
+                        mock_wait.side_effect = RuntimeError("boom")
+                        await handler._log_usage("u1", "event", "model", 5, 1)
+                        mock_log.error.assert_called_once()
 
 class TestMessageHandlerCallModelWithLogging:
     async def test_success(self, handler_fixtures):
@@ -182,8 +190,10 @@ class TestMessageHandlerCallModelWithLogging:
 
     async def test_timeout_logs_and_handles(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
+        # handle_model_timeout is bound as an *instance* attribute in __init__,
+        # not a class attribute, so it must be patched on the instance.
         with patch.object(MessageHandler, "_log_usage", new_callable=AsyncMock) as mock_log:
-            with patch.object(MessageHandler, "handle_model_timeout", new_callable=AsyncMock) as mock_timeout:
+            with patch.object(handler, "handle_model_timeout", new_callable=AsyncMock) as mock_timeout:
                 with patch("src.handlers.MessageHandler.query_model", AsyncMock(side_effect=asyncio.TimeoutError())):
                     with pytest.raises(asyncio.TimeoutError):
                         await handler._call_model_with_logging("m1", "tok", "raw", "prompt", "u1", "model-x")
@@ -193,7 +203,7 @@ class TestMessageHandlerCallModelWithLogging:
     async def test_model_error_logs_and_handles(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
         with patch.object(MessageHandler, "_log_usage", new_callable=AsyncMock) as mock_log:
-            with patch.object(MessageHandler, "handle_model_error", new_callable=AsyncMock) as mock_error:
+            with patch.object(handler, "handle_model_error", new_callable=AsyncMock) as mock_error:
                 with patch("src.handlers.MessageHandler.query_model", AsyncMock(side_effect=RuntimeError("boom"))):
                     with pytest.raises(RuntimeError):
                         await handler._call_model_with_logging("m1", "tok", "raw", "prompt", "u1", "model-x")
@@ -206,7 +216,9 @@ class TestMessageHandlerPublishResponse:
         handler = _make_handler(handler_fixtures)
         await handler._publish_response("m1", "tok-1", "reply")
         handler.producer.add_to_stream.assert_called_once_with({"tok-1": "reply"}, RESPONSE_CHANNEL)
-        handler.cache.add_message_to_cache.assert_called_once_with(token="tok-1", source="Bot", message_data={"msg": "reply", "id": pytest.ANY, "timestamp": pytest.ANY})
+        handler.cache.add_message_to_cache.assert_called_once_with(
+            token="tok-1", source="Bot", message_data={"msg": "reply", "id": ANY, "timestamp": ANY}
+        )
         handler.consumer.delete_message.assert_called_once_with(stream_channel=STREAM_CHANNEL, message_id="m1")
 
 

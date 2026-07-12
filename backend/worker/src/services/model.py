@@ -27,6 +27,9 @@ async def query_model(gpt_client: GPT, prompt: str, timeout: float) -> str:
         )
         loop.create_task(_log_when_finished(query_future, timeout))
         raise
+    except Exception as exc:
+        logger.error("Model query failed: %s", exc)
+        raise RuntimeError(f"Model query failed: {exc}") from exc
 
 
 async def _log_when_finished(query_future: "asyncio.Future[str]", timeout: float) -> None:

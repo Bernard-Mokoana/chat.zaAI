@@ -33,7 +33,9 @@ class TestExtractScalarId:
         assert _extract_scalar_id("id-123") == "id-123"
 
     def test_bytes(self):
-        assert _extract_scalar_id(b"id-123") == b"id-123"
+        # _extract_scalar_id decodes bytes -> str (Redis stream IDs arrive as
+        # bytes and downstream consumers, e.g. consumer.delete_message, need str)
+        assert _extract_scalar_id(b"id-123") == "id-123"
 
     def test_empty_tuple_returns_none(self):
         assert _extract_scalar_id(()) is None
@@ -91,7 +93,7 @@ class TestSendErrorResponse:
 
 
 class TestHandleInvalidEnvelope:
-    @patch("src.services.dead_letter.route_to_dead_letter_queue", new_callable=AsyncMock)
+    @patch("src.utils.error_handlers.route_to_dead_letter_queue", new_callable=AsyncMock)
     async def test_routes_to_dead_letter_and_deletes(self, mock_route):
         producer = MagicMock()
         producer.add_to_stream = AsyncMock()
@@ -113,7 +115,9 @@ class TestHandleInvalidEnvelope:
         producer.add_to_stream = AsyncMock()
         consumer = MagicMock()
         consumer.delete_message = AsyncMock()
-        message = ("noid", {"data": "x"})
+        # 123 is neither str nor bytes, so _extract_scalar_id returns None,
+        # which is what actually exercises the "skip delete" branch.
+        message = (123, {"data": "x"})
         await handle_invalid_envelope(message, producer, consumer)
         consumer.delete_message.assert_not_called()
 

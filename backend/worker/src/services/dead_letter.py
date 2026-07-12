@@ -1,6 +1,6 @@
 import logging
 from src.redis.producer import Producer
-from src.utils.decoding import decode_fields
+from src.utils.decoding import decode_fields   
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ async def route_to_dead_letter_queue(producer: Producer, original_message: tuple
             message_id,
             exc,
         )
-        decoded = raw_fields 
-    
+        decoded = raw_fields
+
     if isinstance(message_id, bytes):
         message_id = message_id.decode("utf-8", errors="replace")
 
