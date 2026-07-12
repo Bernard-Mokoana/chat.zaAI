@@ -25,12 +25,12 @@ class TestResolveModelId:
         gpt = GPT.__new__(GPT)
         assert gpt._resolve_model_id() == "org/model-name"
 
-    @patch.dict(os.environ, {"MODEL_URL": "https://huggingface.co/org/model-name"}, clear=False)
+    @patch.dict(os.environ, {"MODEL_URL": "https://huggingface.co/org/model-name"}, clear=True)
     def test_resolves_model_url_last_two_parts(self):
         gpt = GPT.__new__(GPT)
         assert gpt._resolve_model_id() == "org/model-name"
 
-    @patch.dict(os.environ, {}, clear=False)
+    @patch.dict(os.environ, {}, clear=True)
     def test_falls_back_to_default(self):
         gpt = GPT.__new__(GPT)
         assert gpt._resolve_model_id() == gpt.DEFAULT_MODEL_ID

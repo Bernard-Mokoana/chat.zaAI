@@ -15,7 +15,7 @@ def create_usage_log(
     log_entry = UsageLog(
         user_id=user_id,
         event_type=event_type,
-        model=model,
+        model=model or "unknown",
         total_tokens=total_tokens if total_tokens is not None else 0,
         message_count=message_count if message_count is not None else 0,
     )

@@ -24,13 +24,9 @@ class TestParseStreamMessage:
         message = (b"msg-4", {b"tok-4": b"hello"})
         assert parse_stream_message(message) == ("msg-4", "tok-4", "hello", 0)
 
-    def test_semantic_message_with_bytes_keys_and_values_falls_to_original_format(self):
+    def test_valid_semantic_message_with_bytes_and_values(self):
         message = (b"msg-5", {b"token": b"tok-5", b"text": b"hello"})
-        result = parse_stream_message(message)
-        assert result[0] == "msg-5"
-        assert result[2] == "tok-5"
-        assert result[3] == "hello"
-        assert result[4] == 0
+        assert parse_stream_message(message) == ("msg-5", "tok-5", "hello", 0)
 
     def test_semantic_message_with_retry_count(self):
         message = ("msg-5", {"token": "tok-5", "text": "hello", "retry_count": "2"})
@@ -38,10 +34,7 @@ class TestParseStreamMessage:
 
     def test_semantic_message_with_bytes_retry_count(self):
         message = ("msg-6", {b"token": b"tok-6", b"text": b"hello", b"retry_count": b"3"})
-        result = parse_stream_message(message)
-        assert result[0] == "msg-6"
-        assert result[3] == 0
-        assert result[4] == 0
+        assert parse_stream_message(message) == ("msg-6", "tok-6", "hello", 3)
 
     def test_invalid_message_not_list_or_tuple(self):
         assert parse_stream_message("bad") is None

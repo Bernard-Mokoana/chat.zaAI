@@ -13,6 +13,7 @@ logging.disable(logging.CRITICAL)
 
 
 class TestStreamConsumer:
+    @pytest.mark.asyncio
     async def test_consume_stream_calls_xread(self):
         redis_client = MagicMock()
         redis_client.xread = AsyncMock(return_value=[("stream-1", [("msg-1", {"f": "v"})])])
@@ -23,6 +24,7 @@ class TestStreamConsumer:
         )
         assert result == [("stream-1", [("msg-1", {"f": "v"})])]
 
+    @pytest.mark.asyncio
     async def test_delete_message_calls_xdel(self):
         redis_client = MagicMock()
         redis_client.xdel = AsyncMock(return_value=1)

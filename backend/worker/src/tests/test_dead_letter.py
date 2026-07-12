@@ -13,7 +13,13 @@ from src.utils.decoding import decode_fields
 
 @pytest.fixture(autouse=True)
 def suppress_logging():
+    previous_disable = logging.root.manager.disable
     logging.disable(logging.CRITICAL)
+
+    try:
+        yield
+    finally:
+        logging.disable(previous_disable)
 
 
 class TestRouteToDeadLetterQueue:

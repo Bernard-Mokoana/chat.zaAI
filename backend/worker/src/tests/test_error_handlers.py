@@ -46,8 +46,7 @@ class TestExtractScalarId:
 
 
 class TestSendErrorResponse:
-    @patch("src.utils.error_handlers.route_to_dead_letter_queue", new_callable=AsyncMock)
-    async def test_success_publishes_and_caches_and_deletes(self, mock_route):
+    async def test_success_publishes_and_caches_and_deletes(self):
         producer = MagicMock()
         producer.add_to_stream = AsyncMock()
         cache = MagicMock()
@@ -92,7 +91,7 @@ class TestSendErrorResponse:
 
 
 class TestHandleInvalidEnvelope:
-    @patch("src.utils.error_handlers.route_to_dead_letter_queue", new_callable=AsyncMock)
+    @patch("src.services.dead_letter.route_to_dead_letter_queue", new_callable=AsyncMock)
     async def test_routes_to_dead_letter_and_deletes(self, mock_route):
         producer = MagicMock()
         producer.add_to_stream = AsyncMock()

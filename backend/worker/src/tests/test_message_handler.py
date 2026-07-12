@@ -160,7 +160,7 @@ class TestMessageHandlerLogUsage:
         with patch("src.handlers.MessageHandler.log_worker_usage", MagicMock()):
             with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
                 mock_wait.side_effect = asyncio.TimeoutError()
-                handler._log_usage("u1", "event", "model", 5, 1)
+                await handler._log_usage("u1", "event", "model", 5, 1)
 
     async def test_other_exception_is_logged(self, handler_fixtures):
         handler = _make_handler(handler_fixtures)
@@ -168,7 +168,7 @@ class TestMessageHandlerLogUsage:
             with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
                 mock_wait.side_effect = RuntimeError("boom")
                 with pytest.raises(RuntimeError):
-                    handler._log_usage("u1", "event", "model", 5, 1)
+                    await handler._log_usage("u1", "event", "model", 5, 1)
 
 
 class TestMessageHandlerCallModelWithLogging:

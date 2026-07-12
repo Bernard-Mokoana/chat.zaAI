@@ -4,6 +4,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import asyncio
+import time
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -22,7 +24,7 @@ class TestQueryModel:
     @pytest.mark.asyncio
     async def test_timeout_cancels_future_and_spawns_background_task(self):
         gpt = MagicMock()
-        gpt.query = MagicMock(side_effect=asyncio.sleep(10))
+        gpt.query = MagicMock(side_effect=lambda *a, **k: time.sleep(10))
 
         loop = asyncio.get_event_loop()
         with patch.object(loop, "create_task") as mock_create_task:
@@ -41,7 +43,7 @@ class TestQueryModel:
     @pytest.mark.asyncio
     async def test_timeout_does_not_await_long_future(self):
         gpt = MagicMock()
-        gpt.query = MagicMock(side_effect=asyncio.sleep(10))
+        gpt.query = MagicMock(side_effect=lambda *a, **k: time.sleep(10))
 
         start = asyncio.get_event_loop().time()
         with pytest.raises(asyncio.TimeoutError):

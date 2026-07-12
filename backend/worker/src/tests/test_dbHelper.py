@@ -90,7 +90,9 @@ class TestLogWorkerUsage:
         session_factory.return_value.__exit__.return_value = False
         mock_db.commit.side_effect = RuntimeError("db down")
 
-        with patch.object(_dbhelper.func, "now", return_value="now"):
+        with patch.object(_dbhelper.func, "now", return_value="now"), patch.object(
+            _dbhelper, "logger"
+        ) as mock_logger:
             _dbhelper.log_worker_usage(
                 session_factory=session_factory,
                 user_id="u1",
@@ -98,7 +100,7 @@ class TestLogWorkerUsage:
                 total_tokens=5,
                 message_count=1,
             )
-        assert mock_db.rollback.called is False or True  # log_worker_usage catches Exception
+        mock_logger.error.assert_called_once()
 
 
 class TestNormalizeMessageRole:

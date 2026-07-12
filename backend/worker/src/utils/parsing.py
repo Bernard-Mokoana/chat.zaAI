@@ -21,16 +21,16 @@ def parse_stream_message(message) -> Optional[tuple[str, str, str, int]]:
         logger.error("Malformed message payload for id=%s: %r", message_id, fields)
         return None
 
-    # Semantic format used by retries: {"token": ..., "text": ..., "retry_count": ...}
-    if "token" in fields and "text" in fields:
-        token = decode_bytes(fields["token"])
-        text = decode_bytes(fields["text"])
-        retry_raw = decode_bytes(fields.get("retry_count", "0"))
+    decoded_fields = {
+        decode_bytes(key): decode_bytes(value)
+        for key, value in fields.items()
+    }
+    if "token" in decoded_fields and "text" in decoded_fields:
+        token = decoded_fields["token"]
+        text = decoded_fields["text"]
+        retry_raw = decoded_fields.get("retry_count", "0")
     else:
-        # Original format from server: token sits in the field name, text in the value
-        token_bytes, msg_bytes = next(iter(fields.items()))
-        token = decode_bytes(token_bytes)
-        text = decode_bytes(msg_bytes)
+        token, text = next(iter(decoded_fields.items()))
         retry_raw = "0"
 
     if not token or not text:
