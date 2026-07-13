@@ -1,8 +1,7 @@
-from unittest.mock import ANY, AsyncMock, MagicMock, patch  # Added ANY here
-from uuid import uuid4
+from unittest.mock import ANY, AsyncMock, MagicMock, patch 
 
 import pytest
-from backend.database.config.databaseConfig import get_read_db
+from backend.database.config.databaseConfig import get_write_db
 from backend.database.models.users import User
 from backend.server.main import api
 from backend.server.src.middlewares.jwt_validation import get_current_user
@@ -24,7 +23,7 @@ class TestChatRoutes:
         self.mock_db = MagicMock()
 
         api.dependency_overrides[get_current_user] = lambda: self.mock_user
-        api.dependency_overrides[get_read_db] = lambda: self.mock_db
+        api.dependency_overrides[get_write_db] = lambda: self.mock_db
 
         yield
 

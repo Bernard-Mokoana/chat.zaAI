@@ -1,6 +1,6 @@
 import logging
 
-from backend.database.config.databaseConfig import get_read_db
+from backend.database.config.databaseConfig import get_write_db
 from backend.database.models.users import User
 from backend.server.src.middlewares.jwt_validation import get_current_user
 from backend.server.src.redis.config import Redis
@@ -90,7 +90,7 @@ async def websocket_endpoint(websocket: WebSocket):
 @chat.get("/history/{chat_token}")
 async def get_chat_history(
     chat_token: str,
-    db: Session = Depends(get_read_db),
+    db: Session = Depends(get_write_db),
     current_user: User = Depends(get_current_user),
 ):
     try:
